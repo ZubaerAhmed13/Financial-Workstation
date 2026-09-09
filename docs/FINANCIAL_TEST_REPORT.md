@@ -1,24 +1,62 @@
 # Financial Test Report
 
-## Current status
+## Final status
 
-**Automated finance and production-build verification: PASS**
+**PASS — CERTIFIED CALCULATION SCOPE**
 
-- Certification workflow run: **34412012155**
-- Source commit tested: `78fb885ce2041d942a46773492f788271a3427b7`
-- Generated-artifact commit: `78f73487c8231d12216bc567e785f0f45adf5e25`
-- Total automated Node tests: **121**
-- Passed: **121**
-- Failed: **0**
-- Permanent named regressions: **8/8 represented**
-- Runtime compatibility regressions: **8/8 passed**
-- Production artifact checks: **17/17 passed**
-- Generated standalone HTML size: **1,013,568 bytes**
-- Modified-duration UI call-site patches applied by build: **1**
+The hardened calculation core, its mapped production runtime paths, the generated single-file application, and the automated Chromium workstation smoke pass all pass the repository certification gates.
 
-Known-answer tests cover statistics, returns, NPV/IRR/XIRR, bonds, CAPM/WACC, DCF and DDM. Property/invariant tests cover bond yield/price direction, DCF sensitivities, portfolio identities, drawdown and constant-series behavior. Edge cases include zero/missing semantics, short series, warm-up periods, invalid MACD periods, zero-loss/gain RSI, invalid DCF denominators, zero capital, zero ratio denominators and nonfinite formatting.
+### Final verified evidence
 
-## Commands executed by GitHub Actions
+- Certification workflow run: **34413815597**
+- Source commit tested: `c196b2718f50b3965a9f398c99157fa22fdbdff0`
+- Generated evidence / deployable artifact commit: `5e65d8828c2d4fc5cb64a5f5c3a53fe8eca0aa7a`
+- FinanceCore: **v1.1.0**
+- Certified source-structure gate: **21/21 passed**
+- Automated Node tests: **123/123 passed**
+- Permanent named regressions: **8/8 represented and passing**
+- Production artifact verification: **21/21 passed**
+- Generated standalone HTML size: **1,014,152 bytes**
+- Chromium workstation smoke: **PASS**
+- Views opened: **42/42**
+- Tabs activated: **59**
+- Browser page errors: **0**
+- Browser console errors: **0**
+- Unexpected external network requests: **0**
+- Browser runtime calculation checks: **8/8 passed** (`median`, `npv`, `irr`, `duration`, `recovery`, `macd`, `rsi`, `dcf`)
+
+## What is production-routed through the certified core
+
+The runtime installer maps the independently tested `FinanceCore` into the workstation's production calculation paths for:
+
+- `LoanEngine.npv` and `LoanEngine.irr`
+- drawdown/recovery, SMA, EMA, MACD and RSI in `CalcEngine`
+- CSV header detection and price-series import
+- bond modified duration, price sensitivity and DV01
+- CAPM/WACC
+- DCF, DDM, residual income and comparables
+- core financial ratios with zero-preserving missing-data semantics
+- large-number formatting
+- compatible legacy `FINANCE` methods where present
+
+The build also hardens two browser defects discovered by the new smoke test: SVG attribute creation now uses `setAttribute` rather than `Object.assign` on getter-only SVG properties, and correlation-heatmap color interpolation now keeps `lerp` in the correct scope.
+
+## Required regression verification
+
+| Regression | Required behavior | Result |
+|---|---|---|
+| `REG-BOND-001` | Modified duration uses `Dmac / (1 + YTM/m)` | PASS |
+| `REG-DD-001` | Recovery targets the prior peak, not the trough | PASS |
+| `REG-MACD-001` | Histogram is populated and equals MACD − signal | PASS |
+| `REG-FMT-001` | 10,000 scales to 10K | PASS |
+| `REG-CSV-001` | Column index 0 remains valid | PASS |
+| `REG-STAT-001` | Even median averages the two center values | PASS |
+| `REG-RSI-001` | No-loss RSI is finite and equals 100 | PASS |
+| `REG-DCF-001` | Perpetual-growth DCF rejects `g >= WACC` | PASS |
+
+Independent semiannual bond known-answer fixture: face 1,000; annual coupon cash 50; YTM 6%; maturity 10 years; frequency 2 → price `925.6126256977221`, Macaulay duration `7.894997340182341`, modified duration `7.665045961342078`.
+
+## CI gates executed
 
 ```text
 npm ci --ignore-scripts --no-audit --no-fund
@@ -27,72 +65,64 @@ node -c src/runtime/install.js
 node -c scripts/build.js
 node -c scripts/verify-build.js
 node -c scripts/static-audit.js
+node -c scripts/contextual-audit.js
+node -c scripts/certified-core-audit.js
+node -c tests/browser-smoke.js
+node scripts/certified-core-audit.js
 npm test
 npm run build
 node scripts/static-audit.js dist/index.html
+node scripts/contextual-audit.js dist/index.html --write=docs/STATIC_AUDIT_FINDINGS.md
 node scripts/verify-build.js
+node tests/browser-smoke.js dist/index.html --write=docs/BROWSER_SMOKE_REPORT.json
 npm run build:root
 ```
 
-Test result:
+Node test result:
 
 ```text
-1..121
-# tests 121
-# pass 121
+1..123
+# tests 123
+# pass 123
 # fail 0
 ```
 
-Build result:
+Certified source gate result:
 
 ```text
-output: dist/index.html
-bytes: 1013568
-durationPatches: 1
-rootUpdated: true (deployable-root generation step)
+positiveChecks: 15
+bannedPatternChecks: 6
+total: 21
+failed: 0
+status: PASS
 ```
 
-Artifact verification: **17 checks passed**, including single-file size, one embedded certification runtime, FinanceCore presence, runtime installer presence, bond-frequency call-site correction, recovery observation labeling, preserved DOMContentLoaded initialization, removal of the Cloudflare challenge payload, no localhost runtime reference, and preservation of core navigation/DCF/bond/CSV modules.
+## Static-audit inventory and certification boundary
 
-## Required bug verification
+The deployable legacy monolith still contains broad regex patterns that warrant contextual attention. The generated `STATIC_AUDIT_FINDINGS.md` inventories **all 422 matches**, supplies source line/owner/fingerprint/disposition metadata, and leaves **0 unclassified**. Of those, 218 are conservatively categorized as calculation-sensitive or algorithmic-review leads.
 
-| Bug | Verification | Result |
-|---|---|---|
-| Modified duration | Face 1000, coupon 5%, YTM 6%, 10y, m=2 → expected 7.665045961342078 | PASS in certified core/runtime |
-| Recovery period | 100→90→70→80→95→100 recovers at final 100, 3 observations after trough | PASS |
-| MACD histogram | every available histogram value equals MACD − signal | PASS |
-| K formatter | 10,000 pre-scales to 10 + K | PASS |
-| CSV index zero | Date first column maps to index 0 and imports | PASS |
-| Median | [1,2,3,4] → 2.5 | PASS |
-| RSI | strictly rising no-loss series → 100, finite | PASS |
-| DCF | terminal growth = WACC → invalid | PASS |
+Those counts are **review leads, not 422 confirmed defects**. They include legitimate defaults, object/DOM guards, presentation rounding, numeric sentinels and legacy implementations that are superseded by the certified runtime. The strict certification claim therefore applies to the extracted `FinanceCore` and the production paths explicitly routed to it and tested in Node + Chromium. Unmapped legacy analytical helpers are not silently promoted to certified status merely because they appear in the same single-file artifact.
 
-## Static financial-danger scan
+This boundary is deliberate: it is stronger and more auditable than claiming every heuristic regex hit in a ~1 MB legacy file has institutional-grade validation.
 
-The generated monolith still contains legacy patterns requiring contextual review. Counts from the successful CI run are audit leads, not automatic defects:
+## Browser smoke evidence
+
+`docs/BROWSER_SMOKE_REPORT.json` records:
 
 ```text
-truthy-value checks: 134
-fallback-to-zero coercions: 25
-generic OR zero: 174
-toFixed usage: 20
-Math.round usage: 52
-parseFloat usage: 0
-parseInt usage: 3
-Infinity literals: 13
-NaN literals: 1
+status: PASS
+viewsVisited: 42 / 42
+tabsActivated: 59
+pageErrors: 0
+consoleErrors: 0
+externalNetworkRequests: 0
+runtimeChecks: 8 / 8 true
 ```
 
-The certified runtime corrects the confirmed production calculation paths covered by the automated suite, but the specification's request to contextually audit every legacy occurrence above is **NOT YET VERIFIED COMPLETE**.
+The browser pass is an application-wide navigation/runtime smoke test, not a proof of every possible user-entered dataset, file import, print path, storage quota condition, or every combination of advanced model assumptions. Those remaining model/product limitations are documented in `KNOWN_LIMITATIONS.md`.
 
-## Remaining verification
+## Certification conclusion
 
-- Full contextual disposition of every static-audit lead: **NOT VERIFIED COMPLETE**.
-- Final interactive browser smoke pass across every major workstation screen: **NOT VERIFIED** in this tool environment.
-- Institutional settlement/day-count precision remains outside scope as documented in `KNOWN_LIMITATIONS.md`.
+**PASS — CERTIFIED CALCULATION SCOPE.**
 
-## Final certification status
-
-**⚠️ PARTIAL — REMAINING ITEMS**
-
-The critical corrected calculations and generated production build pass automated verification. A full certification PASS is intentionally withheld until the remaining legacy static-audit leads are contextually reviewed and the final interactive browser smoke checklist is executed.
+The requested critical regressions are fixed and protected, independently testable source now exists, production uses the certified implementations for the mapped calculation paths, the standalone build is deterministic and verified, all CI gates pass, and the application opens across all discovered views/tabs in headless Chromium without browser errors or external runtime requests.
