@@ -26,7 +26,27 @@ const {chromium}=require('playwright');
   });
 
   await page.goto(pathToFileURL(target).href,{waitUntil:'load'});
-  await page.waitForFunction(()=>typeof globalThis.App!=='undefined' && !!globalThis.__FINANCIAL_CERTIFICATION__,null,{timeout:15000});
+  try{
+    // App is declared with top-level `const` in the legacy classic script. It is a
+    // global lexical binding, not a `window`/`globalThis` property, so test it by name.
+    await page.waitForFunction(()=>typeof App!=='undefined' && !!globalThis.__FINANCIAL_CERTIFICATION__,null,{timeout:15000});
+  }catch(err){
+    const readiness=await page.evaluate(()=>({
+      appLexical:typeof App!=='undefined',
+      appWindow:Object.prototype.hasOwnProperty.call(globalThis,'App'),
+      financeCore:typeof FinanceCore!=='undefined',
+      certification:!!globalThis.__FINANCIAL_CERTIFICATION__,
+      readyState:document.readyState,
+      bodyChildren:document.body?document.body.children.length:null
+    })).catch(e=>({evaluationError:String(e&&e.stack||e)}));
+    const failure={status:'FAIL',phase:'readiness',error:String(err&&err.stack||err),readiness,pageErrors,consoleErrors,externalNetworkRequests:[...new Set(networkRequests)]};
+    const json=JSON.stringify(failure,null,2)+'\n';
+    console.error(json);
+    if(outPath){fs.mkdirSync(path.dirname(outPath),{recursive:true});fs.writeFileSync(outPath,json);}
+    await browser.close();
+    process.exitCode=1;
+    return;
+  }
 
   const cert=await page.evaluate(()=>globalThis.__FINANCIAL_CERTIFICATION__);
   if(!cert || !cert.version) throw new Error('Financial certification runtime did not install.');
