@@ -3,6 +3,7 @@ const fs=require('node:fs');
 const path=require('node:path');
 const file=path.resolve(__dirname,'../dist/index.html');
 const html=fs.readFileSync(file,'utf8');
+const safeSvgFactory='const el=(tag,attrs={})=>{ const node=document.createElementNS(NS,tag); for(const [k,v] of Object.entries(attrs)){ if(v!=null) node.setAttribute(k,String(v)); } return node; };';
 const checks=[
   ['generated HTML exists',fs.existsSync(file)],
   ['single-file artifact remains substantial',Buffer.byteLength(html)>900000],
@@ -13,6 +14,8 @@ const checks=[
   ['bond UI passes frequency',html.includes('BondEngine.modifiedDuration(mac,ytm,freq)')],
   ['legacy bond UI omission absent',!html.includes('BondEngine.modifiedDuration(mac,ytm);')],
   ['recovery UI uses observations',html.includes('rec+" obs"')],
+  ['SVG factory uses setAttribute safely',html.includes(safeSvgFactory)],
+  ['legacy SVG Object.assign factory absent',!html.includes('const el=(tag,attrs)=>Object.assign(document.createElementNS(NS,tag),attrs);')],
   ['DOMContentLoaded init preserved',html.includes('window.addEventListener("DOMContentLoaded",init);')],
   ['Cloudflare challenge payload removed',!html.includes('/cdn-cgi/challenge-platform/')],
   ['no localhost runtime reference',!/(?:src|href)=["']https?:\/\/(?:localhost|127\.0\.0\.1)/i.test(html)],
