@@ -96,6 +96,7 @@ const {chromium}=require('playwright');
   const criticalGlobals=await page.evaluate(()=>({
     app:typeof App==='object',
     calc:typeof CalcEngine==='object',
+    loan:typeof LoanEngine==='object',
     bond:typeof BondEngine==='object',
     valuation:typeof ValuationEngine==='object',
     csv:typeof CsvParser==='object',
@@ -108,6 +109,8 @@ const {chromium}=require('playwright');
   const runtimeChecks=await page.evaluate(()=>{
     const out={};
     try{ out.median=FinanceCore.median([1,2,3,4])===2.5; }catch(e){out.median=false;}
+    try{ out.npv=Math.abs(LoanEngine.npv([-1000,1100],.1))<1e-9; }catch(e){out.npv=false;}
+    try{ const r=LoanEngine.irr([-1000,1100]); out.irr=r!=null&&Math.abs(r-.1)<1e-8; }catch(e){out.irr=false;}
     try{ const d=BondEngine.modifiedDuration(8,0.06,2); out.duration=Math.abs(d-(8/1.03))<1e-12; }catch(e){out.duration=false;}
     try{ const d=CalcEngine.maxDrawdown([100,90,70,80,95,100]); out.recovery=d.recoveryPeriod===3; }catch(e){out.recovery=false;}
     try{ const m=CalcEngine.macd(Array.from({length:80},(_,i)=>100+i),12,26,9); out.macd=Array.isArray(m.hist)&&m.hist.some(Number.isFinite); }catch(e){out.macd=false;}
