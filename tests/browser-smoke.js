@@ -73,7 +73,10 @@ const {chromium}=require('playwright');
     await page.waitForTimeout(15);
     if(!result.ok) failures.push(`${view}: ${result.reason}`); else viewsVisited++;
 
-    const tabs=await page.$$eval(`#view-${CSS.escape(view)} .tab`,els=>els.map((e,i)=>({i,tab:e.dataset.tab||'',text:(e.textContent||'').trim().slice(0,80)})));
+    const tabs=await page.evaluate((view)=>{
+      const host=document.getElementById(`view-${view}`);
+      return host?Array.from(host.querySelectorAll('.tab')).map((e,i)=>({i,tab:e.dataset.tab||'',text:(e.textContent||'').trim().slice(0,80)})):[];
+    },view);
     for(const tab of tabs){
       const r=await page.evaluate(({view,index})=>{
         try{
