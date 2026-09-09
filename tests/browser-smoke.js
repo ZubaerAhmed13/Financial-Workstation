@@ -97,7 +97,6 @@ const {chromium}=require('playwright');
   await browser.close();
 
   const report={
-    generatedAt:new Date().toISOString(),
     target:path.basename(target),
     certificationVersion:cert.version,
     totalViews:viewIds.length,
