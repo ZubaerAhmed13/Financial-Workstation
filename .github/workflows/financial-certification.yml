@@ -1,0 +1,64 @@
+name: Financial Calculation Certification
+
+on:
+  push:
+    branches: [main, financial-calculation-certification]
+  pull_request:
+    branches: [main]
+
+permissions:
+  contents: write
+
+jobs:
+  certify:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: npm
+
+      - name: Fresh dependency install
+        run: npm ci --ignore-scripts --no-audit --no-fund
+
+      - name: Syntax validation
+        run: |
+          node -c src/finance/engine.js
+          node -c src/runtime/install.js
+          node -c scripts/build.js
+          node -c scripts/verify-build.js
+          node -c scripts/static-audit.js
+
+      - name: Financial unit, regression, known-answer and integration tests
+        run: npm test
+
+      - name: Production single-file build
+        run: npm run build
+
+      - name: Financial danger-pattern audit
+        run: node scripts/static-audit.js dist/index.html
+
+      - name: Production artifact verification
+        run: node scripts/verify-build.js
+
+      - name: Generate deployable root on certification branch
+        if: github.event_name == 'push' && github.ref_name == 'financial-calculation-certification'
+        run: npm run build:root
+
+      - name: Commit generated single-file artifacts
+        if: github.event_name == 'push' && github.ref_name == 'financial-calculation-certification'
+        shell: bash
+        run: |
+          git add index.html dist/index.html
+          if git diff --cached --quiet; then
+            echo "Generated artifacts already current."
+            exit 0
+          fi
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git commit -m "build: generate certified standalone workstation [cert-build]"
+          git push origin HEAD:${GITHUB_REF_NAME}
