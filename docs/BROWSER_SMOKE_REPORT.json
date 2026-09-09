@@ -1,0 +1,20 @@
+{
+  "target": "index.html",
+  "certificationVersion": "1.1.0",
+  "totalViews": 42,
+  "viewsVisited": 42,
+  "tabsActivated": 59,
+  "pageErrors": [],
+  "consoleErrors": [],
+  "externalNetworkRequests": [],
+  "runtimeChecks": {
+    "median": true,
+    "duration": true,
+    "recovery": true,
+    "macd": true,
+    "rsi": true,
+    "dcf": true
+  },
+  "failures": [],
+  "status": "PASS"
+}
