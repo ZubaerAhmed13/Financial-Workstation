@@ -4,6 +4,7 @@ const path=require('node:path');
 const file=path.resolve(__dirname,'../dist/index.html');
 const html=fs.readFileSync(file,'utf8');
 const safeSvgFactory='const el=(tag,attrs={})=>{ const node=document.createElementNS(NS,tag); for(const [k,v] of Object.entries(attrs)){ if(v!=null) node.setAttribute(k,String(v)); } return node; };';
+const safeMixColor='function mixColor(a,b,t){ const p=hex=>[parseInt(hex.slice(1,3),16),parseInt(hex.slice(3,5),16),parseInt(hex.slice(5,7),16)]; const ca=p(a),cb=p(b); const lerp=(x,y,u)=>x+(y-x)*u; return "rgb("+Math.round(lerp(ca[0],cb[0],t))+","+Math.round(lerp(ca[1],cb[1],t))+","+Math.round(lerp(ca[2],cb[2],t))+")"; }';
 const checks=[
   ['generated HTML exists',fs.existsSync(file)],
   ['single-file artifact remains substantial',Buffer.byteLength(html)>900000],
@@ -16,6 +17,8 @@ const checks=[
   ['recovery UI uses observations',html.includes('rec+" obs"')],
   ['SVG factory uses setAttribute safely',html.includes(safeSvgFactory)],
   ['legacy SVG Object.assign factory absent',!html.includes('const el=(tag,attrs)=>Object.assign(document.createElementNS(NS,tag),attrs);')],
+  ['heatmap mixColor owns interpolation helper',html.includes(safeMixColor)],
+  ['legacy out-of-scope mixColor interpolation absent',!html.includes('const ca=p(a),cb=p(b); return "rgb("+Math.round(lerp(ca[0],cb[0],t))')],
   ['DOMContentLoaded init preserved',html.includes('window.addEventListener("DOMContentLoaded",init);')],
   ['Cloudflare challenge payload removed',!html.includes('/cdn-cgi/challenge-platform/')],
   ['no localhost runtime reference',!/(?:src|href)=["']https?:\/\/(?:localhost|127\.0\.0\.1)/i.test(html)],
