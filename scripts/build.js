@@ -19,6 +19,14 @@ html=html.replace(existing,'');
 // It is unrelated to the workstation and violates the intended offline-only runtime.
 html=html.replace(/\n?<script>\(function\(\)\{function c\(\)\{var b=a\.contentDocument[\s\S]*?<\/script>(?=<\/body>)/g,'');
 
+// SVG DOM properties such as SVGSVGElement.viewBox are getter-only. Object.assign
+// therefore throws in standards-compliant browsers. Use setAttribute for SVG attrs.
+const legacySvgFactory='const el=(tag,attrs)=>Object.assign(document.createElementNS(NS,tag),attrs);';
+const safeSvgFactory='const el=(tag,attrs={})=>{ const node=document.createElementNS(NS,tag); for(const [k,v] of Object.entries(attrs)){ if(v!=null) node.setAttribute(k,String(v)); } return node; };';
+let svgFactoryPatches=0;
+html=html.replace(legacySvgFactory,()=>{svgFactoryPatches++;return safeSvgFactory;});
+if(svgFactoryPatches<1 && !html.includes(safeSvgFactory)) throw new Error('Build refused: ChartManager SVG factory was not found or already hardened in an unexpected form.');
+
 // Frequency is part of the modified-duration denominator. The legacy UI omitted it.
 let durationPatches=0;
 html=html.replace(/BondEngine\.modifiedDuration\(mac,ytm\)/g,()=>{durationPatches++;return 'BondEngine.modifiedDuration(mac,ytm,freq)';});
@@ -33,6 +41,6 @@ if(durationPatches<1 && !html.includes('BondEngine.modifiedDuration(mac,ytm,freq
 fs.mkdirSync(distDir,{recursive:true});
 fs.writeFileSync(distPath,html);
 if(process.argv.includes('--write-root')) fs.writeFileSync(indexPath,html);
-console.log(JSON.stringify({output:path.relative(root,distPath),bytes:Buffer.byteLength(html),durationPatches,rootUpdated:process.argv.includes('--write-root')},null,2));
+console.log(JSON.stringify({output:path.relative(root,distPath),bytes:Buffer.byteLength(html),durationPatches,svgFactoryPatches,rootUpdated:process.argv.includes('--write-root')},null,2));
 
 function escapeRegExp(s){return s.replace(/[.*+?^${}()|[\]\\]/g,'\\$&');}
