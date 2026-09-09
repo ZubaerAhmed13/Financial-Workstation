@@ -33,7 +33,11 @@ jobs:
           node -c scripts/verify-build.js
           node -c scripts/static-audit.js
           node -c scripts/contextual-audit.js
+          node -c scripts/certified-core-audit.js
           node -c tests/browser-smoke.js
+
+      - name: Certified calculation source gate
+        run: node scripts/certified-core-audit.js
 
       - name: Financial unit, regression, known-answer and integration tests
         run: npm test
