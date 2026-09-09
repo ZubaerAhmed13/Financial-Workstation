@@ -6,7 +6,10 @@ const {pathToFileURL}=require('node:url');
 const {chromium}=require('playwright');
 
 (async()=>{
-  const target=path.resolve(process.argv[2]||'dist/index.html');
+  const positional=process.argv.slice(2).filter(a=>!a.startsWith('--'));
+  const target=path.resolve(positional[0]||'dist/index.html');
+  const outArg=process.argv.find(a=>a.startsWith('--write='));
+  const outPath=outArg?path.resolve(outArg.slice('--write='.length)):null;
   if(!fs.existsSync(target)) throw new Error(`Missing browser-smoke target: ${target}`);
 
   const browser=await chromium.launch({headless:true});
@@ -94,6 +97,7 @@ const {chromium}=require('playwright');
   await browser.close();
 
   const report={
+    generatedAt:new Date().toISOString(),
     target:path.basename(target),
     certificationVersion:cert.version,
     totalViews:viewIds.length,
@@ -103,9 +107,12 @@ const {chromium}=require('playwright');
     consoleErrors,
     externalNetworkRequests:[...new Set(networkRequests)],
     runtimeChecks,
-    failures
+    failures,
+    status:(!pageErrors.length&&!consoleErrors.length&&!networkRequests.length&&!failures.length&&viewsVisited===viewIds.length)?'PASS':'FAIL'
   };
-  console.log(JSON.stringify(report,null,2));
+  const json=JSON.stringify(report,null,2)+'\n';
+  console.log(json);
+  if(outPath){fs.mkdirSync(path.dirname(outPath),{recursive:true});fs.writeFileSync(outPath,json);}
 
   if(pageErrors.length) throw new Error(`Browser page errors: ${pageErrors.length}`);
   if(consoleErrors.length) throw new Error(`Browser console errors: ${consoleErrors.length}`);
