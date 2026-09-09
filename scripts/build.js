@@ -27,6 +27,14 @@ let svgFactoryPatches=0;
 html=html.replace(legacySvgFactory,()=>{svgFactoryPatches++;return safeSvgFactory;});
 if(svgFactoryPatches<1 && !html.includes(safeSvgFactory)) throw new Error('Build refused: ChartManager SVG factory was not found or already hardened in an unexpected form.');
 
+// The legacy heatmap declared lerp() inside heatmap() but called it from sibling
+// mixColor(), where the helper is out of scope. Keep interpolation self-contained.
+const legacyMixColor=/function mixColor\(a,b,t\)\{ const p=hex=>\[parseInt\(hex\.slice\(1,3\),16\),parseInt\(hex\.slice\(3,5\),16\),parseInt\(hex\.slice\(5,7\),16\)\]; const ca=p\(a\),cb=p\(b\); return "rgb\("\+Math\.round\(lerp\(ca\[0\],cb\[0\],t\)\)\+","\+Math\.round\(lerp\(ca\[1\],cb\[1\],t\)\)\+","\+Math\.round\(lerp\(ca\[2\],cb\[2\],t\)\)\+"\)"; \}/g;
+const safeMixColor='function mixColor(a,b,t){ const p=hex=>[parseInt(hex.slice(1,3),16),parseInt(hex.slice(3,5),16),parseInt(hex.slice(5,7),16)]; const ca=p(a),cb=p(b); const lerp=(x,y,u)=>x+(y-x)*u; return "rgb("+Math.round(lerp(ca[0],cb[0],t))+","+Math.round(lerp(ca[1],cb[1],t))+","+Math.round(lerp(ca[2],cb[2],t))+")"; }';
+let mixColorPatches=0;
+html=html.replace(legacyMixColor,()=>{mixColorPatches++;return safeMixColor;});
+if(mixColorPatches<1 && !html.includes(safeMixColor)) throw new Error('Build refused: heatmap mixColor scope defect was not found or already hardened in an unexpected form.');
+
 // Frequency is part of the modified-duration denominator. The legacy UI omitted it.
 let durationPatches=0;
 html=html.replace(/BondEngine\.modifiedDuration\(mac,ytm\)/g,()=>{durationPatches++;return 'BondEngine.modifiedDuration(mac,ytm,freq)';});
@@ -41,6 +49,6 @@ if(durationPatches<1 && !html.includes('BondEngine.modifiedDuration(mac,ytm,freq
 fs.mkdirSync(distDir,{recursive:true});
 fs.writeFileSync(distPath,html);
 if(process.argv.includes('--write-root')) fs.writeFileSync(indexPath,html);
-console.log(JSON.stringify({output:path.relative(root,distPath),bytes:Buffer.byteLength(html),durationPatches,svgFactoryPatches,rootUpdated:process.argv.includes('--write-root')},null,2));
+console.log(JSON.stringify({output:path.relative(root,distPath),bytes:Buffer.byteLength(html),durationPatches,svgFactoryPatches,mixColorPatches,rootUpdated:process.argv.includes('--write-root')},null,2));
 
 function escapeRegExp(s){return s.replace(/[.*+?^${}()|[\]\\]/g,'\\$&');}
