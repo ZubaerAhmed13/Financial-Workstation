@@ -9,6 +9,8 @@
   "externalNetworkRequests": [],
   "runtimeChecks": {
     "median": true,
+    "npv": true,
+    "irr": true,
     "duration": true,
     "recovery": true,
     "macd": true,
