@@ -50,6 +50,15 @@
     mark('CsvParser');
   }
 
+  if(typeof LoanEngine!=='undefined' && LoanEngine){
+    // Preserve the legacy call signatures while routing the production methods to
+    // the independently tested core. The optional legacy IRR guess is accepted
+    // for compatibility but intentionally ignored by the deterministic bracketed solver.
+    LoanEngine.npv=(flows,rate)=>Core.npv(flows,rate);
+    LoanEngine.irr=(flows,_guess=.1)=>Core.irr(flows);
+    mark('LoanEngine.npv/irr');
+  }
+
   if(typeof BondEngine!=='undefined' && BondEngine){
     BondEngine.modifiedDuration=(macDur,ytm_,freq=1)=>Core.modifiedDuration(macDur,ytm_,freq);
     BondEngine.priceSensitivity=(face,couponAnnual,freq,nYears,baseYtm,dy)=>{
