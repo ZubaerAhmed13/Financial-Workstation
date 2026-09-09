@@ -13,6 +13,7 @@ function context(){
     fmt:{money:(v)=>'$'+String(v),num:String,pct:String},
     CalcEngine:{},
     CsvParser:{parse:(text)=>text.trim().split(/\r?\n/).map(r=>r.split(','))},
+    LoanEngine:{},
     BondEngine:{},
     CapmWacc:{},
     ValuationEngine:{},
@@ -22,6 +23,8 @@ function context(){
   vm.createContext(c);vm.runInContext(installer,c);return c;
 }
 
+test('runtime NPV routes through certified known-answer implementation',()=>{const c=context();assert.ok(Math.abs(c.LoanEngine.npv([-1000,1100],.1))<1e-9);});
+test('runtime IRR routes through certified bracketed solver',()=>{const c=context();const r=c.LoanEngine.irr([-1000,1100]);assert.ok(r!=null&&Math.abs(r-.1)<1e-8);});
 test('runtime REG-BOND-001 passes coupon frequency into modified-duration math',()=>{const c=context();const mac=7.894997340182341;assert.ok(Math.abs(c.BondEngine.modifiedDuration(mac,.06,2)-7.665045961342078)<1e-10);});
 test('runtime REG-DD-001 does not recover against trough',()=>{const c=context();assert.equal(c.CalcEngine.recoveryPeriod([100,90,70,80,95,100],2),3);});
 test('runtime REG-MACD-001 returns populated histogram',()=>{const c=context();const r=c.CalcEngine.macd(Array.from({length:80},(_,i)=>100+i),12,26,9);assert.ok(r.hist.some(Number.isFinite));});
