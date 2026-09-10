@@ -7,7 +7,7 @@ const text=fs.readFileSync(target,'utf8');
 const lines=text.split(/\r?\n/);
 const groups={
   analytics:[
-    'const SimilarityEngine','const DataQualityEngine','const ScoringEngine','const AssessmentEngine','const PeerSimilarity',
+    'const SimilarityEngine','const ScenarioEngine','const MonteCarlo','const DataQualityEngine','const ScoringEngine','const AssessmentEngine','const PeerSimilarity',
     'function betaAlphaAligned','function rollingSharpe','const BacktestEngine','const PortfolioOptimizers',
     'function factorExposure','function performanceAttribution','const RiskContribution','function segmentForecastRender','function sotpRender','mulberry',
     'const TerminalCrossCheck','const ValuationUncertainty'
@@ -22,7 +22,6 @@ const groups={
     'function minimumVariance','function maximumSharpe','function riskParity','function equalWeight','trackingError','informationRatio','capture'
   ]
 };
-function slug(s){return s.replace(/[^A-Za-z0-9]+/g,'_').replace(/^_|_$/g,'').toLowerCase();}
 function capture(marker){
   const hits=[];
   for(let i=0;i<lines.length;i++)if(lines[i].includes(marker)){hits.push(i);if(hits.length>=4)break;}
