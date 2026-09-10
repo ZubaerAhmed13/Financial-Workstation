@@ -5,6 +5,7 @@
   "certificationVersion": "1.1.0",
   "financialModelVersion": "1.0.0",
   "legacyCalculationVersion": "1.0.0",
+  "riskCreditVersion": "1.0.0",
   "totalViews": 42,
   "viewsVisited": 42,
   "tabsActivated": 59,
@@ -25,7 +26,10 @@
     "ecl": true,
     "stress": true,
     "portfolio": true,
-    "valuationMatrix": true
+    "valuationMatrix": true,
+    "riskMetrics": true,
+    "creditCurve": true,
+    "merton": true
   },
   "layoutChecks": {
     "horizontalOverflow": false,

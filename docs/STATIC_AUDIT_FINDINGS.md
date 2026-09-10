@@ -3,19 +3,19 @@
 This file is generated from the deployable `dist/index.html`. Every regex lead from `scripts/static-audit.js` is enumerated with a source line, owner hint, stable fingerprint and contextual disposition. These are review leads, not automatic defects.
 
 - Target: `index.html`
-- Total pattern hits: **428**
-- Calculation-sensitive / algorithmic-review hits: **221**
+- Total pattern hits: **435**
+- Calculation-sensitive / algorithmic-review hits: **226**
 - Unclassified hits: **0**
 
 ## Counts by pattern
 
 | Pattern | Count |
 |---|---:|
-| truthy-value checks | 138 |
+| truthy-value checks | 142 |
 | Math.round usage | 53 |
 | Infinity literals | 13 |
-| generic OR zero | 172 |
-| toFixed usage | 22 |
+| generic OR zero | 173 |
+| toFixed usage | 24 |
 | parseInt usage | 3 |
 | fallback-to-zero coercions | 24 |
 | NaN literals | 3 |
@@ -26,13 +26,13 @@ This file is generated from the deployable `dist/index.html`. Every regex lead f
 |---|---:|
 | algorithm/parser sentinel | 16 |
 | algorithmic rounding | 2 |
-| calculation-sensitive numeric fallback | 175 |
-| calculation-sensitive presence guard | 44 |
+| calculation-sensitive numeric fallback | 176 |
+| calculation-sensitive presence guard | 48 |
 | DOM/object presence guard | 94 |
 | general numeric/default fallback | 4 |
 | input/parser boundary | 3 |
 | parser/default fallback | 3 |
-| presentation/UI rounding | 73 |
+| presentation/UI rounding | 75 |
 | UI/default-state fallback | 14 |
 
 ## Calculation-sensitive / algorithmic-review leads
@@ -1556,30 +1556,65 @@ This file is generated from the deployable `dist/index.html`. Every regex lead f
 - Match: `if(!base)`
 - Source: `if(!base)return null;`
 
-### 7bda6a74b7ca8f86 — truthy-value checks — line 12522
+### ff998e764566a608 — truthy-value checks — line 12702
 
-- Owner hint: `valuationDrivers`
+- Owner hint: `solveAssetValue`
+- Disposition: **calculation-sensitive presence guard**
+- Match: `if(!eMid)`
+- Source: `const mid=(lo+hi)/2,eMid=mertonEquity(mid,sigmaV,D,r,T);if(!eMid)return null;`
+
+### c5fd04e381eba93b — truthy-value checks — line 12722
+
+- Owner hint: `merton`
+- Disposition: **calculation-sensitive presence guard**
+- Match: `if(!eq)`
+- Source: `if(!eq)return {error:'Merton solver produced a non-finite state.',converged:false,pd:null,E,sigmaE,D,r,T};`
+
+### 6f9527b623ced2cb — truthy-value checks — line 12726
+
+- Owner hint: `merton`
+- Disposition: **calculation-sensitive presence guard**
+- Match: `if(!converged)`
+- Source: `if(!converged)return {error:'Merton solver did not converge to the requested tolerance.',converged:false,pd:null,V,sigmaV,d1:eq.d1,d2:eq.d2,distanceToDefault:eq.d2,E,sigmaE,D,r,T,iterations,residualEquity,residualVol};`
+
+### 75de0cb65365124b — generic OR zero — line 12732
+
+- Owner hint: `mertonTrace`
+- Disposition: **calculation-sensitive numeric fallback**
+- Match: `||0`
+- Source: `return {iterations:x.iterations||0,converged:!!x.converged,residual:finite(x.residualEquity)?Math.abs(x.residualEquity):null,residualVol:finite(x.residualVol)?Math.abs(x.residualVol):null,distanceToDefault:finite(x.distanceToDefault)?x.distanceToDefault:null,pd:finite(x.pd)?x.pd:null,error:x.error||null};`
+
+### 5c0282a9fb526c69 — truthy-value checks — line 12743
+
+- Owner hint: `mertonTrace`
 - Disposition: **calculation-sensitive presence guard**
 - Match: `if(!Core)`
 - Source: `if(!Core){ console.error('Financial certification runtime: FinanceCore missing'); return; }`
 
-### ff1560b2e65c53ed — truthy-value checks — line 12526
+### 313d8ce37164294e — truthy-value checks — line 12747
 
-- Owner hint: `valuationDrivers`
+- Owner hint: `mertonTrace`
 - Disposition: **calculation-sensitive presence guard**
 - Match: `if(!ModelCore)`
 - Source: `if(!ModelCore)installReport.warnings.push('FinancialModelCore missing; three-statement model is outside the expanded certification boundary.');`
 
-### ad847014dfbf5511 — truthy-value checks — line 12527
+### 088c1f9309fc6ca2 — truthy-value checks — line 12748
 
-- Owner hint: `valuationDrivers`
+- Owner hint: `mertonTrace`
 - Disposition: **calculation-sensitive presence guard**
 - Match: `if(!LegacyCore)`
 - Source: `if(!LegacyCore)installReport.warnings.push('LegacyCalculationCore missing; stress, portfolio and multi-method valuation remain outside the expanded certification boundary.');`
 
-### c6247588dc5a370e — truthy-value checks — line 12531
+### 88517af14022c940 — truthy-value checks — line 12749
 
-- Owner hint: `valuationDrivers`
+- Owner hint: `mertonTrace`
+- Disposition: **calculation-sensitive presence guard**
+- Match: `if(!RiskCore)`
+- Source: `if(!RiskCore)installReport.warnings.push('RiskCreditCore missing; VaR/ES, credit curves, Altman and Merton remain outside the expanded certification boundary.');`
+
+### 67fa0ca520fef201 — truthy-value checks — line 12753
+
+- Owner hint: `mertonTrace`
 - Disposition: **calculation-sensitive presence guard**
 - Match: `if(!a)`
 - Source: `const a=Core.abbreviate(v); if(!a) return '—';`
@@ -2011,8 +2046,15 @@ This file is generated from the deployable `dist/index.html`. Every regex lead f
 | `6708eebe7019f627` | generic OR zero | 12412 | `portfolioBuild` | calculation-sensitive numeric fallback | `const add=(obj,key,w)=>obj[key]=(obj[key]\|\|0)+w;` |
 | `b8b57f05a3a70d60` | NaN literals | 12425 | `portfolioStress` | algorithm/parser sentinel | `const totalWeight=port.items.reduce((s,x)=>s+(finite(x.weight)?x.weight:NaN),0);` |
 | `c36b68003c41e63d` | truthy-value checks | 12494 | `valuationDrivers` | calculation-sensitive presence guard | `if(!base)return null;` |
-| `7bda6a74b7ca8f86` | truthy-value checks | 12522 | `valuationDrivers` | calculation-sensitive presence guard | `if(!Core){ console.error('Financial certification runtime: FinanceCore missing'); return; }` |
-| `ff1560b2e65c53ed` | truthy-value checks | 12526 | `valuationDrivers` | calculation-sensitive presence guard | `if(!ModelCore)installReport.warnings.push('FinancialModelCore missing; three-statement model is outside the expanded certification boundary.');` |
-| `ad847014dfbf5511` | truthy-value checks | 12527 | `valuationDrivers` | calculation-sensitive presence guard | `if(!LegacyCore)installReport.warnings.push('LegacyCalculationCore missing; stress, portfolio and multi-method valuation remain outside the expanded certification boundary.');` |
-| `c6247588dc5a370e` | truthy-value checks | 12531 | `valuationDrivers` | calculation-sensitive presence guard | `const a=Core.abbreviate(v); if(!a) return '—';` |
-| `653edf9ba4ee51b8` | Math.round usage | 12645 | `top-level/unknown` | presentation/UI rounding | `const lgd=1-recovery;return {pd,recovery,ead,lgd,el:Math.round(pd*lgd*ead*100)/100};` |
+| `b038369b332d24d5` | toFixed usage | 12641 | `altmanZ` | presentation/UI rounding | `return {z,X1,X2,X3,X4,X5,terms:{X1,X2,X3,X4,X5},zone,msg:\`Z = ${z.toFixed(2)} (${zone}). The Z-Score is a heuristic, not a guarantee of bankruptcy.\`};` |
+| `367145facb0f4fed` | toFixed usage | 12649 | `altmanZPrime` | presentation/UI rounding | `return {z,X1,X2,X3,X4,X5,terms:{X1,X2,X3,X4,X5},zone,msg:\`Z'-score = ${z.toFixed(2)} (${zone}). Private/emerging-market variant.\`};` |
+| `ff998e764566a608` | truthy-value checks | 12702 | `solveAssetValue` | calculation-sensitive presence guard | `const mid=(lo+hi)/2,eMid=mertonEquity(mid,sigmaV,D,r,T);if(!eMid)return null;` |
+| `c5fd04e381eba93b` | truthy-value checks | 12722 | `merton` | calculation-sensitive presence guard | `if(!eq)return {error:'Merton solver produced a non-finite state.',converged:false,pd:null,E,sigmaE,D,r,T};` |
+| `6f9527b623ced2cb` | truthy-value checks | 12726 | `merton` | calculation-sensitive presence guard | `if(!converged)return {error:'Merton solver did not converge to the requested tolerance.',converged:false,pd:null,V,sigmaV,d1:eq.d1,d2:eq.d2,distanceToDefault:eq.d2,E,sigmaE,D,r,T,iterations,residualEquity,residualVol};` |
+| `75de0cb65365124b` | generic OR zero | 12732 | `mertonTrace` | calculation-sensitive numeric fallback | `return {iterations:x.iterations\|\|0,converged:!!x.converged,residual:finite(x.residualEquity)?Math.abs(x.residualEquity):null,residualVol:finite(x.residualVol)?Math.abs(x.residualVol):null,distanceToDefault:finite(x.distanceToDefault)?x.distanceToDefault:null,pd:finite(x.pd)?x.pd:null,error:x.error\|\|null};` |
+| `5c0282a9fb526c69` | truthy-value checks | 12743 | `mertonTrace` | calculation-sensitive presence guard | `if(!Core){ console.error('Financial certification runtime: FinanceCore missing'); return; }` |
+| `313d8ce37164294e` | truthy-value checks | 12747 | `mertonTrace` | calculation-sensitive presence guard | `if(!ModelCore)installReport.warnings.push('FinancialModelCore missing; three-statement model is outside the expanded certification boundary.');` |
+| `088c1f9309fc6ca2` | truthy-value checks | 12748 | `mertonTrace` | calculation-sensitive presence guard | `if(!LegacyCore)installReport.warnings.push('LegacyCalculationCore missing; stress, portfolio and multi-method valuation remain outside the expanded certification boundary.');` |
+| `88517af14022c940` | truthy-value checks | 12749 | `mertonTrace` | calculation-sensitive presence guard | `if(!RiskCore)installReport.warnings.push('RiskCreditCore missing; VaR/ES, credit curves, Altman and Merton remain outside the expanded certification boundary.');` |
+| `67fa0ca520fef201` | truthy-value checks | 12753 | `mertonTrace` | calculation-sensitive presence guard | `const a=Core.abbreviate(v); if(!a) return '—';` |
+| `6782ec725bf36368` | Math.round usage | 12920 | `top-level/unknown` | presentation/UI rounding | `const lgd=1-recovery;return {pd,recovery,ead,lgd,el:Math.round(amount*100)/100};` |
