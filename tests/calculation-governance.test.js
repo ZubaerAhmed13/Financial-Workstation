@@ -1,0 +1,13 @@
+'use strict';
+const test=require('node:test');const assert=require('node:assert/strict');
+const R=require('../src/finance/calculation-registry.js'),M=require('../src/runtime/production-routing-manifest.js');
+test('CG-REG-001 routing surfaces are unique',()=>assert.equal(new Set(M.routes.map(x=>x.surface)).size,M.routes.length));
+test('CG-REG-002 every production route has a registered certified core',()=>{const cores=new Set(R.cores.map(x=>x.name));assert.deepEqual(M.routes.filter(x=>!cores.has(x.core)),[]);});
+test('CG-REG-003 every route has implementation installer and mode',()=>assert.ok(M.routes.every(x=>x.surface&&x.implementation&&x.installer&&x.mode&&x.status==='CERTIFIED_ROUTE')));
+test('CG-REG-004 registry contains all eight certified cores',()=>assert.equal(R.cores.length,8));
+test('CG-REG-005 unknown calculations fail closed to REQUIRES_MIGRATION',()=>assert.equal(R.classify('UnknownEngine.calculateMystery','calculateMystery').status,'REQUIRES_MIGRATION'));
+test('CG-REG-006 presentation names cannot claim a certified financial owner',()=>{const x=R.classify('Unknown.renderSomething','renderSomething');assert.equal(x.status,'PRESENTATION_ONLY');assert.equal(x.owner,null);});
+test('CG-REG-007 routed legacy definition is explicitly retired/shadowed',()=>{const x=R.classify('ScenarioEngine.run','run');assert.equal(x.status,'RETIRED_SHADOWED');assert.equal(x.owner,'SurfaceRetirementCore');});
+test('CG-REG-008 direct UI delegation is separately classified',()=>{const x=R.classify('periodReturnsArray','periodReturnsArray');assert.equal(x.status,'CERTIFIED_CORE_DELEGATION');assert.equal(x.owner,'WorkstationCalculationCore');});
+test('CG-REG-009 narrow nested moat preview has explicit composition proof',()=>{const x=R.classify('computeMoatScore','computeMoatScore');assert.equal(x.status,'CERTIFIED_COMPOSITION');assert.equal(x.owner,'WorkstationCalculationCore');});
+test('CG-REG-010 no registry status silently aliases migration to certified',()=>assert.ok(R.STATUSES.includes('REQUIRES_MIGRATION')&&R.STATUSES.includes('RETIRED_SHADOWED')&&R.STATUSES.includes('CERTIFIED_COMPOSITION')));
