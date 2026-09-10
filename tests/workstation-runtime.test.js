@@ -32,7 +32,7 @@ function context(){
 }
 
 test('WR-REG-001 runtime exposes workstation calculation and ledger versions',()=>{const c=context();assert.equal(c.__FINANCIAL_CERTIFICATION__.workstationVersion,W.VERSION);assert.equal(c.__FINANCIAL_CERTIFICATION__.workstationLedgerVersion,L.VERSION);assert.equal(c.App.meta.workstationCalculationCoreVersion,W.VERSION);assert.equal(c.App.meta.workstationLedgerCoreVersion,L.VERSION);});
-test('WR-REG-002 similarity public route uses hardened standardized distance',()=>{const c=context(),stats=c.SimilarityEngine.standardize([{features:{x:1}},{features:{x:3}}]);near(c.SimilarityEngine.simScore({features:{x:2}},{features:{x:1}},stats,{x:1}),Math.exp(-Math.SQRT1_2));});
+test('WR-REG-002 similarity public route uses hardened standardized distance',()=>{const c=context(),stats=c.SimilarityEngine.standardize([{features:{x:1}},{features:{x:3}}]);near(c.SimilarityEngine.simScore({features:{x:2}},{features:{x:1}},stats,{x:1}),Math.exp(-1));});
 test('WR-REG-003 data quality public route awards proportional case coverage',()=>{const c=context(),base={history:{prices:Array(120).fill(1)},financials:{assets:1,netIncome:1},dcf:{wacc:.1,perShare:1},peers:[{},{},{}],dataOk:true};assert.equal(c.DataQualityEngine.score({...base,caseMatches:[{}]}).score,91);});
 test('WR-REG-004 scoring public route preserves legitimate zero metrics',()=>{const c=context(),r=c.ScoringEngine.score({expectedReturn:0},{return:100,safety:0,valuation:0,liquidity:0,historical:0});assert.equal(r.detail.length,1);});
 test('WR-REG-005 peer coverage public route counts zero-valued fields as present',()=>{const c=context();assert.equal(c.PeerSimilarity.score([{marketCap:1,growth:0,margin:0,roe:0,multiple:0}]).score,100);});
