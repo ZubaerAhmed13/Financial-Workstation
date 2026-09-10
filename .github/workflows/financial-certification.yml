@@ -2,7 +2,7 @@ name: Financial Calculation Certification
 
 on:
   push:
-    branches: [main, financial-calculation-certification, full-monolith-hardening, legacy-calculation-hardening, risk-credit-certification, complete-calculation-modularization]
+    branches: [main, full-calculation-surface-retirement]
   pull_request:
     branches: [main]
 
@@ -25,6 +25,9 @@ jobs:
       - name: Fresh dependency install
         run: npm ci --ignore-scripts --no-audit --no-fund
 
+      - name: Normalize separate canonical UI source
+        run: node scripts/strip-generated-runtime.js src/ui/workstation.html
+
       - name: Syntax validation
         run: |
           node -c src/finance/engine.js
@@ -34,9 +37,17 @@ jobs:
           node -c src/finance/workstation-core.js
           node -c src/finance/workstation-ledger-core.js
           node -c src/finance/simulation-backtest-core.js
+          node -c src/finance/surface-retirement-core.js
+          node -c src/finance/calculation-registry.js
+          node -c src/runtime/production-routing-manifest.js
           node -c src/runtime/install.js
           node -c src/runtime/install-workstation.js
+          node -c src/runtime/install-surface-retirement.js
           node -c scripts/build.js
+          node -c scripts/strip-generated-runtime.js
+          node -c scripts/build-purity-audit.js
+          node -c scripts/calculation-surface-audit.js
+          node -c scripts/generate-calculation-governance.js
           node -c scripts/verify-build.js
           node -c scripts/verify-workstation-build.js
           node -c scripts/static-audit.js
@@ -47,22 +58,22 @@ jobs:
           node -c scripts/focused-math-inventory.js
           node -c tests/browser-smoke.js
           node -c tests/workstation-browser-smoke.js
-          node -c tests/model-engine.test.js
-          node -c tests/legacy-hardening.test.js
-          node -c tests/risk-credit-core.test.js
-          node -c tests/workstation-core.test.js
-          node -c tests/workstation-ledger-core.test.js
-          node -c tests/simulation-backtest-core.test.js
-          node -c tests/workstation-runtime.test.js
-          node -c tests/runtime-integration.test.js
+          node -c tests/surface-retirement-core.test.js
+          node -c tests/calculation-governance.test.js
 
       - name: Certified calculation source gate
         run: node scripts/certified-core-audit.js
 
-      - name: Final workstation calculation source gate
+      - name: Workstation ownership source gate
         run: node scripts/workstation-core-audit.js
 
-      - name: Financial unit, regression, known-answer and integration tests
+      - name: Zero financial build patch gate
+        run: node scripts/build-purity-audit.js
+
+      - name: Full calculation surface classification
+        run: node scripts/calculation-surface-audit.js src/ui/workstation.html --write=docs/CALCULATION_SURFACE_CLASSIFICATION.md
+
+      - name: Financial unit regression known-answer and integration tests
         run: npm test
 
       - name: Production single-file build
@@ -74,17 +85,20 @@ jobs:
       - name: Contextual disposition of all static-audit leads
         run: node scripts/contextual-audit.js dist/index.html --write=docs/STATIC_AUDIT_FINDINGS.md
 
-      - name: Generate legacy calculation inventory
-        run: node scripts/legacy-calculation-inventory.js index.html --write=docs/LEGACY_CALCULATION_INVENTORY.md
+      - name: Generate canonical legacy calculation inventory
+        run: node scripts/legacy-calculation-inventory.js src/ui/workstation.html --write=docs/LEGACY_CALCULATION_INVENTORY.md
 
-      - name: Generate focused math inventories
-        run: node scripts/focused-math-inventory.js index.html
+      - name: Generate focused canonical math inventories
+        run: node scripts/focused-math-inventory.js src/ui/workstation.html
 
       - name: Production artifact verification
         run: node scripts/verify-build.js
 
       - name: Final workstation production artifact verification
         run: node scripts/verify-workstation-build.js
+
+      - name: Generate registry routing and legacy retirement reports
+        run: node scripts/generate-calculation-governance.js
 
       - name: Install pinned cross-browser smoke-test runtime
         run: |
@@ -115,20 +129,24 @@ jobs:
       - name: Chromium mobile final calculation routes
         run: node tests/workstation-browser-smoke.js dist/index.html --browser=chromium --viewport=mobile --write=docs/WORKSTATION_BROWSER_MOBILE.json
 
-      - name: Generate deployable root on certification branch
-        if: github.event_name == 'push' && (github.ref_name == 'financial-calculation-certification' || github.ref_name == 'full-monolith-hardening' || github.ref_name == 'legacy-calculation-hardening' || github.ref_name == 'risk-credit-certification' || github.ref_name == 'complete-calculation-modularization')
+      - name: Generate deployable root on retirement branch
+        if: github.event_name == 'push' && github.ref_name == 'full-calculation-surface-retirement'
         run: npm run build:root
 
-      - name: Commit generated certification evidence and single-file artifacts
-        if: github.event_name == 'push' && (github.ref_name == 'financial-calculation-certification' || github.ref_name == 'full-monolith-hardening' || github.ref_name == 'legacy-calculation-hardening' || github.ref_name == 'risk-credit-certification' || github.ref_name == 'complete-calculation-modularization')
+      - name: Commit canonical source certification evidence and single-file artifacts
+        if: github.event_name == 'push' && github.ref_name == 'full-calculation-surface-retirement'
         shell: bash
         run: |
-          git add index.html dist/index.html docs/STATIC_AUDIT_FINDINGS.md docs/LEGACY_CALCULATION_INVENTORY.md docs/FOCUSED_MATH_ANALYTICS.md docs/FOCUSED_MATH_WORKSPACE.md docs/FOCUSED_MATH_PORTFOLIO.md docs/BROWSER_SMOKE_REPORT.json docs/BROWSER_SMOKE_FIREFOX.json docs/BROWSER_SMOKE_WEBKIT.json docs/BROWSER_SMOKE_MOBILE.json docs/WORKSTATION_BROWSER_CHROMIUM.json docs/WORKSTATION_BROWSER_FIREFOX.json docs/WORKSTATION_BROWSER_WEBKIT.json docs/WORKSTATION_BROWSER_MOBILE.json
+          git add src/ui/workstation.html index.html dist/index.html \
+            docs/CALCULATION_SURFACE_CLASSIFICATION.md docs/CALCULATION_REGISTRY.md docs/PRODUCTION_ROUTING_MANIFEST.md docs/LEGACY_RETIREMENT_REPORT.md \
+            docs/STATIC_AUDIT_FINDINGS.md docs/LEGACY_CALCULATION_INVENTORY.md docs/FOCUSED_MATH_ANALYTICS.md docs/FOCUSED_MATH_WORKSPACE.md docs/FOCUSED_MATH_PORTFOLIO.md \
+            docs/BROWSER_SMOKE_REPORT.json docs/BROWSER_SMOKE_FIREFOX.json docs/BROWSER_SMOKE_WEBKIT.json docs/BROWSER_SMOKE_MOBILE.json \
+            docs/WORKSTATION_BROWSER_CHROMIUM.json docs/WORKSTATION_BROWSER_FIREFOX.json docs/WORKSTATION_BROWSER_WEBKIT.json docs/WORKSTATION_BROWSER_MOBILE.json
           if git diff --cached --quiet; then
-            echo "Generated artifacts and evidence already current."
+            echo "Generated artifacts and governance evidence already current."
             exit 0
           fi
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git commit -m "build: refresh expanded certification evidence [cert-build]"
+          git commit -m "build: refresh full calculation retirement evidence [cert-build]"
           git push origin HEAD:${GITHUB_REF_NAME}
