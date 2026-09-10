@@ -6,6 +6,7 @@ const root=path.resolve(__dirname,'..');
 const engine=fs.readFileSync(path.join(root,'src/finance/engine.js'),'utf8');
 const model=fs.readFileSync(path.join(root,'src/finance/model-engine.js'),'utf8');
 const legacy=fs.readFileSync(path.join(root,'src/finance/legacy-hardening.js'),'utf8');
+const risk=fs.readFileSync(path.join(root,'src/finance/risk-credit-core.js'),'utf8');
 const runtime=fs.readFileSync(path.join(root,'src/runtime/install.js'),'utf8');
 
 const checks=[
@@ -37,7 +38,7 @@ const checks=[
   ['runtime routes model defaults and default-filling to certified model core',runtime.includes('FinancialModelEngine.fillDefaults=(m,sd)=>ModelCore.fillDefaults(m,sd||{})')&&runtime.includes('return ModelCore.defaults(currency)')],
   ['runtime routes XIRR/XNPV to irregular-date certified functions',runtime.includes('XIRR.xnpv=(rate,cashflows,dates)=>Core.xnpv(rate,cashflows,dates)')&&runtime.includes('XIRR.xirr=(cashflows,dates,_guess=.1)=>Core.xirr(cashflows,dates)')],
   ['runtime ECL validates missing/out-of-range values instead of multiplying nulls',runtime.includes("return {pd,recovery,ead,lgd:null,el:null,error:'ECL requires finite PD/recovery in [0,1] and non-negative EAD.'}")],
-  ['runtime ECL preserves explicit zero exposure',runtime.includes("Core.isFiniteNumber(face)?face:1000000")],
+  ['runtime ECL preserves explicit zero exposure',runtime.includes("Core.isFiniteNumber(face)&&face>=0?face:null")],
   ['runtime exposes certified model version',runtime.includes('App.meta.financialModelEngineVersion=ModelCore.VERSION')],
 
   ['stress normalization accepts revenue when revenue0 is absent',legacy.includes("const revenue0=has(sd,'revenue0')?sd.revenue0:sd.revenue;")],
@@ -51,7 +52,27 @@ const checks=[
   ['comparable valuation converts the relative multiple to fair price',legacy.includes('const value=finite(implied)&&implied>EPS?price/implied:null;')],
   ['residual-income valuation converts total equity value to per-share value',legacy.includes('const value=ri.value/shares;')],
   ['value-driver sensitivity uses explicit base values and a real base-value denominator',legacy.includes('[key]:base[key]-delta')&&legacy.includes('Math.abs(high.perShare-low.perShare)/Math.abs(baseDCF.perShare)')],
-  ['runtime routes stress portfolio and valuation matrix to legacy hardening core and exposes its version',runtime.includes('LegacyCore.stressRun')&&runtime.includes('LegacyCore.portfolioBuild')&&runtime.includes('LegacyCore.portfolioStress')&&runtime.includes('LegacyCore.valuationMatrix')&&runtime.includes('App.meta.legacyCalculationCoreVersion=LegacyCore.VERSION')]
+  ['runtime routes stress portfolio and valuation matrix to legacy hardening core and exposes its version',runtime.includes('LegacyCore.stressRun')&&runtime.includes('LegacyCore.portfolioBuild')&&runtime.includes('LegacyCore.portfolioStress')&&runtime.includes('LegacyCore.valuationMatrix')&&runtime.includes('App.meta.legacyCalculationCoreVersion=LegacyCore.VERSION')],
+
+  ['risk core supports arbitrary confidence through inverse-normal quantile',risk.includes('function normalInvCDF(p)')&&risk.includes('const z=normalInvCDF(1-confidence);')],
+  ['historical VaR uses interpolated empirical quantiles',risk.includes('const h=(a.length-1)*p')&&risk.includes('return quantile(returns,1-confidence);')],
+  ['expected shortfall handles fractional tail mass',risk.includes('const mass=(1-confidence)*a.length;')&&risk.includes('if(frac>EPS)sum+=a[Math.min(whole,a.length-1)]*frac;')],
+  ['Monte Carlo risk validates a positive current-value denominator',risk.includes('!finite(currentValue)||currentValue<=0')],
+  ['risk cadence is inferred from timestamp spacing',risk.includes("periodsPerYear=252;label='daily';")&&risk.includes("periodsPerYear=52;label='weekly';")&&risk.includes("periodsPerYear=12;label='monthly';")],
+  ['risk summary annualizes Sharpe by square-root frequency',risk.includes('(mu-rfPerPeriod)/sd*Math.sqrt(periodsPerYear)')],
+  ['risk summary preserves zero-volatility Sharpe as missing',risk.includes('sd!=null&&sd>EPS?')],
+  ['Altman ratios use finite zero-preserving division',risk.includes('function ratio(n,d){return finite(n)&&finite(d)&&Math.abs(d)>EPS?n/d:null;}')],
+  ['credit PD interpolation uses actual horizon weight',risk.includes('const w=(horizon-h0)/(h1-h0);return p0+w*(p1-p0);')],
+  ['credit PD does not extrapolate outside configured horizons',risk.includes('horizon<pts[0][0]||horizon>pts[pts.length-1][0]')],
+  ['Merton validates finite positive horizon and core inputs',risk.includes('![E,sigmaE,D,r,T].every(finite)||E<=0||D<=0||sigmaE<=0||T<=0')],
+  ['Merton solves asset value with bounded bisection',risk.includes('function solveAssetValue(E,sigmaV,D,r,T)')&&risk.includes('for(let i=0;i<160;i++){')],
+  ['Merton requires residual convergence before returning PD',risk.includes("if(!converged)return {error:'Merton solver did not converge to the requested tolerance.'")&&risk.includes('Math.abs(residualEquity)<1e-7&&Math.abs(residualVol)<1e-7')],
+  ['Merton diagnostics carry real distance-to-default and PD',risk.includes('distanceToDefault:finite(x.distanceToDefault)?x.distanceToDefault:null')&&risk.includes('pd:finite(x.pd)?x.pd:null')],
+  ['runtime routes VaR and Expected Shortfall to RiskCreditCore',runtime.includes('RiskMetricsV2.historicalVaR=(returns,conf)=>RiskCore.historicalVaR(returns,conf)')&&runtime.includes('RiskMetricsV2.expectedShortfall=(returns,conf)=>RiskCore.expectedShortfall(returns,conf)')],
+  ['runtime routes Altman Merton and rating PD to RiskCreditCore',runtime.includes('CreditModels.altmanZ=(f)=>RiskCore.altmanZ(f||{})')&&runtime.includes('CreditModels.merton=(E,sigmaE,D,r,T)=>RiskCore.merton(E,sigmaE,D,r,T)')&&runtime.includes('CreditModels.ratingPD=(rating,horizon,table)=>RiskCore.ratingPD')],
+  ['runtime routes credit curve and Merton diagnostics to RiskCreditCore',runtime.includes('CreditCurveV2.curve=(rating)=>RiskCore.creditCurve')&&runtime.includes('MertonDiag.trace=(E,sigmaE,D,r,T)=>RiskCore.mertonTrace(E,sigmaE,D,r,T)')],
+  ['runtime ECL no longer invents missing exposure',runtime.includes("ECLV2.eadDefault=(face,_exposureType)=>Core.isFiniteNumber(face)&&face>=0?face:null")],
+  ['runtime exposes risk-credit core version',runtime.includes('riskCreditVersion:RiskCore?RiskCore.VERSION:null')&&runtime.includes('App.meta.riskCreditCoreVersion=RiskCore.VERSION')]
 ];
 
 const banned=[
@@ -73,7 +94,12 @@ const banned=[
   ['legacy portfolio synthetic five-percent volatility fallback',/volatility\s*\|\|\s*0\.05/,legacy],
   ['legacy comparable valuation current-price collapse',/impliedMean>0\?\s*sd\.price/,legacy],
   ['legacy residual-income total-value versus per-share comparison',/ri\.value\s*\/\s*sd\.price/,legacy],
-  ['legacy value-driver unit denominator fallback',/baseVal\s*\|\|\s*1/,legacy]
+  ['legacy value-driver unit denominator fallback',/baseVal\s*\|\|\s*1/,legacy],
+  ['risk core hard-coded 95/99 normal quantile branch',/conf===0\.99\?2\.326/,risk],
+  ['risk core unguarded Monte Carlo current-value division',/return \(val\/currentValue\)-1/,risk],
+  ['risk core midpoint-only 7-year PD interpolation',/\(p5\+p10\)\/2/,risk],
+  ['risk core Merton truthiness-only input guard',/!E\|\|!D\|\|!sigmaE/,risk],
+  ['runtime synthetic one-million EAD fallback',/:1000000/,runtime]
 ];
 
 let failed=0;
