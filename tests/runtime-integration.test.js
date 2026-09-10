@@ -6,6 +6,7 @@ const fs=require('node:fs');
 const Core=require('../src/finance/engine.js');
 const ModelCore=require('../src/finance/model-engine.js');
 const LegacyCore=require('../src/finance/legacy-hardening.js');
+const RiskCore=require('../src/finance/risk-credit-core.js');
 const installer=fs.readFileSync(require.resolve('../src/runtime/install.js'),'utf8');
 
 function context(){
@@ -13,10 +14,11 @@ function context(){
     FinanceCore:Core,
     FinancialModelCore:ModelCore,
     LegacyCalculationCore:LegacyCore,
+    RiskCreditCore:RiskCore,
     console,
     fmt:{money:(v)=>'$'+String(v),num:String,pct:String,x:String},
     kpi:(a,b,c)=>`${a}:${b}:${c||''}`,
-    CalcEngine:{},
+    CalcEngine:{mean:(a)=>a.length?a.reduce((s,v)=>s+v,0)/a.length:null,stdev:(a)=>{if(a.length<2)return null;const m=a.reduce((s,v)=>s+v,0)/a.length;return Math.sqrt(a.reduce((s,v)=>s+(v-m)**2,0)/(a.length-1));}},
     CsvParser:{parse:(text)=>text.trim().split(/\r?\n/).map(r=>r.split(','))},
     LoanEngine:{},
     BondEngine:{},
@@ -26,10 +28,14 @@ function context(){
     FinancialModelEngine:{legacyTableHelper:true},
     XIRR:{},
     ECLV2:{},
+    RiskMetricsV2:{varHTML:true},
+    CreditModels:{defaultPDTable:RiskCore.DEFAULT_PD_TABLE},
+    CreditCurveV2:{curveHTML:true},
+    MertonDiag:{diagHTML:true},
     StressTestEngine:{PREDEFINED:[{name:'Control',rev:0,margin:0,wacc:0,pdMult:1,desc:'control'}],stressHTML:true},
     PortfolioEngine:{legacyPresentation:true},
     ValuationMatrixV2:{matrixHTML:true,driversHTML:true},
-    App:{meta:{},state:{settings:{currency:'EUR'},stockData:{rf:.03},results:{stock:{}}}},
+    App:{meta:{},state:{settings:{currency:'EUR'},stockData:{rf:.03},history:{prices:[]},results:{stock:{}}}},
   };
   vm.createContext(c);vm.runInContext(installer,c);return c;
 }
@@ -63,3 +69,15 @@ test('runtime portfolio stress preserves zero bond volatility',()=>{const c=cont
 test('runtime comparable valuation no longer collapses to current price',()=>{const c=context();c.App.state.results.stock={comps:{impliedMean:2,peers:[10,11,12,13]}};const mx=c.ValuationMatrixV2.build({price:100});const comp=mx.methods.find(m=>m.method==='Comparable');assert.equal(comp.value,50);assert.equal(comp.upside,-.5);});
 test('runtime valuation matrix preserves legacy presentation helper',()=>{const c=context();assert.equal(c.ValuationMatrixV2.matrixHTML,true);assert.equal(typeof c.ValuationMatrixV2.driversHTML,'function');});
 test('runtime portfolio engine preserves non-calculation presentation fields',()=>{const c=context();assert.equal(c.PortfolioEngine.legacyPresentation,true);assert.equal(typeof c.PortfolioEngine.build,'function');assert.equal(typeof c.PortfolioEngine.stress,'function');});
+
+test('runtime exposes risk-credit certification version',()=>{const c=context();assert.equal(c.__FINANCIAL_CERTIFICATION__.riskCreditVersion,RiskCore.VERSION);assert.equal(c.App.meta.riskCreditCoreVersion,RiskCore.VERSION);assert.equal(c.App.meta.riskEngineVersion,RiskCore.VERSION);});
+test('runtime RC-REG-004 parametric VaR supports confidence levels beyond 95 and 99 percent',()=>{const c=context();const a=c.RiskMetricsV2.parametricVaR(.02,0,.975),b=c.RiskMetricsV2.parametricVaR(.02,0,.95);assert.notEqual(a,b);assert.ok(Math.abs(a+0.03919927969080108)<3e-7);});
+test('runtime RC-REG-005 Monte Carlo VaR rejects zero current-value denominator',()=>{const c=context();assert.equal(c.RiskMetricsV2.mcVaR([90,100,110],0,.95),null);assert.equal(c.RiskMetricsV2.mcES([90,100,110],0,.95),null);});
+test('runtime RC-REG-008 infers weekly cadence rather than hard-coding 252',()=>{const c=context();const d=[Date.UTC(2026,0,5),Date.UTC(2026,0,12),Date.UTC(2026,0,19)];const x=c.CalcEngine.inferPeriodsPerYear(d);assert.equal(x.periodsPerYear,52);assert.equal(x.label,'weekly');});
+test('runtime RC-REG-010 risk summary annualizes Sharpe',()=>{const c=context();const x=c.CalcEngine.riskSummary([.01,-.005,.015,0,.007,-.003],12,0);assert.ok(Number.isFinite(x.sharpe));assert.equal(x.periodsPerYear,12);});
+test('runtime RC-REG-012 Altman preserves zero numerators',()=>{const c=context();const z=c.CreditModels.altmanZ({workingCapital:0,retained:0,ebit:0,mve:0,revenue:0,assets:100,liabilities:50});assert.equal(z.z,0);});
+test('runtime RC-REG-014 credit curve uses correctly weighted 7-year interpolation',()=>{const c=context();const curve=c.CreditCurveV2.curve('BBB');assert.ok(curve);assert.ok(Math.abs(curve.pd[3]-.064)<1e-12);});
+test('runtime RC-REG-019 Merton solver converges and returns bounded PD',()=>{const c=context();const m=c.CreditModels.merton(100,.30,80,.03,1);assert.equal(m.converged,true);assert.ok(m.pd>=0&&m.pd<=1);assert.ok(Math.abs(m.residualEquity)<1e-7);assert.ok(Math.abs(m.residualVol)<1e-7);});
+test('runtime RC-REG-022 Merton diagnostics retain actual distance-to-default',()=>{const c=context();const m=c.CreditModels.merton(100,.30,80,.03,1),d=c.MertonDiag.trace(100,.30,80,.03,1);assert.equal(d.converged,true);assert.ok(Math.abs(d.distanceToDefault-m.distanceToDefault)<1e-12);assert.notEqual(d.distanceToDefault,0);});
+test('runtime ECL no longer manufactures one-million exposure when EAD is missing',()=>{const c=context();assert.equal(c.ECLV2.eadDefault(null,'loan'),null);assert.equal(c.ECLV2.compute(.08,.35,null).el,null);});
+test('runtime risk/credit presentation helpers remain available',()=>{const c=context();assert.equal(c.RiskMetricsV2.varHTML,true);assert.equal(c.CreditCurveV2.curveHTML,true);assert.equal(c.MertonDiag.diagHTML,true);});
