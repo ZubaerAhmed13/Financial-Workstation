@@ -47,7 +47,7 @@
       mark('wsCalculateFromLedger');
     }
     if(typeof wsFxConvert==='function'){
-      wsFxConvert=(amount,currency)=>{const meta=typeof wsFxRateMeta==='function'?wsFxRateMeta(currency):null;return meta?L.positionBaseValue({quantity:amount},1,meta.rate):null;};
+      wsFxConvert=(amount,currency)=>{const meta=typeof wsFxRateMeta==='function'?wsFxRateMeta(currency):null;return meta?W.fxConvert(amount,meta.rate):null;};
       mark('wsFxConvert');
     }
     if(typeof wsPositionBaseValue==='function'){
