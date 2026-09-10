@@ -4,7 +4,7 @@ Generated mechanically from the production source to support the final modulariz
 
 - Source: `index.html`
 - Target names: **36**
-- Located occurrences: **73**
+- Located occurrences: **85**
 
 ## simScore — line 1556 — owner `stats`
 
@@ -45,6 +45,47 @@ Generated mechanically from the production source to support the final modulariz
  1581 |   return {match,simScore,standardize,FEATURES,defaultWeights,normalizeWeights,matchReference};
  1582 | })();
  1583 | 
+```
+
+## simScore — line 13488 — owner `out`
+
+```js
+13480 |   const W=typeof WorkstationCalculationCore!=='undefined'?WorkstationCalculationCore:null;
+13481 |   const L=typeof WorkstationLedgerCore!=='undefined'?WorkstationLedgerCore:null;
+13482 |   if(!W){console.error('Financial certification runtime: WorkstationCalculationCore missing');return;}
+13483 |   const installed=[];
+13484 |   const mark=name=>installed.push(name);
+13485 | 
+13486 |   if(typeof SimilarityEngine!=='undefined'&&SimilarityEngine){
+13487 |     SimilarityEngine.standardize=cases=>W.standardizeCases(cases,SimilarityEngine.FEATURES);
+13488 |     SimilarityEngine.simScore=(query,candidate,stats,weights)=>W.similarityScore(query,candidate,stats,weights,SimilarityEngine.FEATURES);
+13489 |     SimilarityEngine.normalizeWeights=weights=>W.normalizeWeightObject(weights);
+13490 |     SimilarityEngine.match=(query,cases,weights,mode,k)=>{
+13491 |       const useWeights=weights||SimilarityEngine.defaultWeights;
+13492 |       const limit=Number.isInteger(k)&&k>0?k:10;
+13493 |       const pool=mode==='strict'?(cases||[]).filter(c=>c&&query&&c.type===query.type):(cases||[]);
+13494 |       const stats=W.standardizeCases(pool,SimilarityEngine.FEATURES);
+13495 |       const scored=pool.map(c=>({case:c,sim:W.similarityScore(query,c,stats,useWeights,SimilarityEngine.FEATURES)})).sort((a,b)=>b.sim-a.sim);
+13496 |       return {matches:scored.slice(0,limit),total:pool.length,stats,weights:useWeights};
+13497 |     };
+13498 |     SimilarityEngine.matchReference=(query,refCases,weights,k)=>{
+13499 |       const useWeights=weights||SimilarityEngine.defaultWeights,limit=Number.isInteger(k)&&k>0?k:3,pool=refCases||[];
+13500 |       const stats=W.standardizeCases(pool,SimilarityEngine.FEATURES);
+13501 |       return pool.map(c=>({case:c,sim:W.similarityScore(query,c,stats,useWeights,SimilarityEngine.FEATURES)})).sort((a,b)=>b.sim-a.sim).slice(0,limit);
+13502 |     };
+13503 |     mark('SimilarityEngine');
+13504 |   }
+13505 |   if(typeof DataQualityEngine!=='undefined'&&DataQualityEngine){DataQualityEngine.score=ctx=>W.dataQualityScore(ctx);mark('DataQualityEngine.score');}
+13506 |   if(typeof ScoringEngine!=='undefined'&&ScoringEngine){ScoringEngine.score=(metrics,weights)=>W.preferenceScore(metrics,weights||ScoringEngine.DEFAULT_W||W.DEFAULT_PREFERENCE_WEIGHTS);mark('ScoringEngine.score');}
+13507 |   if(typeof PeerSimilarity!=='undefined'&&PeerSimilarity){PeerSimilarity.score=peers=>W.peerDataCoverage(peers);mark('PeerSimilarity.score');}
+13508 | 
+13509 |   if(typeof factorExposure==='function'){factorExposure=items=>W.factorExposure(items);mark('factorExposure');}
+13510 |   if(typeof performanceAttribution==='function'){performanceAttribution=(items,benchmarkRet)=>W.performanceAttribution(items,benchmarkRet);mark('performanceAttribution');}
+13511 |   if(typeof RiskContribution!=='undefined'&&RiskContribution){RiskContribution.compute=(port,corr)=>W.riskContribution(port,corr);mark('RiskContribution.compute');}
+13512 |   if(typeof PortfolioOptimizers!=='undefined'&&PortfolioOptimizers){
+13513 |     PortfolioOptimizers.equalWeight=items=>W.equalWeight(items);
+13514 |     PortfolioOptimizers.minimumVariance=(items,corr)=>W.minimumVariance(items,corr);
+13515 |     PortfolioOptimizers.maximumSharpe=(items,corr,rf)=>W.maximumSharpe(items,corr,rf==null?0:rf);
 ```
 
 ## score — line 1919 — owner `DataQualityEngine`
@@ -170,6 +211,47 @@ Generated mechanically from the production source to support the final modulariz
  8965 |       meta:{app:App.meta.appVersion,model:App.meta.modelVersion,schema:App.meta.schemaVersion,exportedAt:new Date().toISOString()},
 ```
 
+## score — line 13506 — owner `out`
+
+```js
+13498 |     SimilarityEngine.matchReference=(query,refCases,weights,k)=>{
+13499 |       const useWeights=weights||SimilarityEngine.defaultWeights,limit=Number.isInteger(k)&&k>0?k:3,pool=refCases||[];
+13500 |       const stats=W.standardizeCases(pool,SimilarityEngine.FEATURES);
+13501 |       return pool.map(c=>({case:c,sim:W.similarityScore(query,c,stats,useWeights,SimilarityEngine.FEATURES)})).sort((a,b)=>b.sim-a.sim).slice(0,limit);
+13502 |     };
+13503 |     mark('SimilarityEngine');
+13504 |   }
+13505 |   if(typeof DataQualityEngine!=='undefined'&&DataQualityEngine){DataQualityEngine.score=ctx=>W.dataQualityScore(ctx);mark('DataQualityEngine.score');}
+13506 |   if(typeof ScoringEngine!=='undefined'&&ScoringEngine){ScoringEngine.score=(metrics,weights)=>W.preferenceScore(metrics,weights||ScoringEngine.DEFAULT_W||W.DEFAULT_PREFERENCE_WEIGHTS);mark('ScoringEngine.score');}
+13507 |   if(typeof PeerSimilarity!=='undefined'&&PeerSimilarity){PeerSimilarity.score=peers=>W.peerDataCoverage(peers);mark('PeerSimilarity.score');}
+13508 | 
+13509 |   if(typeof factorExposure==='function'){factorExposure=items=>W.factorExposure(items);mark('factorExposure');}
+13510 |   if(typeof performanceAttribution==='function'){performanceAttribution=(items,benchmarkRet)=>W.performanceAttribution(items,benchmarkRet);mark('performanceAttribution');}
+13511 |   if(typeof RiskContribution!=='undefined'&&RiskContribution){RiskContribution.compute=(port,corr)=>W.riskContribution(port,corr);mark('RiskContribution.compute');}
+13512 |   if(typeof PortfolioOptimizers!=='undefined'&&PortfolioOptimizers){
+13513 |     PortfolioOptimizers.equalWeight=items=>W.equalWeight(items);
+13514 |     PortfolioOptimizers.minimumVariance=(items,corr)=>W.minimumVariance(items,corr);
+13515 |     PortfolioOptimizers.maximumSharpe=(items,corr,rf)=>W.maximumSharpe(items,corr,rf==null?0:rf);
+13516 |     PortfolioOptimizers.riskParity=(items,corr)=>W.riskParity(items,corr);
+13517 |     mark('PortfolioOptimizers');
+13518 |   }
+13519 | 
+13520 |   if(L){
+13521 |     if(typeof wsDividendAmounts==='function'){wsDividendAmounts=tx=>L.dividendAmounts(tx);mark('wsDividendAmounts');}
+13522 |     if(typeof wsCalculateFromLedger==='function'){
+13523 |       wsCalculateFromLedger=(ws,_opts)=>L.calculateLedger(ws&&Array.isArray(ws.transactions)?ws.transactions:[],typeof wsBaseCurrency==='function'?wsBaseCurrency():'EUR');
+13524 |       mark('wsCalculateFromLedger');
+13525 |     }
+13526 |     if(typeof wsFxConvert==='function'){
+13527 |       wsFxConvert=(amount,currency)=>{const meta=typeof wsFxRateMeta==='function'?wsFxRateMeta(currency):null;return meta?W.fxConvert(amount,meta.rate):null;};
+13528 |       mark('wsFxConvert');
+13529 |     }
+13530 |     if(typeof wsPositionBaseValue==='function'){
+13531 |       wsPositionBaseValue=security=>{const ws=typeof wsPortfolio==='function'?wsPortfolio():null,p=ws&&ws.holdings?ws.holdings[security]:null;if(!p)return null;const pg=typeof wsGetPrice==='function'?wsGetPrice(security,ws):null;if(!pg)return null;const fx=typeof wsFxRate==='function'?wsFxRate(p.currency||(typeof wsBaseCurrency==='function'?wsBaseCurrency():'EUR')):null;return L.positionBaseValue(p,pg.price,fx);};
+13532 |       mark('wsPositionBaseValue');
+13533 |     }
+```
+
 ## whatWouldChange — line 4792 — owner `ThesisConsistency`
 
 ```js
@@ -227,7 +309,7 @@ Generated mechanically from the production source to support the final modulariz
  1590 |     const out=[]; for(const s of scenarios){
  1591 |       const dcf=ValuationEngine.dcf({revenue0:baseDcf.revenue0, growth:s.growth, ebitdaMargin:s.margin, tax:baseDcf.tax, capexPct:s.capexPct!=null?s.capexPct:baseDcf.capexPct, wcPct:s.wcPct!=null?s.wcPct:baseDcf.wcPct, dandaPct:baseDcf.dandaPct, wacc:s.wacc, terminalGrowth:s.terminalGrowth, terminalMethod:baseDcf.terminalMethod, exitMultiple:s.exitMultiple!=null?s.exitMultiple:baseDcf.exitMultiple, netDebt, shares, horizon:baseDcf.horizon});
  1592 |       const val=dcf.perShare; const mos=currentPrice>0? (val/currentPrice)-1:null;
- 1593 |       out.push({name:s.name, growth:s.growth, margin:s.margin, wacc:s.wacc, tg:s.terminalGrowth, prob:s.prob||null, value:val, perShare:val, dcf, mos});
+ 1593 |       out.push({name:s.name, growth:s.growth, margin:s.margin, wacc:s.wacc, tg:s.terminalGrowth, prob:s.prob??null, value:val, perShare:val, dcf, mos});
  1594 |     }
  1595 |     // probability weighted (if probs provided)
  1596 |     const probSum=out.reduce((s,o)=>s+(o.prob??0),0);
@@ -662,45 +744,45 @@ Generated mechanically from the production source to support the final modulariz
  9049 |     return {available:true,windows,degradation,stability,warning,meanOos,meanIn};
 ```
 
-## run — line 13281 — owner `out`
+## run — line 13427 — owner `out`
 
 ```js
-13273 |       if(amount==null)return {pd,recovery,ead,lgd:null,el:null,error:'ECL requires finite PD/recovery in [0,1] and non-negative EAD.'};
-13274 |       const lgd=1-recovery;return {pd,recovery,ead,lgd,el:Math.round(amount*100)/100};
-13275 |     };
-13276 |     ECLV2.eadDefault=(face,_exposureType)=>Core.isFiniteNumber(face)&&face>=0?face:null;
-13277 |     mark('ECLV2');
-13278 |   }
-13279 | 
-13280 |   if(LegacyCore && typeof StressTestEngine!=='undefined' && StressTestEngine){
-13281 |     StressTestEngine.run=(sd,scenarios)=>{
-13282 |       const currentPD=(typeof App!=='undefined'&&App&&App.state&&App.state.results&&App.state.results.stock&&App.state.results.stock.defaultPD!=null)?App.state.results.stock.defaultPD:.05;
-13283 |       const useScenarios=scenarios==null?StressTestEngine.PREDEFINED:scenarios;
-13284 |       return LegacyCore.stressRun(sd,useScenarios,{defaultPD:currentPD});
-13285 |     };
-13286 |     mark('StressTestEngine.run');
-13287 |   }
-13288 | 
-13289 |   if(LegacyCore && typeof PortfolioEngine!=='undefined' && PortfolioEngine){
-13290 |     PortfolioEngine.build=(items)=>{
-13291 |       const rf=(typeof App!=='undefined'&&App&&App.state&&App.state.stockData&&App.state.stockData.rf!=null)?App.state.stockData.rf:.03;
-13292 |       return LegacyCore.portfolioBuild(items,{riskFreeRate:rf,correlation:.4});
-13293 |     };
-13294 |     PortfolioEngine.stress=(port,scenario)=>LegacyCore.portfolioStress(port,scenario||{});
-13295 |     mark('PortfolioEngine.build/stress');
-13296 |   }
-13297 | 
-13298 |   if(LegacyCore && typeof ValuationMatrixV2!=='undefined' && ValuationMatrixV2){
-13299 |     ValuationMatrixV2.build=(sd)=>{
-13300 |       const result=(typeof App!=='undefined'&&App&&App.state&&App.state.results&&App.state.results.stock)?App.state.results.stock:{};
-13301 |       return LegacyCore.valuationMatrix(sd,result);
-13302 |     };
-13303 |     ValuationMatrixV2.driversHTML=(_mx,sd)=>{
-13304 |       const rows=LegacyCore.valuationDrivers(sd);
-13305 |       if(!rows||!rows.length)return '';
-13306 |       return `<h4 class="mt">TOP VALUE DRIVERS</h4><div class="gridlist">${rows.map((r,i)=>`<div class="metricline"><span class="l">${i+1}. ${r.label}</span><span class="v">${fmt.pct(r.impact,1)} of base value</span></div>`).join('')}</div>`;
-13307 |     };
-13308 |     mark('ValuationMatrixV2.build/driversHTML');
+13419 |       if(amount==null)return {pd,recovery,ead,lgd:null,el:null,error:'ECL requires finite PD/recovery in [0,1] and non-negative EAD.'};
+13420 |       const lgd=1-recovery;return {pd,recovery,ead,lgd,el:Math.round(amount*100)/100};
+13421 |     };
+13422 |     ECLV2.eadDefault=(face,_exposureType)=>Core.isFiniteNumber(face)&&face>=0?face:null;
+13423 |     mark('ECLV2');
+13424 |   }
+13425 | 
+13426 |   if(LegacyCore && typeof StressTestEngine!=='undefined' && StressTestEngine){
+13427 |     StressTestEngine.run=(sd,scenarios)=>{
+13428 |       const currentPD=(typeof App!=='undefined'&&App&&App.state&&App.state.results&&App.state.results.stock&&App.state.results.stock.defaultPD!=null)?App.state.results.stock.defaultPD:.05;
+13429 |       const useScenarios=scenarios==null?StressTestEngine.PREDEFINED:scenarios;
+13430 |       return LegacyCore.stressRun(sd,useScenarios,{defaultPD:currentPD});
+13431 |     };
+13432 |     mark('StressTestEngine.run');
+13433 |   }
+13434 | 
+13435 |   if(LegacyCore && typeof PortfolioEngine!=='undefined' && PortfolioEngine){
+13436 |     PortfolioEngine.build=(items)=>{
+13437 |       const rf=(typeof App!=='undefined'&&App&&App.state&&App.state.stockData&&App.state.stockData.rf!=null)?App.state.stockData.rf:.03;
+13438 |       return LegacyCore.portfolioBuild(items,{riskFreeRate:rf,correlation:.4});
+13439 |     };
+13440 |     PortfolioEngine.stress=(port,scenario)=>LegacyCore.portfolioStress(port,scenario||{});
+13441 |     mark('PortfolioEngine.build/stress');
+13442 |   }
+13443 | 
+13444 |   if(LegacyCore && typeof ValuationMatrixV2!=='undefined' && ValuationMatrixV2){
+13445 |     ValuationMatrixV2.build=(sd)=>{
+13446 |       const result=(typeof App!=='undefined'&&App&&App.state&&App.state.results&&App.state.results.stock)?App.state.results.stock:{};
+13447 |       return LegacyCore.valuationMatrix(sd,result);
+13448 |     };
+13449 |     ValuationMatrixV2.driversHTML=(_mx,sd)=>{
+13450 |       const rows=LegacyCore.valuationDrivers(sd);
+13451 |       if(!rows||!rows.length)return '';
+13452 |       return `<h4 class="mt">TOP VALUE DRIVERS</h4><div class="gridlist">${rows.map((r,i)=>`<div class="metricline"><span class="l">${i+1}. ${r.label}</span><span class="v">${fmt.pct(r.impact,1)} of base value</span></div>`).join('')}</div>`;
+13453 |     };
+13454 |     mark('ValuationMatrixV2.build/driversHTML');
 ```
 
 ## monitor — line 5315 — owner `ThesisConsistencyV3`
@@ -1154,6 +1236,47 @@ Generated mechanically from the production source to support the final modulariz
 12898 |     const corr=corrMatrix||Array.from({length:n},(_,i)=>Array.from({length:n},(_,j)=>i===j?1:.4));
 ```
 
+## performanceAttribution — line 13510 — owner `out`
+
+```js
+13502 |     };
+13503 |     mark('SimilarityEngine');
+13504 |   }
+13505 |   if(typeof DataQualityEngine!=='undefined'&&DataQualityEngine){DataQualityEngine.score=ctx=>W.dataQualityScore(ctx);mark('DataQualityEngine.score');}
+13506 |   if(typeof ScoringEngine!=='undefined'&&ScoringEngine){ScoringEngine.score=(metrics,weights)=>W.preferenceScore(metrics,weights||ScoringEngine.DEFAULT_W||W.DEFAULT_PREFERENCE_WEIGHTS);mark('ScoringEngine.score');}
+13507 |   if(typeof PeerSimilarity!=='undefined'&&PeerSimilarity){PeerSimilarity.score=peers=>W.peerDataCoverage(peers);mark('PeerSimilarity.score');}
+13508 | 
+13509 |   if(typeof factorExposure==='function'){factorExposure=items=>W.factorExposure(items);mark('factorExposure');}
+13510 |   if(typeof performanceAttribution==='function'){performanceAttribution=(items,benchmarkRet)=>W.performanceAttribution(items,benchmarkRet);mark('performanceAttribution');}
+13511 |   if(typeof RiskContribution!=='undefined'&&RiskContribution){RiskContribution.compute=(port,corr)=>W.riskContribution(port,corr);mark('RiskContribution.compute');}
+13512 |   if(typeof PortfolioOptimizers!=='undefined'&&PortfolioOptimizers){
+13513 |     PortfolioOptimizers.equalWeight=items=>W.equalWeight(items);
+13514 |     PortfolioOptimizers.minimumVariance=(items,corr)=>W.minimumVariance(items,corr);
+13515 |     PortfolioOptimizers.maximumSharpe=(items,corr,rf)=>W.maximumSharpe(items,corr,rf==null?0:rf);
+13516 |     PortfolioOptimizers.riskParity=(items,corr)=>W.riskParity(items,corr);
+13517 |     mark('PortfolioOptimizers');
+13518 |   }
+13519 | 
+13520 |   if(L){
+13521 |     if(typeof wsDividendAmounts==='function'){wsDividendAmounts=tx=>L.dividendAmounts(tx);mark('wsDividendAmounts');}
+13522 |     if(typeof wsCalculateFromLedger==='function'){
+13523 |       wsCalculateFromLedger=(ws,_opts)=>L.calculateLedger(ws&&Array.isArray(ws.transactions)?ws.transactions:[],typeof wsBaseCurrency==='function'?wsBaseCurrency():'EUR');
+13524 |       mark('wsCalculateFromLedger');
+13525 |     }
+13526 |     if(typeof wsFxConvert==='function'){
+13527 |       wsFxConvert=(amount,currency)=>{const meta=typeof wsFxRateMeta==='function'?wsFxRateMeta(currency):null;return meta?W.fxConvert(amount,meta.rate):null;};
+13528 |       mark('wsFxConvert');
+13529 |     }
+13530 |     if(typeof wsPositionBaseValue==='function'){
+13531 |       wsPositionBaseValue=security=>{const ws=typeof wsPortfolio==='function'?wsPortfolio():null,p=ws&&ws.holdings?ws.holdings[security]:null;if(!p)return null;const pg=typeof wsGetPrice==='function'?wsGetPrice(security,ws):null;if(!pg)return null;const fx=typeof wsFxRate==='function'?wsFxRate(p.currency||(typeof wsBaseCurrency==='function'?wsBaseCurrency():'EUR')):null;return L.positionBaseValue(p,pg.price,fx);};
+13532 |       mark('wsPositionBaseValue');
+13533 |     }
+13534 |     if(typeof wsMarketValue==='function'){
+13535 |       wsMarketValue=()=>{const ws=typeof wsPortfolio==='function'?wsPortfolio():null,pos=ws&&ws.holdings?ws.holdings:{};const entries=Object.keys(pos).map(k=>{const p=pos[k],pg=typeof wsGetPrice==='function'?wsGetPrice(k,ws):null,meta=typeof wsFxRateMeta==='function'?wsFxRateMeta(p.currency||(typeof wsBaseCurrency==='function'?wsBaseCurrency():'EUR')):null;return {position:p,price:pg?pg.price:null,fxRate:meta?meta.rate:null};});return L.marketValueSummary(entries);};
+13536 |       mark('wsMarketValue');
+13537 |     }
+```
+
 ## creditRatios — line 7193 — owner `BootstrapMC`
 
 ```js
@@ -1236,45 +1359,45 @@ Generated mechanically from the production source to support the final modulariz
  7335 |     const total=Number($("#seg_total").value)||sd.revenue||1000;
 ```
 
-## sotpRender — line 7365 — owner `BootstrapMC`
+## sotpRender — line 7364 — owner `BootstrapMC`
 
 ```js
- 7357 |     <div id="segChart" class="mt"></div></div>`;
- 7358 |     $("#segOut").innerHTML=h;
- 7359 |     const cb=h("div",{id:"segChartBox",class:"chartbox"}); cb.appendChild(ChartManager.lineChart({series:out.map(s=>({data:s.revs,label:s.name})),labels:out[0].revs.map((_,i)=>(seg.startYear+i)+"E"),title:"Segment Revenue Forecast",yFmt:fmt.money})); $("#segOut").appendChild(cb);
- 7360 |     StorageManager.save();
- 7361 |   });
- 7362 | }
- 7363 | 
- 7364 | /* ---- Sum-of-the-Parts valuation ---- */
- 7365 | function sotpRender(){
- 7366 |   const sotp=App.state.sotp||(App.state.sotp={parts:[],shares:null});
- 7367 |   const sd=App.state.stockData;
- 7368 |   if(!sotp.parts.length) sotp.parts=[{name:"Core Business",value:sd.marketCap||0,multiple:10,metric:sd.netIncome||0},{name:"Cash / Investments",value:sd.cash||0,multiple:1,metric:sd.cash||0}];
- 7369 |   const rows=sotp.parts.map((p,i)=>`<tr>
- 7370 |     <td><input type="text" value="${esc(p.name)}" id="sotp_${i}_name" style="width:140px"></td>
- 7371 |     <td><input type="text" value="${p.value}" id="sotp_${i}_value" style="width:90px"></td>
- 7372 |     <td><input type="text" value="${p.multiple}" id="sotp_${i}_mult" style="width:60px"></td>
- 7373 |     <td><input type="text" value="${p.metric}" id="sotp_${i}_metric" style="width:90px"></td>
- 7374 |     <td><button class="btn btn-sm btn-danger" data-sotp="${i}">×</button></td></tr>`).join("");
- 7375 |   $("#sotpForm").innerHTML=`<div class="card"><div class="card-title">Sum-of-the-Parts Valuation</div>
- 7376 |   <p class="small dim">Value each business part separately (e.g. via its own multiple × metric, or an absolute value), then sum and divide by shares. Useful for conglomerates.</p>
- 7377 |   <div class="tablewrap"><table class="data"><thead><tr><th>Part</th><th class="num">Value / Metric</th><th class="num">Multiple</th><th class="num">Metric</th><th></th></tr></thead><tbody>${rows}</tbody></table></div>
- 7378 |   <div class="row mt"><span class="small">Shares outstanding: <input type="text" id="sotp_shares" value="${sotp.shares||sd.shares||1}" style="width:90px"></span>
- 7379 |   <button class="btn btn-sm" id="sotp_add">+ Part</button>
- 7380 |   <button class="btn btn-primary" id="sotp_run">Compute SOTP</button></div>
- 7381 |   <div id="sotpOut" class="mt"></div></div>`;
- 7382 |   wire("sotp_add","click",()=>{ sotp.parts.push({name:"New Part",value:0,multiple:1,metric:0}); sotpRender(); });
- 7383 |   $$("#sotpForm [data-sotp]").forEach(b=>b.addEventListener("click",()=>{ sotp.parts.splice(Number(b.dataset.sotp),1); sotpRender(); }));
- 7384 |   wire("sotp_run","click",()=>{
- 7385 |     const shares=Number($("#sotp_shares").value)||1;
- 7386 |     const parts=sotp.parts.map((p,i)=>{ const value=Number($("#sotp_"+i+"_value")?.value)||0; const mult=Number($("#sotp_"+i+"_mult")?.value)||1; const metric=Number($("#sotp_"+i+"_metric")?.value)||0; return {name:$("#sotp_"+i+"_name")?.value||p.name, value: value!==0? value: mult*metric, mult, metric}; });
- 7387 |     sotp.parts=parts; sotp.shares=shares;
- 7388 |     const totalEV=parts.reduce((a,b)=>a+b.value,0);
- 7389 |     const equityValue=totalEV-(sd.netDebt||0);
- 7390 |     const perShare= shares>0? equityValue/shares:0;
- 7391 |     App.state.sotpResult={parts,totalEV,equityValue,perShare,shares};
- 7392 |     let h=`<div class="card"><div class="card-title">Sum-of-the-Parts Result</div>
+ 7356 |     <div id="segChart" class="mt"></div></div>`;
+ 7357 |     $("#segOut").innerHTML=h;
+ 7358 |     const cb=h("div",{id:"segChartBox",class:"chartbox"}); cb.appendChild(ChartManager.lineChart({series:out.map(s=>({data:s.revs,label:s.name})),labels:out[0].revs.map((_,i)=>(seg.startYear+i)+"E"),title:"Segment Revenue Forecast",yFmt:fmt.money})); $("#segOut").appendChild(cb);
+ 7359 |     StorageManager.save();
+ 7360 |   });
+ 7361 | }
+ 7362 | 
+ 7363 | /* ---- Sum-of-the-Parts valuation ---- */
+ 7364 | function sotpRender(){
+ 7365 |   const sotp=App.state.sotp||(App.state.sotp={parts:[],shares:null});
+ 7366 |   const sd=App.state.stockData;
+ 7367 |   if(!sotp.parts.length) sotp.parts=[{name:"Core Business",value:sd.marketCap||0,multiple:10,metric:sd.netIncome||0},{name:"Cash / Investments",value:sd.cash||0,multiple:1,metric:sd.cash||0}];
+ 7368 |   const rows=sotp.parts.map((p,i)=>`<tr>
+ 7369 |     <td><input type="text" value="${esc(p.name)}" id="sotp_${i}_name" style="width:140px"></td>
+ 7370 |     <td><input type="text" value="${p.value}" id="sotp_${i}_value" style="width:90px"></td>
+ 7371 |     <td><input type="text" value="${p.multiple}" id="sotp_${i}_mult" style="width:60px"></td>
+ 7372 |     <td><input type="text" value="${p.metric}" id="sotp_${i}_metric" style="width:90px"></td>
+ 7373 |     <td><button class="btn btn-sm btn-danger" data-sotp="${i}">×</button></td></tr>`).join("");
+ 7374 |   $("#sotpForm").innerHTML=`<div class="card"><div class="card-title">Sum-of-the-Parts Valuation</div>
+ 7375 |   <p class="small dim">Value each business part separately (e.g. via its own multiple × metric, or an absolute value), then sum and divide by shares. Useful for conglomerates.</p>
+ 7376 |   <div class="tablewrap"><table class="data"><thead><tr><th>Part</th><th class="num">Value / Metric</th><th class="num">Multiple</th><th class="num">Metric</th><th></th></tr></thead><tbody>${rows}</tbody></table></div>
+ 7377 |   <div class="row mt"><span class="small">Shares outstanding: <input type="text" id="sotp_shares" value="${sotp.shares||sd.shares||1}" style="width:90px"></span>
+ 7378 |   <button class="btn btn-sm" id="sotp_add">+ Part</button>
+ 7379 |   <button class="btn btn-primary" id="sotp_run">Compute SOTP</button></div>
+ 7380 |   <div id="sotpOut" class="mt"></div></div>`;
+ 7381 |   wire("sotp_add","click",()=>{ sotp.parts.push({name:"New Part",value:0,multiple:1,metric:0}); sotpRender(); });
+ 7382 |   $$("#sotpForm [data-sotp]").forEach(b=>b.addEventListener("click",()=>{ sotp.parts.splice(Number(b.dataset.sotp),1); sotpRender(); }));
+ 7383 |   wire("sotp_run","click",()=>{
+ 7384 |     const sharesRaw=$("#sotp_shares").value; const shares=String(sharesRaw).trim()===""?NaN:Number(sharesRaw);
+ 7385 |     const rawParts=sotp.parts.map((p,i)=>{ const raw=$("#sotp_"+i+"_value")?.value; const value=raw==null||String(raw).trim()===""?null:Number(raw); const mult=Number($("#sotp_"+i+"_mult")?.value); const metric=Number($("#sotp_"+i+"_metric")?.value); return {name:$("#sotp_"+i+"_name")?.value||p.name,value:Number.isFinite(value)?value:null,multiple:mult,metric}; });
+ 7386 |     const netDebt=Number.isFinite(sd.netDebt)?sd.netDebt:((Number.isFinite(sd.debt)?sd.debt:0)-(Number.isFinite(sd.cash)?sd.cash:0));
+ 7387 |     const sotpCalc=WorkstationCalculationCore.sumOfParts(rawParts,netDebt,shares);
+ 7388 |     if(!sotpCalc){ $("#sotpOut").innerHTML=`<div class="banner warn">SOTP requires positive diluted shares and a finite explicit value or finite multiple × metric for every part.</div>`; return; }
+ 7389 |     const parts=sotpCalc.parts,totalEV=sotpCalc.totalEV,equityValue=sotpCalc.equityValue,perShare=sotpCalc.perShare;
+ 7390 |     sotp.parts=parts; sotp.shares=shares;
+ 7391 |     App.state.sotpResult={parts,totalEV,equityValue,perShare,shares,netDebt};
 ```
 
 ## mulberry — line 1607 — owner `MonteCarlo`
@@ -2072,18 +2195,18 @@ Generated mechanically from the production source to support the final modulariz
  8514 |     if(!sd||sd.price==null)return null;
  8515 |     const base={revenue0:a.revenue||sd.revenue,tax:a.tax,capexPct:a.capexPct,wcPct:a.wcPct,dandaPct:a.dandaPct,wacc:a.wacc,terminalGrowth:a.terminalGrowth,terminalMethod:"growth",exitMultiple:a.exitMultiple,netDebt:a.netDebt,shares:a.shares,horizon:a.horizon,growth:a.revenueGrowth,ebitdaMargin:a.ebitdaMargin};
  8516 |     function dcfRange(g,m,w,tg){
- 8517 |       const lo=ValuationEngine.dcf({...base,growth:g*.9,margin:m*.9,wacc:w*1.06,terminalGrowth:tg*.85}).perShare;
- 8518 |       const hi=ValuationEngine.dcf({...base,growth:g*1.1,margin:m*1.1,wacc:w*.94,terminalGrowth:tg*1.15}).perShare;
- 8519 |       const mid=ValuationEngine.dcf({...base,growth:g,margin:m,wacc:w,terminalGrowth:tg}).perShare;
+ 8517 |       const lo=ValuationEngine.dcf({...base,growth:g*.9,ebitdaMargin:m*.9,wacc:w*1.06,terminalGrowth:tg*.85}).perShare;
+ 8518 |       const hi=ValuationEngine.dcf({...base,growth:g*1.1,ebitdaMargin:m*1.1,wacc:w*.94,terminalGrowth:tg*1.15}).perShare;
+ 8519 |       const mid=ValuationEngine.dcf({...base,growth:g,ebitdaMargin:m,wacc:w,terminalGrowth:tg}).perShare;
  8520 |       return {lo,mid,hi};
  8521 |     }
  8522 |     const bear=dcfRange(a.revenueGrowth*.55,a.ebitdaMargin*.8,a.wacc*1.15,a.terminalGrowth*.6);
  8523 |     const baseR=dcfRange(a.revenueGrowth,a.ebitdaMargin,a.wacc,a.terminalGrowth);
  8524 |     const bull=dcfRange(a.revenueGrowth*1.5,a.ebitdaMargin*1.2,a.wacc*.85,a.terminalGrowth*1.4);
  8525 |     const central=baseR.mid;
- 8526 |     const disp=(bull.hi-bear.lo)/(Math.abs(central)||1);
+ 8526 |     const disp=Number.isFinite(central)&&Math.abs(central)>1e-12?(bull.hi-bear.lo)/Math.abs(central):null;
  8527 |     const suff=DataSufficiency.compute().overall;
- 8528 |     const conf= Math.max(0,Math.min(100,Math.round(80 - disp*20 + (suff-50)*0.3)));
+ 8528 |     const conf= disp==null?0:Math.max(0,Math.min(100,Math.round(80 - disp*20 + (suff-50)*0.3)));
  8529 |     return {bear,baseR,bull,central,conf,dispersion:disp};
  8530 |   }
  8531 |   function html(u){
@@ -2138,86 +2261,127 @@ Generated mechanically from the production source to support the final modulariz
  8686 |     // documentation
 ```
 
-## compute — line 13192 — owner `installReport`
+## compute — line 13338 — owner `installReport`
 
 ```js
-13184 |       if(r.error)return {error:r.error,value:null,rows:[]};
-13185 |       return {value:r.value,bookValue0,pvRI:r.pvRI,tvRI:r.continuingValue,pvTV:r.pvContinuing,rows:r.rows.map(x=>({t:x.t,income:x.netIncome,charge:x.equityCharge,ri:x.residualIncome,pvRI:x.pvRI,bv:x.endingBV}))};
-13186 |     };
-13187 |     ValuationEngine.comparables=(companyMultiple,peers)=>Core.comparables(companyMultiple,peers);
-13188 |     mark('ValuationEngine');
-13189 |   }
-13190 | 
-13191 |   if(typeof FinancialRatios!=='undefined' && FinancialRatios){
-13192 |     FinancialRatios.compute=(f)=>Core.financialRatios(f||{});
-13193 |     FinancialRatios.dupont=(r)=>({netMargin:r.netMargin,assetTurnover:r.assetTurnover,equityMultiplier:r.equityMultiplier,roe:r.netMargin!=null&&r.assetTurnover!=null&&r.equityMultiplier!=null?r.netMargin*r.assetTurnover*r.equityMultiplier:null});
-13194 |     mark('FinancialRatios');
-13195 |   }
-13196 | 
-13197 |   if(ModelCore && typeof FinancialModelEngine!=='undefined' && FinancialModelEngine){
-13198 |     FinancialModelEngine.defaults=()=>{
-13199 |       const currency=(typeof App!=='undefined'&&App&&App.state&&App.state.settings&&App.state.settings.currency)||'EUR';
-13200 |       return ModelCore.defaults(currency);
-13201 |     };
-13202 |     FinancialModelEngine.fillDefaults=(m,sd)=>ModelCore.fillDefaults(m,sd||{});
-13203 |     FinancialModelEngine.build=(m,sd)=>{
-13204 |       const out=ModelCore.build(m,sd||{});
-13205 |       if(Array.isArray(out.covenants) && typeof fmt!=='undefined')out.covenants=out.covenants.map(c=>({...c,fmt:c.format==='ratio'?fmt.x:fmt.money}));
-13206 |       return out;
-13207 |     };
-13208 |     mark('FinancialModelEngine.build/fillDefaults/defaults');
-13209 |   }
-13210 | 
-13211 |   if(typeof XIRR!=='undefined' && XIRR){
-13212 |     XIRR.xnpv=(rate,cashflows,dates)=>Core.xnpv(rate,cashflows,dates);
-13213 |     XIRR.xirr=(cashflows,dates,_guess=.1)=>Core.xirr(cashflows,dates);
-13214 |     XIRR.xirrHTML=(cashflows,dates)=>{
-13215 |       const r=Core.xirr(cashflows,dates);
-13216 |       if(r==null)return '<div class="banner warn">XIRR could not be determined — the irregular cash-flow pattern may have no unique root.</div>';
-13217 |       return `<div class="card"><div class="card-title">XIRR (irregular-period IRR)</div><div class="grid g2">${kpi('XIRR',fmt.pct(r,2),'annualized, irregular dates')}</div><div class="formula">Solve Σ CF_i/(1+XIRR)^((date_i−date_0)/365) = 0</div><div class="banner info">XIRR handles cash flows that arrive at irregular dates by discounting each to its actual year-fraction. It annualizes the return correctly for non-annual periods.</div></div>`;
-13218 |     };
-13219 |     mark('XIRR');
+13330 |       if(r.error)return {error:r.error,value:null,rows:[]};
+13331 |       return {value:r.value,bookValue0,pvRI:r.pvRI,tvRI:r.continuingValue,pvTV:r.pvContinuing,rows:r.rows.map(x=>({t:x.t,income:x.netIncome,charge:x.equityCharge,ri:x.residualIncome,pvRI:x.pvRI,bv:x.endingBV}))};
+13332 |     };
+13333 |     ValuationEngine.comparables=(companyMultiple,peers)=>Core.comparables(companyMultiple,peers);
+13334 |     mark('ValuationEngine');
+13335 |   }
+13336 | 
+13337 |   if(typeof FinancialRatios!=='undefined' && FinancialRatios){
+13338 |     FinancialRatios.compute=(f)=>Core.financialRatios(f||{});
+13339 |     FinancialRatios.dupont=(r)=>({netMargin:r.netMargin,assetTurnover:r.assetTurnover,equityMultiplier:r.equityMultiplier,roe:r.netMargin!=null&&r.assetTurnover!=null&&r.equityMultiplier!=null?r.netMargin*r.assetTurnover*r.equityMultiplier:null});
+13340 |     mark('FinancialRatios');
+13341 |   }
+13342 | 
+13343 |   if(ModelCore && typeof FinancialModelEngine!=='undefined' && FinancialModelEngine){
+13344 |     FinancialModelEngine.defaults=()=>{
+13345 |       const currency=(typeof App!=='undefined'&&App&&App.state&&App.state.settings&&App.state.settings.currency)||'EUR';
+13346 |       return ModelCore.defaults(currency);
+13347 |     };
+13348 |     FinancialModelEngine.fillDefaults=(m,sd)=>ModelCore.fillDefaults(m,sd||{});
+13349 |     FinancialModelEngine.build=(m,sd)=>{
+13350 |       const out=ModelCore.build(m,sd||{});
+13351 |       if(Array.isArray(out.covenants) && typeof fmt!=='undefined')out.covenants=out.covenants.map(c=>({...c,fmt:c.format==='ratio'?fmt.x:fmt.money}));
+13352 |       return out;
+13353 |     };
+13354 |     mark('FinancialModelEngine.build/fillDefaults/defaults');
+13355 |   }
+13356 | 
+13357 |   if(typeof XIRR!=='undefined' && XIRR){
+13358 |     XIRR.xnpv=(rate,cashflows,dates)=>Core.xnpv(rate,cashflows,dates);
+13359 |     XIRR.xirr=(cashflows,dates,_guess=.1)=>Core.xirr(cashflows,dates);
+13360 |     XIRR.xirrHTML=(cashflows,dates)=>{
+13361 |       const r=Core.xirr(cashflows,dates);
+13362 |       if(r==null)return '<div class="banner warn">XIRR could not be determined — the irregular cash-flow pattern may have no unique root.</div>';
+13363 |       return `<div class="card"><div class="card-title">XIRR (irregular-period IRR)</div><div class="grid g2">${kpi('XIRR',fmt.pct(r,2),'annualized, irregular dates')}</div><div class="formula">Solve Σ CF_i/(1+XIRR)^((date_i−date_0)/365) = 0</div><div class="banner info">XIRR handles cash flows that arrive at irregular dates by discounting each to its actual year-fraction. It annualizes the return correctly for non-annual periods.</div></div>`;
+13364 |     };
+13365 |     mark('XIRR');
 ```
 
-## compute — line 13271 — owner `out`
+## compute — line 13417 — owner `out`
 
 ```js
-13263 |   }
-13264 | 
-13265 |   if(RiskCore && typeof MertonDiag!=='undefined' && MertonDiag){
-13266 |     MertonDiag.trace=(E,sigmaE,D,r,T)=>RiskCore.mertonTrace(E,sigmaE,D,r,T);
-13267 |     mark('MertonDiag.trace');
-13268 |   }
-13269 | 
-13270 |   if(typeof ECLV2!=='undefined' && ECLV2){
-13271 |     ECLV2.compute=(pd,recovery,ead)=>{
-13272 |       const amount=RiskCore?RiskCore.expectedLossAmount(pd,recovery,ead):(Core.isFiniteNumber(pd)&&Core.isFiniteNumber(recovery)&&Core.isFiniteNumber(ead)&&pd>=0&&pd<=1&&recovery>=0&&recovery<=1&&ead>=0?pd*(1-recovery)*ead:null);
-13273 |       if(amount==null)return {pd,recovery,ead,lgd:null,el:null,error:'ECL requires finite PD/recovery in [0,1] and non-negative EAD.'};
-13274 |       const lgd=1-recovery;return {pd,recovery,ead,lgd,el:Math.round(amount*100)/100};
-13275 |     };
-13276 |     ECLV2.eadDefault=(face,_exposureType)=>Core.isFiniteNumber(face)&&face>=0?face:null;
-13277 |     mark('ECLV2');
-13278 |   }
-13279 | 
-13280 |   if(LegacyCore && typeof StressTestEngine!=='undefined' && StressTestEngine){
-13281 |     StressTestEngine.run=(sd,scenarios)=>{
-13282 |       const currentPD=(typeof App!=='undefined'&&App&&App.state&&App.state.results&&App.state.results.stock&&App.state.results.stock.defaultPD!=null)?App.state.results.stock.defaultPD:.05;
-13283 |       const useScenarios=scenarios==null?StressTestEngine.PREDEFINED:scenarios;
-13284 |       return LegacyCore.stressRun(sd,useScenarios,{defaultPD:currentPD});
-13285 |     };
-13286 |     mark('StressTestEngine.run');
-13287 |   }
-13288 | 
-13289 |   if(LegacyCore && typeof PortfolioEngine!=='undefined' && PortfolioEngine){
-13290 |     PortfolioEngine.build=(items)=>{
-13291 |       const rf=(typeof App!=='undefined'&&App&&App.state&&App.state.stockData&&App.state.stockData.rf!=null)?App.state.stockData.rf:.03;
-13292 |       return LegacyCore.portfolioBuild(items,{riskFreeRate:rf,correlation:.4});
-13293 |     };
-13294 |     PortfolioEngine.stress=(port,scenario)=>LegacyCore.portfolioStress(port,scenario||{});
-13295 |     mark('PortfolioEngine.build/stress');
-13296 |   }
-13297 | 
-13298 |   if(LegacyCore && typeof ValuationMatrixV2!=='undefined' && ValuationMatrixV2){
+13409 |   }
+13410 | 
+13411 |   if(RiskCore && typeof MertonDiag!=='undefined' && MertonDiag){
+13412 |     MertonDiag.trace=(E,sigmaE,D,r,T)=>RiskCore.mertonTrace(E,sigmaE,D,r,T);
+13413 |     mark('MertonDiag.trace');
+13414 |   }
+13415 | 
+13416 |   if(typeof ECLV2!=='undefined' && ECLV2){
+13417 |     ECLV2.compute=(pd,recovery,ead)=>{
+13418 |       const amount=RiskCore?RiskCore.expectedLossAmount(pd,recovery,ead):(Core.isFiniteNumber(pd)&&Core.isFiniteNumber(recovery)&&Core.isFiniteNumber(ead)&&pd>=0&&pd<=1&&recovery>=0&&recovery<=1&&ead>=0?pd*(1-recovery)*ead:null);
+13419 |       if(amount==null)return {pd,recovery,ead,lgd:null,el:null,error:'ECL requires finite PD/recovery in [0,1] and non-negative EAD.'};
+13420 |       const lgd=1-recovery;return {pd,recovery,ead,lgd,el:Math.round(amount*100)/100};
+13421 |     };
+13422 |     ECLV2.eadDefault=(face,_exposureType)=>Core.isFiniteNumber(face)&&face>=0?face:null;
+13423 |     mark('ECLV2');
+13424 |   }
+13425 | 
+13426 |   if(LegacyCore && typeof StressTestEngine!=='undefined' && StressTestEngine){
+13427 |     StressTestEngine.run=(sd,scenarios)=>{
+13428 |       const currentPD=(typeof App!=='undefined'&&App&&App.state&&App.state.results&&App.state.results.stock&&App.state.results.stock.defaultPD!=null)?App.state.results.stock.defaultPD:.05;
+13429 |       const useScenarios=scenarios==null?StressTestEngine.PREDEFINED:scenarios;
+13430 |       return LegacyCore.stressRun(sd,useScenarios,{defaultPD:currentPD});
+13431 |     };
+13432 |     mark('StressTestEngine.run');
+13433 |   }
+13434 | 
+13435 |   if(LegacyCore && typeof PortfolioEngine!=='undefined' && PortfolioEngine){
+13436 |     PortfolioEngine.build=(items)=>{
+13437 |       const rf=(typeof App!=='undefined'&&App&&App.state&&App.state.stockData&&App.state.stockData.rf!=null)?App.state.stockData.rf:.03;
+13438 |       return LegacyCore.portfolioBuild(items,{riskFreeRate:rf,correlation:.4});
+13439 |     };
+13440 |     PortfolioEngine.stress=(port,scenario)=>LegacyCore.portfolioStress(port,scenario||{});
+13441 |     mark('PortfolioEngine.build/stress');
+13442 |   }
+13443 | 
+13444 |   if(LegacyCore && typeof ValuationMatrixV2!=='undefined' && ValuationMatrixV2){
+```
+
+## compute — line 13511 — owner `out`
+
+```js
+13503 |     mark('SimilarityEngine');
+13504 |   }
+13505 |   if(typeof DataQualityEngine!=='undefined'&&DataQualityEngine){DataQualityEngine.score=ctx=>W.dataQualityScore(ctx);mark('DataQualityEngine.score');}
+13506 |   if(typeof ScoringEngine!=='undefined'&&ScoringEngine){ScoringEngine.score=(metrics,weights)=>W.preferenceScore(metrics,weights||ScoringEngine.DEFAULT_W||W.DEFAULT_PREFERENCE_WEIGHTS);mark('ScoringEngine.score');}
+13507 |   if(typeof PeerSimilarity!=='undefined'&&PeerSimilarity){PeerSimilarity.score=peers=>W.peerDataCoverage(peers);mark('PeerSimilarity.score');}
+13508 | 
+13509 |   if(typeof factorExposure==='function'){factorExposure=items=>W.factorExposure(items);mark('factorExposure');}
+13510 |   if(typeof performanceAttribution==='function'){performanceAttribution=(items,benchmarkRet)=>W.performanceAttribution(items,benchmarkRet);mark('performanceAttribution');}
+13511 |   if(typeof RiskContribution!=='undefined'&&RiskContribution){RiskContribution.compute=(port,corr)=>W.riskContribution(port,corr);mark('RiskContribution.compute');}
+13512 |   if(typeof PortfolioOptimizers!=='undefined'&&PortfolioOptimizers){
+13513 |     PortfolioOptimizers.equalWeight=items=>W.equalWeight(items);
+13514 |     PortfolioOptimizers.minimumVariance=(items,corr)=>W.minimumVariance(items,corr);
+13515 |     PortfolioOptimizers.maximumSharpe=(items,corr,rf)=>W.maximumSharpe(items,corr,rf==null?0:rf);
+13516 |     PortfolioOptimizers.riskParity=(items,corr)=>W.riskParity(items,corr);
+13517 |     mark('PortfolioOptimizers');
+13518 |   }
+13519 | 
+13520 |   if(L){
+13521 |     if(typeof wsDividendAmounts==='function'){wsDividendAmounts=tx=>L.dividendAmounts(tx);mark('wsDividendAmounts');}
+13522 |     if(typeof wsCalculateFromLedger==='function'){
+13523 |       wsCalculateFromLedger=(ws,_opts)=>L.calculateLedger(ws&&Array.isArray(ws.transactions)?ws.transactions:[],typeof wsBaseCurrency==='function'?wsBaseCurrency():'EUR');
+13524 |       mark('wsCalculateFromLedger');
+13525 |     }
+13526 |     if(typeof wsFxConvert==='function'){
+13527 |       wsFxConvert=(amount,currency)=>{const meta=typeof wsFxRateMeta==='function'?wsFxRateMeta(currency):null;return meta?W.fxConvert(amount,meta.rate):null;};
+13528 |       mark('wsFxConvert');
+13529 |     }
+13530 |     if(typeof wsPositionBaseValue==='function'){
+13531 |       wsPositionBaseValue=security=>{const ws=typeof wsPortfolio==='function'?wsPortfolio():null,p=ws&&ws.holdings?ws.holdings[security]:null;if(!p)return null;const pg=typeof wsGetPrice==='function'?wsGetPrice(security,ws):null;if(!pg)return null;const fx=typeof wsFxRate==='function'?wsFxRate(p.currency||(typeof wsBaseCurrency==='function'?wsBaseCurrency():'EUR')):null;return L.positionBaseValue(p,pg.price,fx);};
+13532 |       mark('wsPositionBaseValue');
+13533 |     }
+13534 |     if(typeof wsMarketValue==='function'){
+13535 |       wsMarketValue=()=>{const ws=typeof wsPortfolio==='function'?wsPortfolio():null,pos=ws&&ws.holdings?ws.holdings:{};const entries=Object.keys(pos).map(k=>{const p=pos[k],pg=typeof wsGetPrice==='function'?wsGetPrice(k,ws):null,meta=typeof wsFxRateMeta==='function'?wsFxRateMeta(p.currency||(typeof wsBaseCurrency==='function'?wsBaseCurrency():'EUR')):null;return {position:p,price:pg?pg.price:null,fxRate:meta?meta.rate:null};});return L.marketValueSummary(entries);};
+13536 |       mark('wsMarketValue');
+13537 |     }
+13538 |     if(typeof wsCashSummary==='function'){
 ```
 
 ## minimumVariance — line 9122 — owner `PortfolioOptimizers`
@@ -2302,6 +2466,47 @@ Generated mechanically from the production source to support the final modulariz
 12951 |       }
 ```
 
+## minimumVariance — line 13514 — owner `out`
+
+```js
+13506 |   if(typeof ScoringEngine!=='undefined'&&ScoringEngine){ScoringEngine.score=(metrics,weights)=>W.preferenceScore(metrics,weights||ScoringEngine.DEFAULT_W||W.DEFAULT_PREFERENCE_WEIGHTS);mark('ScoringEngine.score');}
+13507 |   if(typeof PeerSimilarity!=='undefined'&&PeerSimilarity){PeerSimilarity.score=peers=>W.peerDataCoverage(peers);mark('PeerSimilarity.score');}
+13508 | 
+13509 |   if(typeof factorExposure==='function'){factorExposure=items=>W.factorExposure(items);mark('factorExposure');}
+13510 |   if(typeof performanceAttribution==='function'){performanceAttribution=(items,benchmarkRet)=>W.performanceAttribution(items,benchmarkRet);mark('performanceAttribution');}
+13511 |   if(typeof RiskContribution!=='undefined'&&RiskContribution){RiskContribution.compute=(port,corr)=>W.riskContribution(port,corr);mark('RiskContribution.compute');}
+13512 |   if(typeof PortfolioOptimizers!=='undefined'&&PortfolioOptimizers){
+13513 |     PortfolioOptimizers.equalWeight=items=>W.equalWeight(items);
+13514 |     PortfolioOptimizers.minimumVariance=(items,corr)=>W.minimumVariance(items,corr);
+13515 |     PortfolioOptimizers.maximumSharpe=(items,corr,rf)=>W.maximumSharpe(items,corr,rf==null?0:rf);
+13516 |     PortfolioOptimizers.riskParity=(items,corr)=>W.riskParity(items,corr);
+13517 |     mark('PortfolioOptimizers');
+13518 |   }
+13519 | 
+13520 |   if(L){
+13521 |     if(typeof wsDividendAmounts==='function'){wsDividendAmounts=tx=>L.dividendAmounts(tx);mark('wsDividendAmounts');}
+13522 |     if(typeof wsCalculateFromLedger==='function'){
+13523 |       wsCalculateFromLedger=(ws,_opts)=>L.calculateLedger(ws&&Array.isArray(ws.transactions)?ws.transactions:[],typeof wsBaseCurrency==='function'?wsBaseCurrency():'EUR');
+13524 |       mark('wsCalculateFromLedger');
+13525 |     }
+13526 |     if(typeof wsFxConvert==='function'){
+13527 |       wsFxConvert=(amount,currency)=>{const meta=typeof wsFxRateMeta==='function'?wsFxRateMeta(currency):null;return meta?W.fxConvert(amount,meta.rate):null;};
+13528 |       mark('wsFxConvert');
+13529 |     }
+13530 |     if(typeof wsPositionBaseValue==='function'){
+13531 |       wsPositionBaseValue=security=>{const ws=typeof wsPortfolio==='function'?wsPortfolio():null,p=ws&&ws.holdings?ws.holdings[security]:null;if(!p)return null;const pg=typeof wsGetPrice==='function'?wsGetPrice(security,ws):null;if(!pg)return null;const fx=typeof wsFxRate==='function'?wsFxRate(p.currency||(typeof wsBaseCurrency==='function'?wsBaseCurrency():'EUR')):null;return L.positionBaseValue(p,pg.price,fx);};
+13532 |       mark('wsPositionBaseValue');
+13533 |     }
+13534 |     if(typeof wsMarketValue==='function'){
+13535 |       wsMarketValue=()=>{const ws=typeof wsPortfolio==='function'?wsPortfolio():null,pos=ws&&ws.holdings?ws.holdings:{};const entries=Object.keys(pos).map(k=>{const p=pos[k],pg=typeof wsGetPrice==='function'?wsGetPrice(k,ws):null,meta=typeof wsFxRateMeta==='function'?wsFxRateMeta(p.currency||(typeof wsBaseCurrency==='function'?wsBaseCurrency():'EUR')):null;return {position:p,price:pg?pg.price:null,fxRate:meta?meta.rate:null};});return L.marketValueSummary(entries);};
+13536 |       mark('wsMarketValue');
+13537 |     }
+13538 |     if(typeof wsCashSummary==='function'){
+13539 |       wsCashSummary=()=>{const ws=typeof wsPortfolio==='function'?wsPortfolio():null;if(!ws)return null;const mv=typeof wsMarketValue==='function'?wsMarketValue():null;return L.cashSummary(ws.cashAccounts||{},ws.fxRates||{},typeof wsBaseCurrency==='function'?wsBaseCurrency():'EUR',mv&&Number.isFinite(mv.mv)?mv.mv:0);};
+13540 |       mark('wsCashSummary');
+13541 |     }
+```
+
 ## maximumSharpe — line 9142 — owner `PortfolioOptimizers`
 
 ```js
@@ -2382,6 +2587,47 @@ Generated mechanically from the production source to support the final modulariz
 12963 |       const target=contrib.reduce((a,b)=>a+b,0)/w.length;
 12964 |       if(!finite(target)||target<=EPS){
 12965 |         if(items.every(x=>x.volatility<=EPS))return equalWeight(items);
+```
+
+## maximumSharpe — line 13515 — owner `out`
+
+```js
+13507 |   if(typeof PeerSimilarity!=='undefined'&&PeerSimilarity){PeerSimilarity.score=peers=>W.peerDataCoverage(peers);mark('PeerSimilarity.score');}
+13508 | 
+13509 |   if(typeof factorExposure==='function'){factorExposure=items=>W.factorExposure(items);mark('factorExposure');}
+13510 |   if(typeof performanceAttribution==='function'){performanceAttribution=(items,benchmarkRet)=>W.performanceAttribution(items,benchmarkRet);mark('performanceAttribution');}
+13511 |   if(typeof RiskContribution!=='undefined'&&RiskContribution){RiskContribution.compute=(port,corr)=>W.riskContribution(port,corr);mark('RiskContribution.compute');}
+13512 |   if(typeof PortfolioOptimizers!=='undefined'&&PortfolioOptimizers){
+13513 |     PortfolioOptimizers.equalWeight=items=>W.equalWeight(items);
+13514 |     PortfolioOptimizers.minimumVariance=(items,corr)=>W.minimumVariance(items,corr);
+13515 |     PortfolioOptimizers.maximumSharpe=(items,corr,rf)=>W.maximumSharpe(items,corr,rf==null?0:rf);
+13516 |     PortfolioOptimizers.riskParity=(items,corr)=>W.riskParity(items,corr);
+13517 |     mark('PortfolioOptimizers');
+13518 |   }
+13519 | 
+13520 |   if(L){
+13521 |     if(typeof wsDividendAmounts==='function'){wsDividendAmounts=tx=>L.dividendAmounts(tx);mark('wsDividendAmounts');}
+13522 |     if(typeof wsCalculateFromLedger==='function'){
+13523 |       wsCalculateFromLedger=(ws,_opts)=>L.calculateLedger(ws&&Array.isArray(ws.transactions)?ws.transactions:[],typeof wsBaseCurrency==='function'?wsBaseCurrency():'EUR');
+13524 |       mark('wsCalculateFromLedger');
+13525 |     }
+13526 |     if(typeof wsFxConvert==='function'){
+13527 |       wsFxConvert=(amount,currency)=>{const meta=typeof wsFxRateMeta==='function'?wsFxRateMeta(currency):null;return meta?W.fxConvert(amount,meta.rate):null;};
+13528 |       mark('wsFxConvert');
+13529 |     }
+13530 |     if(typeof wsPositionBaseValue==='function'){
+13531 |       wsPositionBaseValue=security=>{const ws=typeof wsPortfolio==='function'?wsPortfolio():null,p=ws&&ws.holdings?ws.holdings[security]:null;if(!p)return null;const pg=typeof wsGetPrice==='function'?wsGetPrice(security,ws):null;if(!pg)return null;const fx=typeof wsFxRate==='function'?wsFxRate(p.currency||(typeof wsBaseCurrency==='function'?wsBaseCurrency():'EUR')):null;return L.positionBaseValue(p,pg.price,fx);};
+13532 |       mark('wsPositionBaseValue');
+13533 |     }
+13534 |     if(typeof wsMarketValue==='function'){
+13535 |       wsMarketValue=()=>{const ws=typeof wsPortfolio==='function'?wsPortfolio():null,pos=ws&&ws.holdings?ws.holdings:{};const entries=Object.keys(pos).map(k=>{const p=pos[k],pg=typeof wsGetPrice==='function'?wsGetPrice(k,ws):null,meta=typeof wsFxRateMeta==='function'?wsFxRateMeta(p.currency||(typeof wsBaseCurrency==='function'?wsBaseCurrency():'EUR')):null;return {position:p,price:pg?pg.price:null,fxRate:meta?meta.rate:null};});return L.marketValueSummary(entries);};
+13536 |       mark('wsMarketValue');
+13537 |     }
+13538 |     if(typeof wsCashSummary==='function'){
+13539 |       wsCashSummary=()=>{const ws=typeof wsPortfolio==='function'?wsPortfolio():null;if(!ws)return null;const mv=typeof wsMarketValue==='function'?wsMarketValue():null;return L.cashSummary(ws.cashAccounts||{},ws.fxRates||{},typeof wsBaseCurrency==='function'?wsBaseCurrency():'EUR',mv&&Number.isFinite(mv.mv)?mv.mv:0);};
+13540 |       mark('wsCashSummary');
+13541 |     }
+13542 |     if(typeof wsUnrealized==='function'){
 ```
 
 ## wsDividendAmounts — line 9607 — owner `FinancialValidators`
@@ -2466,6 +2712,47 @@ Generated mechanically from the production source to support the final modulariz
  9651 |       pos.fxBasis= prevCost+cost>0? ((prevCost*pos.fxBasis)+(cost*fxB))/(prevCost+cost) : fxB;
 ```
 
+## wsCalculateFromLedger — line 13523 — owner `out`
+
+```js
+13515 |     PortfolioOptimizers.maximumSharpe=(items,corr,rf)=>W.maximumSharpe(items,corr,rf==null?0:rf);
+13516 |     PortfolioOptimizers.riskParity=(items,corr)=>W.riskParity(items,corr);
+13517 |     mark('PortfolioOptimizers');
+13518 |   }
+13519 | 
+13520 |   if(L){
+13521 |     if(typeof wsDividendAmounts==='function'){wsDividendAmounts=tx=>L.dividendAmounts(tx);mark('wsDividendAmounts');}
+13522 |     if(typeof wsCalculateFromLedger==='function'){
+13523 |       wsCalculateFromLedger=(ws,_opts)=>L.calculateLedger(ws&&Array.isArray(ws.transactions)?ws.transactions:[],typeof wsBaseCurrency==='function'?wsBaseCurrency():'EUR');
+13524 |       mark('wsCalculateFromLedger');
+13525 |     }
+13526 |     if(typeof wsFxConvert==='function'){
+13527 |       wsFxConvert=(amount,currency)=>{const meta=typeof wsFxRateMeta==='function'?wsFxRateMeta(currency):null;return meta?W.fxConvert(amount,meta.rate):null;};
+13528 |       mark('wsFxConvert');
+13529 |     }
+13530 |     if(typeof wsPositionBaseValue==='function'){
+13531 |       wsPositionBaseValue=security=>{const ws=typeof wsPortfolio==='function'?wsPortfolio():null,p=ws&&ws.holdings?ws.holdings[security]:null;if(!p)return null;const pg=typeof wsGetPrice==='function'?wsGetPrice(security,ws):null;if(!pg)return null;const fx=typeof wsFxRate==='function'?wsFxRate(p.currency||(typeof wsBaseCurrency==='function'?wsBaseCurrency():'EUR')):null;return L.positionBaseValue(p,pg.price,fx);};
+13532 |       mark('wsPositionBaseValue');
+13533 |     }
+13534 |     if(typeof wsMarketValue==='function'){
+13535 |       wsMarketValue=()=>{const ws=typeof wsPortfolio==='function'?wsPortfolio():null,pos=ws&&ws.holdings?ws.holdings:{};const entries=Object.keys(pos).map(k=>{const p=pos[k],pg=typeof wsGetPrice==='function'?wsGetPrice(k,ws):null,meta=typeof wsFxRateMeta==='function'?wsFxRateMeta(p.currency||(typeof wsBaseCurrency==='function'?wsBaseCurrency():'EUR')):null;return {position:p,price:pg?pg.price:null,fxRate:meta?meta.rate:null};});return L.marketValueSummary(entries);};
+13536 |       mark('wsMarketValue');
+13537 |     }
+13538 |     if(typeof wsCashSummary==='function'){
+13539 |       wsCashSummary=()=>{const ws=typeof wsPortfolio==='function'?wsPortfolio():null;if(!ws)return null;const mv=typeof wsMarketValue==='function'?wsMarketValue():null;return L.cashSummary(ws.cashAccounts||{},ws.fxRates||{},typeof wsBaseCurrency==='function'?wsBaseCurrency():'EUR',mv&&Number.isFinite(mv.mv)?mv.mv:0);};
+13540 |       mark('wsCashSummary');
+13541 |     }
+13542 |     if(typeof wsUnrealized==='function'){
+13543 |       wsUnrealized=(security,price)=>{const ws=typeof wsPortfolio==='function'?wsPortfolio():null,p=ws&&ws.holdings?ws.holdings[security]:null;const r=L.positionUnrealized(p,price);return r?r.unrealizedPnl:null;};
+13544 |       mark('wsUnrealized');
+13545 |     }
+13546 |   }
+13547 | 
+13548 |   if(typeof wsTWR==='function'){wsTWR=snapshots=>W.timeWeightedReturnFromSnapshots(snapshots);mark('wsTWR');}
+13549 |   if(typeof wsMWR==='function'){wsMWR=snapshots=>W.moneyWeightedReturnFromSnapshots(snapshots);mark('wsMWR');}
+13550 |   if(typeof wsAnnualized==='function'){wsAnnualized=(twr,days)=>W.annualizeReturn(twr,days);mark('wsAnnualized');}
+```
+
 ## wsFxRateMeta — line 9704 — owner `accounts`
 
 ```js
@@ -2548,6 +2835,47 @@ Generated mechanically from the production source to support the final modulariz
  9747 | function wsPositionBaseValue(k){
 ```
 
+## wsFxConvert — line 13527 — owner `out`
+
+```js
+13519 | 
+13520 |   if(L){
+13521 |     if(typeof wsDividendAmounts==='function'){wsDividendAmounts=tx=>L.dividendAmounts(tx);mark('wsDividendAmounts');}
+13522 |     if(typeof wsCalculateFromLedger==='function'){
+13523 |       wsCalculateFromLedger=(ws,_opts)=>L.calculateLedger(ws&&Array.isArray(ws.transactions)?ws.transactions:[],typeof wsBaseCurrency==='function'?wsBaseCurrency():'EUR');
+13524 |       mark('wsCalculateFromLedger');
+13525 |     }
+13526 |     if(typeof wsFxConvert==='function'){
+13527 |       wsFxConvert=(amount,currency)=>{const meta=typeof wsFxRateMeta==='function'?wsFxRateMeta(currency):null;return meta?W.fxConvert(amount,meta.rate):null;};
+13528 |       mark('wsFxConvert');
+13529 |     }
+13530 |     if(typeof wsPositionBaseValue==='function'){
+13531 |       wsPositionBaseValue=security=>{const ws=typeof wsPortfolio==='function'?wsPortfolio():null,p=ws&&ws.holdings?ws.holdings[security]:null;if(!p)return null;const pg=typeof wsGetPrice==='function'?wsGetPrice(security,ws):null;if(!pg)return null;const fx=typeof wsFxRate==='function'?wsFxRate(p.currency||(typeof wsBaseCurrency==='function'?wsBaseCurrency():'EUR')):null;return L.positionBaseValue(p,pg.price,fx);};
+13532 |       mark('wsPositionBaseValue');
+13533 |     }
+13534 |     if(typeof wsMarketValue==='function'){
+13535 |       wsMarketValue=()=>{const ws=typeof wsPortfolio==='function'?wsPortfolio():null,pos=ws&&ws.holdings?ws.holdings:{};const entries=Object.keys(pos).map(k=>{const p=pos[k],pg=typeof wsGetPrice==='function'?wsGetPrice(k,ws):null,meta=typeof wsFxRateMeta==='function'?wsFxRateMeta(p.currency||(typeof wsBaseCurrency==='function'?wsBaseCurrency():'EUR')):null;return {position:p,price:pg?pg.price:null,fxRate:meta?meta.rate:null};});return L.marketValueSummary(entries);};
+13536 |       mark('wsMarketValue');
+13537 |     }
+13538 |     if(typeof wsCashSummary==='function'){
+13539 |       wsCashSummary=()=>{const ws=typeof wsPortfolio==='function'?wsPortfolio():null;if(!ws)return null;const mv=typeof wsMarketValue==='function'?wsMarketValue():null;return L.cashSummary(ws.cashAccounts||{},ws.fxRates||{},typeof wsBaseCurrency==='function'?wsBaseCurrency():'EUR',mv&&Number.isFinite(mv.mv)?mv.mv:0);};
+13540 |       mark('wsCashSummary');
+13541 |     }
+13542 |     if(typeof wsUnrealized==='function'){
+13543 |       wsUnrealized=(security,price)=>{const ws=typeof wsPortfolio==='function'?wsPortfolio():null,p=ws&&ws.holdings?ws.holdings[security]:null;const r=L.positionUnrealized(p,price);return r?r.unrealizedPnl:null;};
+13544 |       mark('wsUnrealized');
+13545 |     }
+13546 |   }
+13547 | 
+13548 |   if(typeof wsTWR==='function'){wsTWR=snapshots=>W.timeWeightedReturnFromSnapshots(snapshots);mark('wsTWR');}
+13549 |   if(typeof wsMWR==='function'){wsMWR=snapshots=>W.moneyWeightedReturnFromSnapshots(snapshots);mark('wsMWR');}
+13550 |   if(typeof wsAnnualized==='function'){wsAnnualized=(twr,days)=>W.annualizeReturn(twr,days);mark('wsAnnualized');}
+13551 |   if(typeof wsCaptureRatios==='function'){wsCaptureRatios=(p,b,a)=>{const r=W.captureRatios(p,b,a);return r?{upside:r.upside,downside:r.downside,beta:r.beta,te:r.te,ir:r.ir,alpha:r.alpha,periods:r.n}:null;};mark('wsCaptureRatios');}
+13552 |   if(typeof wsPerfRisk==='function'){wsPerfRisk=(returns,annualFactor)=>W.performanceRisk(returns,annualFactor,.02);mark('wsPerfRisk');}
+13553 |   if(typeof wsPeriodReturns==='function'){wsPeriodReturns=snapshots=>W.periodReturnsFromSnapshots(snapshots);mark('wsPeriodReturns');}
+13554 | 
+```
+
 ## wsMarketValue — line 9723 — owner `accounts`
 
 ```js
@@ -2587,6 +2915,47 @@ Generated mechanically from the production source to support the final modulariz
  9748 |   const ws=wsPortfolio(); const p=ws.holdings&&ws.holdings[k]; if(!p)return null;
  9749 |   const cur=p.currency||wsBaseCurrency();
  9750 |   const pg=wsGetPrice(k, ws); if(!pg)return null;
+```
+
+## wsMarketValue — line 13535 — owner `out`
+
+```js
+13527 |       wsFxConvert=(amount,currency)=>{const meta=typeof wsFxRateMeta==='function'?wsFxRateMeta(currency):null;return meta?W.fxConvert(amount,meta.rate):null;};
+13528 |       mark('wsFxConvert');
+13529 |     }
+13530 |     if(typeof wsPositionBaseValue==='function'){
+13531 |       wsPositionBaseValue=security=>{const ws=typeof wsPortfolio==='function'?wsPortfolio():null,p=ws&&ws.holdings?ws.holdings[security]:null;if(!p)return null;const pg=typeof wsGetPrice==='function'?wsGetPrice(security,ws):null;if(!pg)return null;const fx=typeof wsFxRate==='function'?wsFxRate(p.currency||(typeof wsBaseCurrency==='function'?wsBaseCurrency():'EUR')):null;return L.positionBaseValue(p,pg.price,fx);};
+13532 |       mark('wsPositionBaseValue');
+13533 |     }
+13534 |     if(typeof wsMarketValue==='function'){
+13535 |       wsMarketValue=()=>{const ws=typeof wsPortfolio==='function'?wsPortfolio():null,pos=ws&&ws.holdings?ws.holdings:{};const entries=Object.keys(pos).map(k=>{const p=pos[k],pg=typeof wsGetPrice==='function'?wsGetPrice(k,ws):null,meta=typeof wsFxRateMeta==='function'?wsFxRateMeta(p.currency||(typeof wsBaseCurrency==='function'?wsBaseCurrency():'EUR')):null;return {position:p,price:pg?pg.price:null,fxRate:meta?meta.rate:null};});return L.marketValueSummary(entries);};
+13536 |       mark('wsMarketValue');
+13537 |     }
+13538 |     if(typeof wsCashSummary==='function'){
+13539 |       wsCashSummary=()=>{const ws=typeof wsPortfolio==='function'?wsPortfolio():null;if(!ws)return null;const mv=typeof wsMarketValue==='function'?wsMarketValue():null;return L.cashSummary(ws.cashAccounts||{},ws.fxRates||{},typeof wsBaseCurrency==='function'?wsBaseCurrency():'EUR',mv&&Number.isFinite(mv.mv)?mv.mv:0);};
+13540 |       mark('wsCashSummary');
+13541 |     }
+13542 |     if(typeof wsUnrealized==='function'){
+13543 |       wsUnrealized=(security,price)=>{const ws=typeof wsPortfolio==='function'?wsPortfolio():null,p=ws&&ws.holdings?ws.holdings[security]:null;const r=L.positionUnrealized(p,price);return r?r.unrealizedPnl:null;};
+13544 |       mark('wsUnrealized');
+13545 |     }
+13546 |   }
+13547 | 
+13548 |   if(typeof wsTWR==='function'){wsTWR=snapshots=>W.timeWeightedReturnFromSnapshots(snapshots);mark('wsTWR');}
+13549 |   if(typeof wsMWR==='function'){wsMWR=snapshots=>W.moneyWeightedReturnFromSnapshots(snapshots);mark('wsMWR');}
+13550 |   if(typeof wsAnnualized==='function'){wsAnnualized=(twr,days)=>W.annualizeReturn(twr,days);mark('wsAnnualized');}
+13551 |   if(typeof wsCaptureRatios==='function'){wsCaptureRatios=(p,b,a)=>{const r=W.captureRatios(p,b,a);return r?{upside:r.upside,downside:r.downside,beta:r.beta,te:r.te,ir:r.ir,alpha:r.alpha,periods:r.n}:null;};mark('wsCaptureRatios');}
+13552 |   if(typeof wsPerfRisk==='function'){wsPerfRisk=(returns,annualFactor)=>W.performanceRisk(returns,annualFactor,.02);mark('wsPerfRisk');}
+13553 |   if(typeof wsPeriodReturns==='function'){wsPeriodReturns=snapshots=>W.periodReturnsFromSnapshots(snapshots);mark('wsPeriodReturns');}
+13554 | 
+13555 |   if(typeof App!=='undefined'&&App&&App.meta){
+13556 |     App.meta.workstationCalculationCoreVersion=W.VERSION;
+13557 |     if(L)App.meta.workstationLedgerCoreVersion=L.VERSION;
+13558 |   }
+13559 |   const prior=globalThis.__FINANCIAL_CERTIFICATION__||{};
+13560 |   const priorInstalled=Array.isArray(prior.installed)?prior.installed:[];
+13561 |   globalThis.__FINANCIAL_CERTIFICATION__=Object.freeze(Object.assign({},prior,{
+13562 |     workstationVersion:W.VERSION,
 ```
 
 ## wsPositionBaseValue — line 9747 — owner `accounts`
@@ -2669,6 +3038,47 @@ Generated mechanically from the production source to support the final modulariz
  9787 |   ws.rebalanceProposals=proposals;
  9788 |   return {items,proposals,mv};
  9789 | }
+```
+
+## wsCashSummary — line 13539 — owner `out`
+
+```js
+13531 |       wsPositionBaseValue=security=>{const ws=typeof wsPortfolio==='function'?wsPortfolio():null,p=ws&&ws.holdings?ws.holdings[security]:null;if(!p)return null;const pg=typeof wsGetPrice==='function'?wsGetPrice(security,ws):null;if(!pg)return null;const fx=typeof wsFxRate==='function'?wsFxRate(p.currency||(typeof wsBaseCurrency==='function'?wsBaseCurrency():'EUR')):null;return L.positionBaseValue(p,pg.price,fx);};
+13532 |       mark('wsPositionBaseValue');
+13533 |     }
+13534 |     if(typeof wsMarketValue==='function'){
+13535 |       wsMarketValue=()=>{const ws=typeof wsPortfolio==='function'?wsPortfolio():null,pos=ws&&ws.holdings?ws.holdings:{};const entries=Object.keys(pos).map(k=>{const p=pos[k],pg=typeof wsGetPrice==='function'?wsGetPrice(k,ws):null,meta=typeof wsFxRateMeta==='function'?wsFxRateMeta(p.currency||(typeof wsBaseCurrency==='function'?wsBaseCurrency():'EUR')):null;return {position:p,price:pg?pg.price:null,fxRate:meta?meta.rate:null};});return L.marketValueSummary(entries);};
+13536 |       mark('wsMarketValue');
+13537 |     }
+13538 |     if(typeof wsCashSummary==='function'){
+13539 |       wsCashSummary=()=>{const ws=typeof wsPortfolio==='function'?wsPortfolio():null;if(!ws)return null;const mv=typeof wsMarketValue==='function'?wsMarketValue():null;return L.cashSummary(ws.cashAccounts||{},ws.fxRates||{},typeof wsBaseCurrency==='function'?wsBaseCurrency():'EUR',mv&&Number.isFinite(mv.mv)?mv.mv:0);};
+13540 |       mark('wsCashSummary');
+13541 |     }
+13542 |     if(typeof wsUnrealized==='function'){
+13543 |       wsUnrealized=(security,price)=>{const ws=typeof wsPortfolio==='function'?wsPortfolio():null,p=ws&&ws.holdings?ws.holdings[security]:null;const r=L.positionUnrealized(p,price);return r?r.unrealizedPnl:null;};
+13544 |       mark('wsUnrealized');
+13545 |     }
+13546 |   }
+13547 | 
+13548 |   if(typeof wsTWR==='function'){wsTWR=snapshots=>W.timeWeightedReturnFromSnapshots(snapshots);mark('wsTWR');}
+13549 |   if(typeof wsMWR==='function'){wsMWR=snapshots=>W.moneyWeightedReturnFromSnapshots(snapshots);mark('wsMWR');}
+13550 |   if(typeof wsAnnualized==='function'){wsAnnualized=(twr,days)=>W.annualizeReturn(twr,days);mark('wsAnnualized');}
+13551 |   if(typeof wsCaptureRatios==='function'){wsCaptureRatios=(p,b,a)=>{const r=W.captureRatios(p,b,a);return r?{upside:r.upside,downside:r.downside,beta:r.beta,te:r.te,ir:r.ir,alpha:r.alpha,periods:r.n}:null;};mark('wsCaptureRatios');}
+13552 |   if(typeof wsPerfRisk==='function'){wsPerfRisk=(returns,annualFactor)=>W.performanceRisk(returns,annualFactor,.02);mark('wsPerfRisk');}
+13553 |   if(typeof wsPeriodReturns==='function'){wsPeriodReturns=snapshots=>W.periodReturnsFromSnapshots(snapshots);mark('wsPeriodReturns');}
+13554 | 
+13555 |   if(typeof App!=='undefined'&&App&&App.meta){
+13556 |     App.meta.workstationCalculationCoreVersion=W.VERSION;
+13557 |     if(L)App.meta.workstationLedgerCoreVersion=L.VERSION;
+13558 |   }
+13559 |   const prior=globalThis.__FINANCIAL_CERTIFICATION__||{};
+13560 |   const priorInstalled=Array.isArray(prior.installed)?prior.installed:[];
+13561 |   globalThis.__FINANCIAL_CERTIFICATION__=Object.freeze(Object.assign({},prior,{
+13562 |     workstationVersion:W.VERSION,
+13563 |     workstationLedgerVersion:L?L.VERSION:null,
+13564 |     installed:priorInstalled.concat(installed),
+13565 |     workstationInstalled:Object.freeze(installed.slice())
+13566 |   }));
 ```
 
 ## wsReconcile — line 9795 — owner `localCash`
@@ -2792,6 +3202,47 @@ Generated mechanically from the production source to support the final modulariz
  9909 |   ${staleKeys.length||missingKeys.length?`<div class="banner warn">${missingKeys.length?`<b>PORTFOLIO VALUE INCOMPLETE</b> — no price recorded for: ${missingKeys.join(", ")}. `:""}${staleKeys.length?`<b>PORTFOLIO VALUE PARTIALLY STALE</b> — stale prices: ${staleKeys.join(", ")}. `:""}The totals below are not fully current.</div>`:""}
  9910 |   <div class="grid g4">
  9911 |     ${kpi("Market value",mv.mv>0?fmt.money(mv.mv):"—")}
+```
+
+## wsUnrealized — line 13543 — owner `out`
+
+```js
+13535 |       wsMarketValue=()=>{const ws=typeof wsPortfolio==='function'?wsPortfolio():null,pos=ws&&ws.holdings?ws.holdings:{};const entries=Object.keys(pos).map(k=>{const p=pos[k],pg=typeof wsGetPrice==='function'?wsGetPrice(k,ws):null,meta=typeof wsFxRateMeta==='function'?wsFxRateMeta(p.currency||(typeof wsBaseCurrency==='function'?wsBaseCurrency():'EUR')):null;return {position:p,price:pg?pg.price:null,fxRate:meta?meta.rate:null};});return L.marketValueSummary(entries);};
+13536 |       mark('wsMarketValue');
+13537 |     }
+13538 |     if(typeof wsCashSummary==='function'){
+13539 |       wsCashSummary=()=>{const ws=typeof wsPortfolio==='function'?wsPortfolio():null;if(!ws)return null;const mv=typeof wsMarketValue==='function'?wsMarketValue():null;return L.cashSummary(ws.cashAccounts||{},ws.fxRates||{},typeof wsBaseCurrency==='function'?wsBaseCurrency():'EUR',mv&&Number.isFinite(mv.mv)?mv.mv:0);};
+13540 |       mark('wsCashSummary');
+13541 |     }
+13542 |     if(typeof wsUnrealized==='function'){
+13543 |       wsUnrealized=(security,price)=>{const ws=typeof wsPortfolio==='function'?wsPortfolio():null,p=ws&&ws.holdings?ws.holdings[security]:null;const r=L.positionUnrealized(p,price);return r?r.unrealizedPnl:null;};
+13544 |       mark('wsUnrealized');
+13545 |     }
+13546 |   }
+13547 | 
+13548 |   if(typeof wsTWR==='function'){wsTWR=snapshots=>W.timeWeightedReturnFromSnapshots(snapshots);mark('wsTWR');}
+13549 |   if(typeof wsMWR==='function'){wsMWR=snapshots=>W.moneyWeightedReturnFromSnapshots(snapshots);mark('wsMWR');}
+13550 |   if(typeof wsAnnualized==='function'){wsAnnualized=(twr,days)=>W.annualizeReturn(twr,days);mark('wsAnnualized');}
+13551 |   if(typeof wsCaptureRatios==='function'){wsCaptureRatios=(p,b,a)=>{const r=W.captureRatios(p,b,a);return r?{upside:r.upside,downside:r.downside,beta:r.beta,te:r.te,ir:r.ir,alpha:r.alpha,periods:r.n}:null;};mark('wsCaptureRatios');}
+13552 |   if(typeof wsPerfRisk==='function'){wsPerfRisk=(returns,annualFactor)=>W.performanceRisk(returns,annualFactor,.02);mark('wsPerfRisk');}
+13553 |   if(typeof wsPeriodReturns==='function'){wsPeriodReturns=snapshots=>W.periodReturnsFromSnapshots(snapshots);mark('wsPeriodReturns');}
+13554 | 
+13555 |   if(typeof App!=='undefined'&&App&&App.meta){
+13556 |     App.meta.workstationCalculationCoreVersion=W.VERSION;
+13557 |     if(L)App.meta.workstationLedgerCoreVersion=L.VERSION;
+13558 |   }
+13559 |   const prior=globalThis.__FINANCIAL_CERTIFICATION__||{};
+13560 |   const priorInstalled=Array.isArray(prior.installed)?prior.installed:[];
+13561 |   globalThis.__FINANCIAL_CERTIFICATION__=Object.freeze(Object.assign({},prior,{
+13562 |     workstationVersion:W.VERSION,
+13563 |     workstationLedgerVersion:L?L.VERSION:null,
+13564 |     installed:priorInstalled.concat(installed),
+13565 |     workstationInstalled:Object.freeze(installed.slice())
+13566 |   }));
+13567 | })();
+13568 | /* FINANCIAL_CERTIFICATION_RUNTIME_END */
+13569 | window.addEventListener("DOMContentLoaded",init);
+13570 | 
 ```
 
 ## wsTWR — line 10229 — owner `order`
@@ -2956,6 +3407,41 @@ Generated mechanically from the production source to support the final modulariz
 11905 |   const risk= wsPerfRisk(periodReturnsArray(snaps), wsAnnualizationFactor(snaps));
 11906 |   // build an array of period returns from snapshot MV for risk stats
 11907 |   function periodReturnsArray(snaps2){ return (typeof WorkstationCalculationCore!=="undefined"?WorkstationCalculationCore.periodReturnsFromSnapshots(snaps2):null)||[]; }
+```
+
+## wsPerfRisk — line 13552 — owner `out`
+
+```js
+13544 |       mark('wsUnrealized');
+13545 |     }
+13546 |   }
+13547 | 
+13548 |   if(typeof wsTWR==='function'){wsTWR=snapshots=>W.timeWeightedReturnFromSnapshots(snapshots);mark('wsTWR');}
+13549 |   if(typeof wsMWR==='function'){wsMWR=snapshots=>W.moneyWeightedReturnFromSnapshots(snapshots);mark('wsMWR');}
+13550 |   if(typeof wsAnnualized==='function'){wsAnnualized=(twr,days)=>W.annualizeReturn(twr,days);mark('wsAnnualized');}
+13551 |   if(typeof wsCaptureRatios==='function'){wsCaptureRatios=(p,b,a)=>{const r=W.captureRatios(p,b,a);return r?{upside:r.upside,downside:r.downside,beta:r.beta,te:r.te,ir:r.ir,alpha:r.alpha,periods:r.n}:null;};mark('wsCaptureRatios');}
+13552 |   if(typeof wsPerfRisk==='function'){wsPerfRisk=(returns,annualFactor)=>W.performanceRisk(returns,annualFactor,.02);mark('wsPerfRisk');}
+13553 |   if(typeof wsPeriodReturns==='function'){wsPeriodReturns=snapshots=>W.periodReturnsFromSnapshots(snapshots);mark('wsPeriodReturns');}
+13554 | 
+13555 |   if(typeof App!=='undefined'&&App&&App.meta){
+13556 |     App.meta.workstationCalculationCoreVersion=W.VERSION;
+13557 |     if(L)App.meta.workstationLedgerCoreVersion=L.VERSION;
+13558 |   }
+13559 |   const prior=globalThis.__FINANCIAL_CERTIFICATION__||{};
+13560 |   const priorInstalled=Array.isArray(prior.installed)?prior.installed:[];
+13561 |   globalThis.__FINANCIAL_CERTIFICATION__=Object.freeze(Object.assign({},prior,{
+13562 |     workstationVersion:W.VERSION,
+13563 |     workstationLedgerVersion:L?L.VERSION:null,
+13564 |     installed:priorInstalled.concat(installed),
+13565 |     workstationInstalled:Object.freeze(installed.slice())
+13566 |   }));
+13567 | })();
+13568 | /* FINANCIAL_CERTIFICATION_RUNTIME_END */
+13569 | window.addEventListener("DOMContentLoaded",init);
+13570 | 
+13571 | </script></body>
+13572 | </html>
+13573 | 
 ```
 
 ## periodReturnsArray — line 11907 — owner `rets`

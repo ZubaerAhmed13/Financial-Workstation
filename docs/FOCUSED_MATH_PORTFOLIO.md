@@ -68,18 +68,18 @@ Not located.
  8514 |     if(!sd||sd.price==null)return null;
  8515 |     const base={revenue0:a.revenue||sd.revenue,tax:a.tax,capexPct:a.capexPct,wcPct:a.wcPct,dandaPct:a.dandaPct,wacc:a.wacc,terminalGrowth:a.terminalGrowth,terminalMethod:"growth",exitMultiple:a.exitMultiple,netDebt:a.netDebt,shares:a.shares,horizon:a.horizon,growth:a.revenueGrowth,ebitdaMargin:a.ebitdaMargin};
  8516 |     function dcfRange(g,m,w,tg){
- 8517 |       const lo=ValuationEngine.dcf({...base,growth:g*.9,margin:m*.9,wacc:w*1.06,terminalGrowth:tg*.85}).perShare;
- 8518 |       const hi=ValuationEngine.dcf({...base,growth:g*1.1,margin:m*1.1,wacc:w*.94,terminalGrowth:tg*1.15}).perShare;
- 8519 |       const mid=ValuationEngine.dcf({...base,growth:g,margin:m,wacc:w,terminalGrowth:tg}).perShare;
+ 8517 |       const lo=ValuationEngine.dcf({...base,growth:g*.9,ebitdaMargin:m*.9,wacc:w*1.06,terminalGrowth:tg*.85}).perShare;
+ 8518 |       const hi=ValuationEngine.dcf({...base,growth:g*1.1,ebitdaMargin:m*1.1,wacc:w*.94,terminalGrowth:tg*1.15}).perShare;
+ 8519 |       const mid=ValuationEngine.dcf({...base,growth:g,ebitdaMargin:m,wacc:w,terminalGrowth:tg}).perShare;
  8520 |       return {lo,mid,hi};
  8521 |     }
  8522 |     const bear=dcfRange(a.revenueGrowth*.55,a.ebitdaMargin*.8,a.wacc*1.15,a.terminalGrowth*.6);
  8523 |     const baseR=dcfRange(a.revenueGrowth,a.ebitdaMargin,a.wacc,a.terminalGrowth);
  8524 |     const bull=dcfRange(a.revenueGrowth*1.5,a.ebitdaMargin*1.2,a.wacc*.85,a.terminalGrowth*1.4);
  8525 |     const central=baseR.mid;
- 8526 |     const disp=(bull.hi-bear.lo)/(Math.abs(central)||1);
+ 8526 |     const disp=Number.isFinite(central)&&Math.abs(central)>1e-12?(bull.hi-bear.lo)/Math.abs(central):null;
  8527 |     const suff=DataSufficiency.compute().overall;
- 8528 |     const conf= Math.max(0,Math.min(100,Math.round(80 - disp*20 + (suff-50)*0.3)));
+ 8528 |     const conf= disp==null?0:Math.max(0,Math.min(100,Math.round(80 - disp*20 + (suff-50)*0.3)));
  8529 |     return {bear,baseR,bull,central,conf,dispersion:disp};
  8530 |   }
  8531 |   function html(u){

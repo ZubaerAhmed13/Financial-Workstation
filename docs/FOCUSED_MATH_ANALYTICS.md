@@ -60,7 +60,7 @@ Generated from index.html. Engineering evidence only; not a certification claim.
  1590 |     const out=[]; for(const s of scenarios){
  1591 |       const dcf=ValuationEngine.dcf({revenue0:baseDcf.revenue0, growth:s.growth, ebitdaMargin:s.margin, tax:baseDcf.tax, capexPct:s.capexPct!=null?s.capexPct:baseDcf.capexPct, wcPct:s.wcPct!=null?s.wcPct:baseDcf.wcPct, dandaPct:baseDcf.dandaPct, wacc:s.wacc, terminalGrowth:s.terminalGrowth, terminalMethod:baseDcf.terminalMethod, exitMultiple:s.exitMultiple!=null?s.exitMultiple:baseDcf.exitMultiple, netDebt, shares, horizon:baseDcf.horizon});
  1592 |       const val=dcf.perShare; const mos=currentPrice>0? (val/currentPrice)-1:null;
- 1593 |       out.push({name:s.name, growth:s.growth, margin:s.margin, wacc:s.wacc, tg:s.terminalGrowth, prob:s.prob||null, value:val, perShare:val, dcf, mos});
+ 1593 |       out.push({name:s.name, growth:s.growth, margin:s.margin, wacc:s.wacc, tg:s.terminalGrowth, prob:s.prob??null, value:val, perShare:val, dcf, mos});
  1594 |     }
  1595 |     // probability weighted (if probs provided)
  1596 |     const probSum=out.reduce((s,o)=>s+(o.prob??0),0);
@@ -84,6 +84,256 @@ Generated from index.html. Engineering evidence only; not a certification claim.
  1614 |     const finals=[];
  1615 |     const results={ };
  1616 |     const subsample=[];
+```
+
+## const ScenarioEngine — 1 hit(s)
+
+### line 1587
+
+```js
+ 1575 |     weights=weights||defaultWeights; k=k||3;
+ 1576 |     const stats=standardize(refCases);
+ 1577 |     const scored=refCases.map(c=>({case:c, sim:simScore(query,c,stats,weights)}));
+ 1578 |     scored.sort((a,b)=>b.sim-a.sim);
+ 1579 |     return scored.slice(0,k);
+ 1580 |   }
+ 1581 |   return {match,simScore,standardize,FEATURES,defaultWeights,normalizeWeights,matchReference};
+ 1582 | })();
+ 1583 | 
+ 1584 | /* ============================================================
+ 1585 |    SCENARIO ENGINE
+ 1586 |    ============================================================ */
+ 1587 | const ScenarioEngine=(()=>{
+ 1588 |   function run(baseDcf, scenarios, currentPrice, netDebt, shares){
+ 1589 |     // scenarios: array of {name, growth, margin, wacc, terminalGrowth, prob}
+ 1590 |     const out=[]; for(const s of scenarios){
+ 1591 |       const dcf=ValuationEngine.dcf({revenue0:baseDcf.revenue0, growth:s.growth, ebitdaMargin:s.margin, tax:baseDcf.tax, capexPct:s.capexPct!=null?s.capexPct:baseDcf.capexPct, wcPct:s.wcPct!=null?s.wcPct:baseDcf.wcPct, dandaPct:baseDcf.dandaPct, wacc:s.wacc, terminalGrowth:s.terminalGrowth, terminalMethod:baseDcf.terminalMethod, exitMultiple:s.exitMultiple!=null?s.exitMultiple:baseDcf.exitMultiple, netDebt, shares, horizon:baseDcf.horizon});
+ 1592 |       const val=dcf.perShare; const mos=currentPrice>0? (val/currentPrice)-1:null;
+ 1593 |       out.push({name:s.name, growth:s.growth, margin:s.margin, wacc:s.wacc, tg:s.terminalGrowth, prob:s.prob??null, value:val, perShare:val, dcf, mos});
+ 1594 |     }
+ 1595 |     // probability weighted (if probs provided)
+ 1596 |     const probSum=out.reduce((s,o)=>s+(o.prob??0),0);
+ 1597 |     let weighted=null; if(probSum>0 && out.every(o=>o.prob!=null)) weighted=out.reduce((s,o)=>s+o.prob*o.value,0)/probSum;
+ 1598 |     return {out,weighted};
+ 1599 |   }
+ 1600 |   return {run};
+ 1601 | })();
+ 1602 | 
+ 1603 | /* ============================================================
+ 1604 |    MONTE CARLO — GBM paths
+ 1605 |    ============================================================ */
+ 1606 | const MonteCarlo=(()=>{
+ 1607 |   function mulberry(seed){ return function(){ seed|=0; seed=seed+0x6D2B79F5|0; let t=Math.imul(seed^seed>>>15,1|seed); t=t+Math.imul(t^t>>>7,61|t)^t; return ((t^t>>>14)>>>0)/4294967296; }; }
+ 1608 |   function run({initial=100, expectedReturn=.10, volatility=.25, horizonYears=1, simulations=10000, seed=1234, target=110, stepsPerYear=12}){
+ 1609 |     const rnd=mulberry(seed);
+ 1610 |     const norm=()=>{ // Box-Muller
+ 1611 |       const u1=Math.max(rnd(),1e-12), u2=rnd(); return Math.sqrt(-2*Math.log(u1))*Math.cos(2*Math.PI*u2); };
+ 1612 |     const mu=expectedReturn, sigma=volatility;
+ 1613 |     const dt=1/stepsPerYear; const n=Math.round(horizonYears*stepsPerYear);
+ 1614 |     const finals=[];
+ 1615 |     const results={ };
+ 1616 |     const subsample=[];
+ 1617 |     for(let sim=0;sim<simulations;sim++){
+ 1618 |       let s=initial;
+ 1619 |       for(let t=0;t<n;t++){ s*= Math.exp((mu-0.5*sigma*sigma)*dt + sigma*Math.sqrt(dt)*norm()); }
+ 1620 |       finals.push(s); if(sim% Math.max(1,Math.floor(simulations/200))===0) subsample.push(s);
+ 1621 |     }
+ 1622 |     finals.sort((a,b)=>a-b);
+ 1623 |     const pct=(p)=> finals[Math.min(finals.length-1, Math.floor(p*(finals.length-1)))];
+ 1624 |     const returns=finals.map(f=> f/initial-1);
+ 1625 |     const pLoss=returns.filter(r=>r<0).length/returns.length;
+ 1626 |     const pTarget=finals.filter(f=>f>=target).length/simulations; // P(final ≥ target)
+ 1627 |     const pExceed=finals.filter(f=>f>=target).length/simulations;
+ 1628 |     return {initial,simulations, median:pct(.5), p5:pct(.05),p25:pct(.25),p75:pct(.75),p95:pct(.95), min:finals[0], max:finals[finals.length-1], mean:CalcEngine.mean(finals), pLoss, pTarget, pExceed, target, subsample, seed};
+ 1629 |   }
+ 1630 |   return {run};
+ 1631 | })();
+ 1632 | 
+ 1633 | /* ============================================================
+ 1634 |    CORRELATION
+ 1635 |    ============================================================ */
+ 1636 | const Correlation=(()=>{
+ 1637 |   function matrix(series){
+ 1638 |     // series: {name, returns[]}
+ 1639 |     const n=Math.min(...series.map(s=>s.returns.length));
+ 1640 |     const names=series.map(s=>s.name); const m=names.length;
+ 1641 |     const out=Array.from({length:m},()=>Array(m).fill(null));
+ 1642 |     for(let i=0;i<m;i++) for(let j=0;j<m;j++){ if(i===j){out[i][j]=1;continue;} const a=series[i].returns.slice(-n),b=series[j].returns.slice(-n); out[i][j]=CalcEngine.corr(a,b); }
+ 1643 |     return {names,matrix:out};
+ 1644 |   }
+ 1645 |   return {matrix};
+ 1646 | })();
+ 1647 | 
+ 1648 | /* ============================================================
+ 1649 |    SENTIMENT — rule-based, clearly limited.
+ 1650 |    ============================================================ */
+ 1651 | const Sentiment=(()=>{
+```
+
+## const MonteCarlo — 2 hit(s)
+
+### line 1606
+
+```js
+ 1594 |     }
+ 1595 |     // probability weighted (if probs provided)
+ 1596 |     const probSum=out.reduce((s,o)=>s+(o.prob??0),0);
+ 1597 |     let weighted=null; if(probSum>0 && out.every(o=>o.prob!=null)) weighted=out.reduce((s,o)=>s+o.prob*o.value,0)/probSum;
+ 1598 |     return {out,weighted};
+ 1599 |   }
+ 1600 |   return {run};
+ 1601 | })();
+ 1602 | 
+ 1603 | /* ============================================================
+ 1604 |    MONTE CARLO — GBM paths
+ 1605 |    ============================================================ */
+ 1606 | const MonteCarlo=(()=>{
+ 1607 |   function mulberry(seed){ return function(){ seed|=0; seed=seed+0x6D2B79F5|0; let t=Math.imul(seed^seed>>>15,1|seed); t=t+Math.imul(t^t>>>7,61|t)^t; return ((t^t>>>14)>>>0)/4294967296; }; }
+ 1608 |   function run({initial=100, expectedReturn=.10, volatility=.25, horizonYears=1, simulations=10000, seed=1234, target=110, stepsPerYear=12}){
+ 1609 |     const rnd=mulberry(seed);
+ 1610 |     const norm=()=>{ // Box-Muller
+ 1611 |       const u1=Math.max(rnd(),1e-12), u2=rnd(); return Math.sqrt(-2*Math.log(u1))*Math.cos(2*Math.PI*u2); };
+ 1612 |     const mu=expectedReturn, sigma=volatility;
+ 1613 |     const dt=1/stepsPerYear; const n=Math.round(horizonYears*stepsPerYear);
+ 1614 |     const finals=[];
+ 1615 |     const results={ };
+ 1616 |     const subsample=[];
+ 1617 |     for(let sim=0;sim<simulations;sim++){
+ 1618 |       let s=initial;
+ 1619 |       for(let t=0;t<n;t++){ s*= Math.exp((mu-0.5*sigma*sigma)*dt + sigma*Math.sqrt(dt)*norm()); }
+ 1620 |       finals.push(s); if(sim% Math.max(1,Math.floor(simulations/200))===0) subsample.push(s);
+ 1621 |     }
+ 1622 |     finals.sort((a,b)=>a-b);
+ 1623 |     const pct=(p)=> finals[Math.min(finals.length-1, Math.floor(p*(finals.length-1)))];
+ 1624 |     const returns=finals.map(f=> f/initial-1);
+ 1625 |     const pLoss=returns.filter(r=>r<0).length/returns.length;
+ 1626 |     const pTarget=finals.filter(f=>f>=target).length/simulations; // P(final ≥ target)
+ 1627 |     const pExceed=finals.filter(f=>f>=target).length/simulations;
+ 1628 |     return {initial,simulations, median:pct(.5), p5:pct(.05),p25:pct(.25),p75:pct(.75),p95:pct(.95), min:finals[0], max:finals[finals.length-1], mean:CalcEngine.mean(finals), pLoss, pTarget, pExceed, target, subsample, seed};
+ 1629 |   }
+ 1630 |   return {run};
+ 1631 | })();
+ 1632 | 
+ 1633 | /* ============================================================
+ 1634 |    CORRELATION
+ 1635 |    ============================================================ */
+ 1636 | const Correlation=(()=>{
+ 1637 |   function matrix(series){
+ 1638 |     // series: {name, returns[]}
+ 1639 |     const n=Math.min(...series.map(s=>s.returns.length));
+ 1640 |     const names=series.map(s=>s.name); const m=names.length;
+ 1641 |     const out=Array.from({length:m},()=>Array(m).fill(null));
+ 1642 |     for(let i=0;i<m;i++) for(let j=0;j<m;j++){ if(i===j){out[i][j]=1;continue;} const a=series[i].returns.slice(-n),b=series[j].returns.slice(-n); out[i][j]=CalcEngine.corr(a,b); }
+ 1643 |     return {names,matrix:out};
+ 1644 |   }
+ 1645 |   return {matrix};
+ 1646 | })();
+ 1647 | 
+ 1648 | /* ============================================================
+ 1649 |    SENTIMENT — rule-based, clearly limited.
+ 1650 |    ============================================================ */
+ 1651 | const Sentiment=(()=>{
+ 1652 |   const pos=["beat","growth","profit","strong","record","up","gain","positive","outperform","upgrade","growth","confidence","recover","expansion","margin","surge","bullish","good","excellent","improve","boost","opportunity","dividend","buyback","guidance","raised"];
+ 1653 |   const neg=["loss","decline","fall","miss","weak","down","negative","underperform","downgrade","risk","debt","bankruptcy","default","lawsuit","fraud","restructure","warn","cut","weakness","bearish","bad","poor","drop","slump","layoff","charge","impairment"];
+ 1654 |   const neu=["guidance","reported","announced","expected","flat","mixed","stable","unchanged","review","commentary","legal","regulatory"];
+ 1655 |   function analyze(text){ const words=String(text).toLowerCase().replace(/[^a-z\s'-]/g," ").split(/\s+/).filter(Boolean);
+ 1656 |     let p=0,n=0,nu=0; const foundP=[],foundN=[],foundNeu=[];
+ 1657 |     for(const w of words){ if(pos.includes(w)){p++;foundP.push(w);} else if(neg.includes(w)){n++;foundN.push(w);} else if(neu.includes(w)){nu++;foundNeu.push(w);} }
+ 1658 |     const total=p+n+nu; const score= total>0? (p-n)/total : 0;
+ 1659 |     const label= p>n? "Positive bias": n>p? "Negative bias":"Neutral / mixed";
+ 1660 |     return {p,n,nu,score,label,foundP:foundP.slice(0,12),foundN:foundN.slice(0,12),words:words.length,note:"Rule-based word-count sentiment; may misread context, sarcasm, negation, or industry jargon."}; }
+ 1661 |   return {analyze};
+ 1662 | })();
+ 1663 | 
+ 1664 | /* ============================================================
+ 1665 |    EXPLANATION, RED FLAGS, DATA QUALITY, ASSESSMENT
+ 1666 |    ============================================================ */
+ 1667 | const ExplanationEngine=(()=>{
+ 1668 |   function valuation(mos){ if(mos==null) return "Valuation unknown — insufficient data.";
+ 1669 |     if(mos>=.30) return "Estimated intrinsic value is substantially above the current price under the selected assumptions — potentially attractive, though highly assumption-dependent.";
+ 1670 |     if(mos>=.10) return "Estimated intrinsic value is modestly above the current price — potentially attractive under current assumptions.";
+```
+
+### line 7510
+
+```js
+ 7498 |   finals.sort(function(a,b){return a-b;});
+ 7499 |   function pct(p){ return finals[Math.min(finals.length-1,Math.floor(p*(finals.length-1)))]; }
+ 7500 |   var sum=0; for(var i=0;i<finals.length;i++)sum+=finals[i];
+ 7501 |   var mean=sum/finals.length;
+ 7502 |   var pLoss=0; for(i=0;i<finals.length;i++) if(finals[i]<initial)pLoss++;
+ 7503 |   pLoss=pLoss/finals.length;
+ 7504 |   var pExceed=0; if(target!=null){ for(i=0;i<finals.length;i++) if(finals[i]>=target)pExceed++; pExceed=pExceed/finals.length; }
+ 7505 |   self.postMessage({type:"done", initial:initial, simulations:simulations, median:pct(.5), p5:pct(.05), p25:pct(.25), p75:pct(.75), p95:pct(.95), min:finals[0], max:finals[finals.length-1], mean:mean, pLoss:pLoss, pExceed:pExceed, target:target, subsample:subsample, seed:seed, method:"GBM (Web Worker)"});
+ 7506 | };
+ 7507 | `;
+ 7508 | 
+ 7509 | /* ---- Main-thread fallback (mirrors the worker math via the existing engine) ---- */
+ 7510 | const MonteCarloWorker=(()=>{
+ 7511 |   let worker=null, curCallback=null, curProgress=null, running=false;
+ 7512 | 
+ 7513 |   function buildWorker(){
+ 7514 |     try{
+ 7515 |       if(typeof Worker==="undefined") return null;
+ 7516 |       const blob=new Blob([MCWorkerSource],{type:"application/javascript"});
+ 7517 |       const url=URL.createObjectURL(blob);
+ 7518 |       const w=new Worker(url);
+ 7519 |       w.onmessage=function(e){
+ 7520 |         const d=e.data;
+ 7521 |         if(d.type==="progress"){ if(curProgress)curProgress(d.done,d.total); }
+ 7522 |         else if(d.type==="done"){ const cb=curCallback; curCallback=null; curProgress=null; running=false; if(cb)cb(d); }
+ 7523 |       };
+ 7524 |       w.onerror=function(){ // fallback to main thread
+ 7525 |         cleanup();
+ 7526 |         if(curCallback){ const cb=curCallback; curCallback=null; curProgress=null; running=false; cb(null); }
+ 7527 |       };
+ 7528 |       worker=w; return w;
+ 7529 |     }catch(e){ return null; }
+ 7530 |   }
+ 7531 |   function cleanup(){ try{ if(worker){ worker.terminate(); } }catch(e){} worker=null; }
+ 7532 | 
+ 7533 |   // Run in worker if possible, else run synchronously via MonteCarlo.run
+ 7534 |   function run(cfg, onDone, onProgress){
+ 7535 |     const w=worker||buildWorker();
+ 7536 |     if(!w){
+ 7537 |       // main-thread fallback
+ 7538 |       const r=MonteCarlo.run(cfg);
+ 7539 |       if(onProgress){ for(let i=0;i<=20;i++) onProgress(i*Math.ceil((cfg.simulations||10000)/20), cfg.simulations||10000); }
+ 7540 |       if(onDone) setTimeout(()=>onDone(r),0);
+ 7541 |       return true; // handled synchronously (indicate no worker used)
+ 7542 |     }
+ 7543 |     running=true; curCallback=onDone; curProgress=onProgress;
+ 7544 |     w.postMessage(cfg);
+ 7545 |     return false;
+ 7546 |   }
+ 7547 |   function cancel(){ cleanup(); running=false; curCallback=null; curProgress=null; }
+ 7548 |   function isRunning(){ return running; }
+ 7549 |   return {run,cancel,isRunning,buildWorker,MCWorkerSource};
+ 7550 | })();
+ 7551 | 
+ 7552 | /* ---- Enhanced runMC using the worker with progress bar ---- */
+ 7553 | function runMC(newSeed){
+ 7554 |   const g=n=>Number($("#"+n).value)||0;
+ 7555 |   const seed= newSeed? Math.floor(Math.random()*1e9): (App.state.mcSeed||1234); App.state.mcSeed=seed;
+ 7556 |   const sims=Math.min(50000,Math.max(100,Math.round(g("mc_n"))));
+ 7557 |   const cfg={initial:g("mc_s0"), expectedReturn:g("mc_mu")/100, volatility:g("mc_sig")/100, horizonYears:g("mc_T"), simulations:sims, seed, target:g("mc_target"), stepsPerYear:252};
+ 7558 |   // progress UI
+ 7559 |   $("#mcOut").innerHTML=`<div class="card"><div class="card-title">Running Monte Carlo</div>
+ 7560 |   <div class="progressbar"><div id="mcProgressBar" style="width:0%"></div></div>
+ 7561 |   <div class="small dim mt" id="mcProgressLabel">Preparing ${fmt.num(sims,0)} simulations…</div>
+ 7562 |   <div class="small dim">Running off the main thread (Web Worker) so the interface stays responsive. Results are a modeled distribution, not a prediction.</div></div>`;
+ 7563 |   const onProgress=(done,total)=>{ const p=Math.round(done/total*100); const bar=$("#mcProgressBar"); if(bar)bar.style.width=p+"%"; const lab=$("#mcProgressLabel"); if(lab)lab.textContent=Math.min(p,100)+"% complete ("+fmt.num(done,0)+"/"+fmt.num(total,0)+")"; };
+ 7564 |   MonteCarloWorker.run(cfg, function(r){
+ 7565 |     if(!r){ // worker failed -> fallback already done; r from fallback is set via MonteCarlo.run
+ 7566 |       // onError path returned null; try direct
+ 7567 |       r=MonteCarlo.run(cfg);
+ 7568 |     }
+ 7569 |     App.state.results.mc=r; App.state.results.mc.seed=seed;
+ 7570 |     renderMCResult(r,cfg,g);
+ 7571 |   }, onProgress);
+ 7572 | }
+ 7573 | function renderMCResult(r,cfg,g){
+ 7574 |   $("#mcOut").innerHTML=`<div class="banner info"><b>Assumptions:</b> S₀=${fmt.money(r.initial)}, μ=${fmt.pct(cfg.expectedReturn)}, σ=${fmt.pct(cfg.volatility)}, T=${fmt.num(cfg.horizonYears)}y, ${fmt.num(r.simulations,0)} simulations, seed ${r.seed}. ${r.method||"GBM"} — this is a modeled distribution, not a prediction.</div>
 ```
 
 ## const DataQualityEngine — 1 hit(s)
@@ -1148,18 +1398,18 @@ Generated from index.html. Engineering evidence only; not a certification claim.
  8514 |     if(!sd||sd.price==null)return null;
  8515 |     const base={revenue0:a.revenue||sd.revenue,tax:a.tax,capexPct:a.capexPct,wcPct:a.wcPct,dandaPct:a.dandaPct,wacc:a.wacc,terminalGrowth:a.terminalGrowth,terminalMethod:"growth",exitMultiple:a.exitMultiple,netDebt:a.netDebt,shares:a.shares,horizon:a.horizon,growth:a.revenueGrowth,ebitdaMargin:a.ebitdaMargin};
  8516 |     function dcfRange(g,m,w,tg){
- 8517 |       const lo=ValuationEngine.dcf({...base,growth:g*.9,margin:m*.9,wacc:w*1.06,terminalGrowth:tg*.85}).perShare;
- 8518 |       const hi=ValuationEngine.dcf({...base,growth:g*1.1,margin:m*1.1,wacc:w*.94,terminalGrowth:tg*1.15}).perShare;
- 8519 |       const mid=ValuationEngine.dcf({...base,growth:g,margin:m,wacc:w,terminalGrowth:tg}).perShare;
+ 8517 |       const lo=ValuationEngine.dcf({...base,growth:g*.9,ebitdaMargin:m*.9,wacc:w*1.06,terminalGrowth:tg*.85}).perShare;
+ 8518 |       const hi=ValuationEngine.dcf({...base,growth:g*1.1,ebitdaMargin:m*1.1,wacc:w*.94,terminalGrowth:tg*1.15}).perShare;
+ 8519 |       const mid=ValuationEngine.dcf({...base,growth:g,ebitdaMargin:m,wacc:w,terminalGrowth:tg}).perShare;
  8520 |       return {lo,mid,hi};
  8521 |     }
  8522 |     const bear=dcfRange(a.revenueGrowth*.55,a.ebitdaMargin*.8,a.wacc*1.15,a.terminalGrowth*.6);
  8523 |     const baseR=dcfRange(a.revenueGrowth,a.ebitdaMargin,a.wacc,a.terminalGrowth);
  8524 |     const bull=dcfRange(a.revenueGrowth*1.5,a.ebitdaMargin*1.2,a.wacc*.85,a.terminalGrowth*1.4);
  8525 |     const central=baseR.mid;
- 8526 |     const disp=(bull.hi-bear.lo)/(Math.abs(central)||1);
+ 8526 |     const disp=Number.isFinite(central)&&Math.abs(central)>1e-12?(bull.hi-bear.lo)/Math.abs(central):null;
  8527 |     const suff=DataSufficiency.compute().overall;
- 8528 |     const conf= Math.max(0,Math.min(100,Math.round(80 - disp*20 + (suff-50)*0.3)));
+ 8528 |     const conf= disp==null?0:Math.max(0,Math.min(100,Math.round(80 - disp*20 + (suff-50)*0.3)));
  8529 |     return {bear,baseR,bull,central,conf,dispersion:disp};
  8530 |   }
  8531 |   function html(u){
@@ -1229,81 +1479,82 @@ Generated from index.html. Engineering evidence only; not a certification claim.
  7343 |     });
  7344 |     seg.segments=segs;
  7345 |     // compute per-segment revenue path
- 7346 |     const out=segs.map(s=>{ const revs=[]; let r=total*s.share; for(let y=0;y<ny;y++){ revs.push(r); r*=(1+(s.growth[y]||0)); } return {name:s.name,revs,margins:s.margin}; });
- 7347 |     // total forecast
- 7348 |     const totalRevs=Array(ny).fill(0); const totalEbitda=Array(ny).fill(0);
- 7349 |     out.forEach(s=>{ s.revs.forEach((v,y)=>{ totalRevs[y]+=v; totalEbitda[y]+=v*(s.margins[y]||0); }); });
- 7350 |     App.state.segmentForecast={segments:out,totalRevs,totalEbitda,startYear:seg.startYear};
- 7351 |     // render
- 7352 |     let h=`<div class="card"><div class="card-title">Segment Forecast</div>
- 7353 |     <div class="tablewrap"><table class="data"><thead><tr><th>Segment</th>${yrHeaders}<th class="num">Total</th></tr></thead><tbody>`;
- 7354 |     out.forEach(s=>{ const tot=s.revs.reduce((a,b)=>a+b,0); h+=`<tr><td>${esc(s.name)}</td>${s.revs.map(v=>`<td class="num">${fmt.money(v)}</td>`).join("")}<td class="num">${fmt.money(tot)}</td></tr>`; });
- 7355 |     h+=`</tbody></table></div>
- 7356 |     <div class="grid g3 mt">${kpi("Total revenue (Y1)",fmt.money(totalRevs[0]))}${kpi("Total EBITDA (Y1)",fmt.money(totalEbitda[0]))}${kpi("Blended margin (Y1)",totalRevs[0]?fmt.pct(totalEbitda[0]/totalRevs[0]):"—")}</div>
- 7357 |     <div id="segChart" class="mt"></div></div>`;
- 7358 |     $("#segOut").innerHTML=h;
- 7359 |     const cb=h("div",{id:"segChartBox",class:"chartbox"}); cb.appendChild(ChartManager.lineChart({series:out.map(s=>({data:s.revs,label:s.name})),labels:out[0].revs.map((_,i)=>(seg.startYear+i)+"E"),title:"Segment Revenue Forecast",yFmt:fmt.money})); $("#segOut").appendChild(cb);
- 7360 |     StorageManager.save();
- 7361 |   });
- 7362 | }
- 7363 | 
- 7364 | /* ---- Sum-of-the-Parts valuation ---- */
- 7365 | function sotpRender(){
- 7366 |   const sotp=App.state.sotp||(App.state.sotp={parts:[],shares:null});
- 7367 |   const sd=App.state.stockData;
- 7368 |   if(!sotp.parts.length) sotp.parts=[{name:"Core Business",value:sd.marketCap||0,multiple:10,metric:sd.netIncome||0},{name:"Cash / Investments",value:sd.cash||0,multiple:1,metric:sd.cash||0}];
- 7369 |   const rows=sotp.parts.map((p,i)=>`<tr>
- 7370 |     <td><input type="text" value="${esc(p.name)}" id="sotp_${i}_name" style="width:140px"></td>
- 7371 |     <td><input type="text" value="${p.value}" id="sotp_${i}_value" style="width:90px"></td>
- 7372 |     <td><input type="text" value="${p.multiple}" id="sotp_${i}_mult" style="width:60px"></td>
+ 7346 |     const segCalc=WorkstationCalculationCore.segmentForecast(total,segs,ny);
+ 7347 |     if(!segCalc){ $("#segOut").innerHTML=`<div class="banner warn">Segment forecast requires finite non-negative revenue/shares and finite growth/margin assumptions for every year.</div>`; return; }
+ 7348 |     const out=segCalc.segments,totalRevs=segCalc.totalRevs,totalEbitda=segCalc.totalEbitda;
+ 7349 |     App.state.segmentForecast={segments:out,totalRevs,totalEbitda,startYear:seg.startYear,shareTotal:segCalc.shareTotal,shareReconciles:segCalc.shareReconciles};
+ 7350 |     // render
+ 7351 |     let h=`<div class="card"><div class="card-title">Segment Forecast</div>
+ 7352 |     <div class="tablewrap"><table class="data"><thead><tr><th>Segment</th>${yrHeaders}<th class="num">Total</th></tr></thead><tbody>`;
+ 7353 |     out.forEach(s=>{ const tot=s.revs.reduce((a,b)=>a+b,0); h+=`<tr><td>${esc(s.name)}</td>${s.revs.map(v=>`<td class="num">${fmt.money(v)}</td>`).join("")}<td class="num">${fmt.money(tot)}</td></tr>`; });
+ 7354 |     h+=`</tbody></table></div>
+ 7355 |     <div class="grid g3 mt">${kpi("Total revenue (Y1)",fmt.money(totalRevs[0]))}${kpi("Total EBITDA (Y1)",fmt.money(totalEbitda[0]))}${kpi("Blended margin (Y1)",totalRevs[0]?fmt.pct(totalEbitda[0]/totalRevs[0]):"—")}</div>
+ 7356 |     <div id="segChart" class="mt"></div></div>`;
+ 7357 |     $("#segOut").innerHTML=h;
+ 7358 |     const cb=h("div",{id:"segChartBox",class:"chartbox"}); cb.appendChild(ChartManager.lineChart({series:out.map(s=>({data:s.revs,label:s.name})),labels:out[0].revs.map((_,i)=>(seg.startYear+i)+"E"),title:"Segment Revenue Forecast",yFmt:fmt.money})); $("#segOut").appendChild(cb);
+ 7359 |     StorageManager.save();
+ 7360 |   });
+ 7361 | }
+ 7362 | 
+ 7363 | /* ---- Sum-of-the-Parts valuation ---- */
+ 7364 | function sotpRender(){
+ 7365 |   const sotp=App.state.sotp||(App.state.sotp={parts:[],shares:null});
+ 7366 |   const sd=App.state.stockData;
+ 7367 |   if(!sotp.parts.length) sotp.parts=[{name:"Core Business",value:sd.marketCap||0,multiple:10,metric:sd.netIncome||0},{name:"Cash / Investments",value:sd.cash||0,multiple:1,metric:sd.cash||0}];
+ 7368 |   const rows=sotp.parts.map((p,i)=>`<tr>
+ 7369 |     <td><input type="text" value="${esc(p.name)}" id="sotp_${i}_name" style="width:140px"></td>
+ 7370 |     <td><input type="text" value="${p.value}" id="sotp_${i}_value" style="width:90px"></td>
+ 7371 |     <td><input type="text" value="${p.multiple}" id="sotp_${i}_mult" style="width:60px"></td>
+ 7372 |     <td><input type="text" value="${p.metric}" id="sotp_${i}_metric" style="width:90px"></td>
 ```
 
 ## function sotpRender — 1 hit(s)
 
-### line 7365
+### line 7364
 
 ```js
- 7353 |     <div class="tablewrap"><table class="data"><thead><tr><th>Segment</th>${yrHeaders}<th class="num">Total</th></tr></thead><tbody>`;
- 7354 |     out.forEach(s=>{ const tot=s.revs.reduce((a,b)=>a+b,0); h+=`<tr><td>${esc(s.name)}</td>${s.revs.map(v=>`<td class="num">${fmt.money(v)}</td>`).join("")}<td class="num">${fmt.money(tot)}</td></tr>`; });
- 7355 |     h+=`</tbody></table></div>
- 7356 |     <div class="grid g3 mt">${kpi("Total revenue (Y1)",fmt.money(totalRevs[0]))}${kpi("Total EBITDA (Y1)",fmt.money(totalEbitda[0]))}${kpi("Blended margin (Y1)",totalRevs[0]?fmt.pct(totalEbitda[0]/totalRevs[0]):"—")}</div>
- 7357 |     <div id="segChart" class="mt"></div></div>`;
- 7358 |     $("#segOut").innerHTML=h;
- 7359 |     const cb=h("div",{id:"segChartBox",class:"chartbox"}); cb.appendChild(ChartManager.lineChart({series:out.map(s=>({data:s.revs,label:s.name})),labels:out[0].revs.map((_,i)=>(seg.startYear+i)+"E"),title:"Segment Revenue Forecast",yFmt:fmt.money})); $("#segOut").appendChild(cb);
- 7360 |     StorageManager.save();
- 7361 |   });
- 7362 | }
- 7363 | 
- 7364 | /* ---- Sum-of-the-Parts valuation ---- */
- 7365 | function sotpRender(){
- 7366 |   const sotp=App.state.sotp||(App.state.sotp={parts:[],shares:null});
- 7367 |   const sd=App.state.stockData;
- 7368 |   if(!sotp.parts.length) sotp.parts=[{name:"Core Business",value:sd.marketCap||0,multiple:10,metric:sd.netIncome||0},{name:"Cash / Investments",value:sd.cash||0,multiple:1,metric:sd.cash||0}];
- 7369 |   const rows=sotp.parts.map((p,i)=>`<tr>
- 7370 |     <td><input type="text" value="${esc(p.name)}" id="sotp_${i}_name" style="width:140px"></td>
- 7371 |     <td><input type="text" value="${p.value}" id="sotp_${i}_value" style="width:90px"></td>
- 7372 |     <td><input type="text" value="${p.multiple}" id="sotp_${i}_mult" style="width:60px"></td>
- 7373 |     <td><input type="text" value="${p.metric}" id="sotp_${i}_metric" style="width:90px"></td>
- 7374 |     <td><button class="btn btn-sm btn-danger" data-sotp="${i}">×</button></td></tr>`).join("");
- 7375 |   $("#sotpForm").innerHTML=`<div class="card"><div class="card-title">Sum-of-the-Parts Valuation</div>
- 7376 |   <p class="small dim">Value each business part separately (e.g. via its own multiple × metric, or an absolute value), then sum and divide by shares. Useful for conglomerates.</p>
- 7377 |   <div class="tablewrap"><table class="data"><thead><tr><th>Part</th><th class="num">Value / Metric</th><th class="num">Multiple</th><th class="num">Metric</th><th></th></tr></thead><tbody>${rows}</tbody></table></div>
- 7378 |   <div class="row mt"><span class="small">Shares outstanding: <input type="text" id="sotp_shares" value="${sotp.shares||sd.shares||1}" style="width:90px"></span>
- 7379 |   <button class="btn btn-sm" id="sotp_add">+ Part</button>
- 7380 |   <button class="btn btn-primary" id="sotp_run">Compute SOTP</button></div>
- 7381 |   <div id="sotpOut" class="mt"></div></div>`;
- 7382 |   wire("sotp_add","click",()=>{ sotp.parts.push({name:"New Part",value:0,multiple:1,metric:0}); sotpRender(); });
- 7383 |   $$("#sotpForm [data-sotp]").forEach(b=>b.addEventListener("click",()=>{ sotp.parts.splice(Number(b.dataset.sotp),1); sotpRender(); }));
- 7384 |   wire("sotp_run","click",()=>{
- 7385 |     const shares=Number($("#sotp_shares").value)||1;
- 7386 |     const parts=sotp.parts.map((p,i)=>{ const value=Number($("#sotp_"+i+"_value")?.value)||0; const mult=Number($("#sotp_"+i+"_mult")?.value)||1; const metric=Number($("#sotp_"+i+"_metric")?.value)||0; return {name:$("#sotp_"+i+"_name")?.value||p.name, value: value!==0? value: mult*metric, mult, metric}; });
- 7387 |     sotp.parts=parts; sotp.shares=shares;
- 7388 |     const totalEV=parts.reduce((a,b)=>a+b.value,0);
- 7389 |     const equityValue=totalEV-(sd.netDebt||0);
- 7390 |     const perShare= shares>0? equityValue/shares:0;
- 7391 |     App.state.sotpResult={parts,totalEV,equityValue,perShare,shares};
+ 7352 |     <div class="tablewrap"><table class="data"><thead><tr><th>Segment</th>${yrHeaders}<th class="num">Total</th></tr></thead><tbody>`;
+ 7353 |     out.forEach(s=>{ const tot=s.revs.reduce((a,b)=>a+b,0); h+=`<tr><td>${esc(s.name)}</td>${s.revs.map(v=>`<td class="num">${fmt.money(v)}</td>`).join("")}<td class="num">${fmt.money(tot)}</td></tr>`; });
+ 7354 |     h+=`</tbody></table></div>
+ 7355 |     <div class="grid g3 mt">${kpi("Total revenue (Y1)",fmt.money(totalRevs[0]))}${kpi("Total EBITDA (Y1)",fmt.money(totalEbitda[0]))}${kpi("Blended margin (Y1)",totalRevs[0]?fmt.pct(totalEbitda[0]/totalRevs[0]):"—")}</div>
+ 7356 |     <div id="segChart" class="mt"></div></div>`;
+ 7357 |     $("#segOut").innerHTML=h;
+ 7358 |     const cb=h("div",{id:"segChartBox",class:"chartbox"}); cb.appendChild(ChartManager.lineChart({series:out.map(s=>({data:s.revs,label:s.name})),labels:out[0].revs.map((_,i)=>(seg.startYear+i)+"E"),title:"Segment Revenue Forecast",yFmt:fmt.money})); $("#segOut").appendChild(cb);
+ 7359 |     StorageManager.save();
+ 7360 |   });
+ 7361 | }
+ 7362 | 
+ 7363 | /* ---- Sum-of-the-Parts valuation ---- */
+ 7364 | function sotpRender(){
+ 7365 |   const sotp=App.state.sotp||(App.state.sotp={parts:[],shares:null});
+ 7366 |   const sd=App.state.stockData;
+ 7367 |   if(!sotp.parts.length) sotp.parts=[{name:"Core Business",value:sd.marketCap||0,multiple:10,metric:sd.netIncome||0},{name:"Cash / Investments",value:sd.cash||0,multiple:1,metric:sd.cash||0}];
+ 7368 |   const rows=sotp.parts.map((p,i)=>`<tr>
+ 7369 |     <td><input type="text" value="${esc(p.name)}" id="sotp_${i}_name" style="width:140px"></td>
+ 7370 |     <td><input type="text" value="${p.value}" id="sotp_${i}_value" style="width:90px"></td>
+ 7371 |     <td><input type="text" value="${p.multiple}" id="sotp_${i}_mult" style="width:60px"></td>
+ 7372 |     <td><input type="text" value="${p.metric}" id="sotp_${i}_metric" style="width:90px"></td>
+ 7373 |     <td><button class="btn btn-sm btn-danger" data-sotp="${i}">×</button></td></tr>`).join("");
+ 7374 |   $("#sotpForm").innerHTML=`<div class="card"><div class="card-title">Sum-of-the-Parts Valuation</div>
+ 7375 |   <p class="small dim">Value each business part separately (e.g. via its own multiple × metric, or an absolute value), then sum and divide by shares. Useful for conglomerates.</p>
+ 7376 |   <div class="tablewrap"><table class="data"><thead><tr><th>Part</th><th class="num">Value / Metric</th><th class="num">Multiple</th><th class="num">Metric</th><th></th></tr></thead><tbody>${rows}</tbody></table></div>
+ 7377 |   <div class="row mt"><span class="small">Shares outstanding: <input type="text" id="sotp_shares" value="${sotp.shares||sd.shares||1}" style="width:90px"></span>
+ 7378 |   <button class="btn btn-sm" id="sotp_add">+ Part</button>
+ 7379 |   <button class="btn btn-primary" id="sotp_run">Compute SOTP</button></div>
+ 7380 |   <div id="sotpOut" class="mt"></div></div>`;
+ 7381 |   wire("sotp_add","click",()=>{ sotp.parts.push({name:"New Part",value:0,multiple:1,metric:0}); sotpRender(); });
+ 7382 |   $$("#sotpForm [data-sotp]").forEach(b=>b.addEventListener("click",()=>{ sotp.parts.splice(Number(b.dataset.sotp),1); sotpRender(); }));
+ 7383 |   wire("sotp_run","click",()=>{
+ 7384 |     const sharesRaw=$("#sotp_shares").value; const shares=String(sharesRaw).trim()===""?NaN:Number(sharesRaw);
+ 7385 |     const rawParts=sotp.parts.map((p,i)=>{ const raw=$("#sotp_"+i+"_value")?.value; const value=raw==null||String(raw).trim()===""?null:Number(raw); const mult=Number($("#sotp_"+i+"_mult")?.value); const metric=Number($("#sotp_"+i+"_metric")?.value); return {name:$("#sotp_"+i+"_name")?.value||p.name,value:Number.isFinite(value)?value:null,multiple:mult,metric}; });
+ 7386 |     const netDebt=Number.isFinite(sd.netDebt)?sd.netDebt:((Number.isFinite(sd.debt)?sd.debt:0)-(Number.isFinite(sd.cash)?sd.cash:0));
+ 7387 |     const sotpCalc=WorkstationCalculationCore.sumOfParts(rawParts,netDebt,shares);
+ 7388 |     if(!sotpCalc){ $("#sotpOut").innerHTML=`<div class="banner warn">SOTP requires positive diluted shares and a finite explicit value or finite multiple × metric for every part.</div>`; return; }
+ 7389 |     const parts=sotpCalc.parts,totalEV=sotpCalc.totalEV,equityValue=sotpCalc.equityValue,perShare=sotpCalc.perShare;
+ 7390 |     sotp.parts=parts; sotp.shares=shares;
+ 7391 |     App.state.sotpResult={parts,totalEV,equityValue,perShare,shares,netDebt};
  7392 |     let h=`<div class="card"><div class="card-title">Sum-of-the-Parts Result</div>
- 7393 |     <div class="tablewrap"><table class="data"><thead><tr><th>Part</th><th class="num">Value</th></tr></thead><tbody>${parts.map(p=>`<tr><td>${esc(p.name)}</td><td class="num">${fmt.money(p.value)}</td></tr>`).join("")}<tr><td><b>Total EV</b></td><td class="num"><b>${fmt.money(totalEV)}</b></td></tr><tr><td>Net debt</td><td class="num">${fmt.money(sd.netDebt||0)}</td></tr><tr><td><b>Equity value</b></td><td class="num"><b>${fmt.money(equityValue)}</b></td></tr><tr><td><b>Per share</b></td><td class="num"><b>${fmt.money(perShare)}</b></td></tr></tbody></table></div>
+ 7393 |     <div class="tablewrap"><table class="data"><thead><tr><th>Part</th><th class="num">Value</th></tr></thead><tbody>${parts.map(p=>`<tr><td>${esc(p.name)}</td><td class="num">${fmt.money(p.value)}</td></tr>`).join("")}<tr><td><b>Total EV</b></td><td class="num"><b>${fmt.money(totalEV)}</b></td></tr><tr><td>Net debt</td><td class="num">${fmt.money(netDebt)}</td></tr><tr><td><b>Equity value</b></td><td class="num"><b>${fmt.money(equityValue)}</b></td></tr><tr><td><b>Per share</b></td><td class="num"><b>${fmt.money(perShare)}</b></td></tr></tbody></table></div>
  7394 |     ${sd.price?`<div class="metricline"><span class="l">vs current price</span><span class="v">${fmt.money(sd.price)} → ${perShare?fmt.pct(perShare/sd.price-1):"—"}</span></div>`:""}
  7395 |     <div id="sotpChart" class="mt"></div></div>`;
  7396 |     $("#sotpOut").innerHTML=h;
@@ -1339,7 +1590,6 @@ Generated from index.html. Engineering evidence only; not a certification claim.
  7426 |     App.state.eqTrend=t;
  7427 |     // charts: NI vs CFO vs FCF, and working-capital warning
  7428 |     let h=`<div class="card"><div class="card-title">Earnings Quality Trend</div>
- 7429 |     <div id="eqTrendChart1"></div><div id="eqTrendChart2"></div>`;
 ```
 
 ## mulberry — 4 hit(s)
@@ -1649,7 +1899,7 @@ Generated from index.html. Engineering evidence only; not a certification claim.
  1590 |     const out=[]; for(const s of scenarios){
  1591 |       const dcf=ValuationEngine.dcf({revenue0:baseDcf.revenue0, growth:s.growth, ebitdaMargin:s.margin, tax:baseDcf.tax, capexPct:s.capexPct!=null?s.capexPct:baseDcf.capexPct, wcPct:s.wcPct!=null?s.wcPct:baseDcf.wcPct, dandaPct:baseDcf.dandaPct, wacc:s.wacc, terminalGrowth:s.terminalGrowth, terminalMethod:baseDcf.terminalMethod, exitMultiple:s.exitMultiple!=null?s.exitMultiple:baseDcf.exitMultiple, netDebt, shares, horizon:baseDcf.horizon});
  1592 |       const val=dcf.perShare; const mos=currentPrice>0? (val/currentPrice)-1:null;
- 1593 |       out.push({name:s.name, growth:s.growth, margin:s.margin, wacc:s.wacc, tg:s.terminalGrowth, prob:s.prob||null, value:val, perShare:val, dcf, mos});
+ 1593 |       out.push({name:s.name, growth:s.growth, margin:s.margin, wacc:s.wacc, tg:s.terminalGrowth, prob:s.prob??null, value:val, perShare:val, dcf, mos});
  1594 |     }
  1595 |     // probability weighted (if probs provided)
  1596 |     const probSum=out.reduce((s,o)=>s+(o.prob??0),0);
@@ -1779,18 +2029,18 @@ Generated from index.html. Engineering evidence only; not a certification claim.
  8514 |     if(!sd||sd.price==null)return null;
  8515 |     const base={revenue0:a.revenue||sd.revenue,tax:a.tax,capexPct:a.capexPct,wcPct:a.wcPct,dandaPct:a.dandaPct,wacc:a.wacc,terminalGrowth:a.terminalGrowth,terminalMethod:"growth",exitMultiple:a.exitMultiple,netDebt:a.netDebt,shares:a.shares,horizon:a.horizon,growth:a.revenueGrowth,ebitdaMargin:a.ebitdaMargin};
  8516 |     function dcfRange(g,m,w,tg){
- 8517 |       const lo=ValuationEngine.dcf({...base,growth:g*.9,margin:m*.9,wacc:w*1.06,terminalGrowth:tg*.85}).perShare;
- 8518 |       const hi=ValuationEngine.dcf({...base,growth:g*1.1,margin:m*1.1,wacc:w*.94,terminalGrowth:tg*1.15}).perShare;
- 8519 |       const mid=ValuationEngine.dcf({...base,growth:g,margin:m,wacc:w,terminalGrowth:tg}).perShare;
+ 8517 |       const lo=ValuationEngine.dcf({...base,growth:g*.9,ebitdaMargin:m*.9,wacc:w*1.06,terminalGrowth:tg*.85}).perShare;
+ 8518 |       const hi=ValuationEngine.dcf({...base,growth:g*1.1,ebitdaMargin:m*1.1,wacc:w*.94,terminalGrowth:tg*1.15}).perShare;
+ 8519 |       const mid=ValuationEngine.dcf({...base,growth:g,ebitdaMargin:m,wacc:w,terminalGrowth:tg}).perShare;
  8520 |       return {lo,mid,hi};
  8521 |     }
  8522 |     const bear=dcfRange(a.revenueGrowth*.55,a.ebitdaMargin*.8,a.wacc*1.15,a.terminalGrowth*.6);
  8523 |     const baseR=dcfRange(a.revenueGrowth,a.ebitdaMargin,a.wacc,a.terminalGrowth);
  8524 |     const bull=dcfRange(a.revenueGrowth*1.5,a.ebitdaMargin*1.2,a.wacc*.85,a.terminalGrowth*1.4);
  8525 |     const central=baseR.mid;
- 8526 |     const disp=(bull.hi-bear.lo)/(Math.abs(central)||1);
+ 8526 |     const disp=Number.isFinite(central)&&Math.abs(central)>1e-12?(bull.hi-bear.lo)/Math.abs(central):null;
  8527 |     const suff=DataSufficiency.compute().overall;
- 8528 |     const conf= Math.max(0,Math.min(100,Math.round(80 - disp*20 + (suff-50)*0.3)));
+ 8528 |     const conf= disp==null?0:Math.max(0,Math.min(100,Math.round(80 - disp*20 + (suff-50)*0.3)));
  8529 |     return {bear,baseR,bull,central,conf,dispersion:disp};
  8530 |   }
  8531 |   function html(u){
