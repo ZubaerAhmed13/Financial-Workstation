@@ -5,6 +5,7 @@ const path=require('node:path');
 const root=path.resolve(__dirname,'..');
 const engine=fs.readFileSync(path.join(root,'src/finance/engine.js'),'utf8');
 const model=fs.readFileSync(path.join(root,'src/finance/model-engine.js'),'utf8');
+const legacy=fs.readFileSync(path.join(root,'src/finance/legacy-hardening.js'),'utf8');
 const runtime=fs.readFileSync(path.join(root,'src/runtime/install.js'),'utf8');
 
 const checks=[
@@ -37,7 +38,20 @@ const checks=[
   ['runtime routes XIRR/XNPV to irregular-date certified functions',runtime.includes('XIRR.xnpv=(rate,cashflows,dates)=>Core.xnpv(rate,cashflows,dates)')&&runtime.includes('XIRR.xirr=(cashflows,dates,_guess=.1)=>Core.xirr(cashflows,dates)')],
   ['runtime ECL validates missing/out-of-range values instead of multiplying nulls',runtime.includes("return {pd,recovery,ead,lgd:null,el:null,error:'ECL requires finite PD/recovery in [0,1] and non-negative EAD.'}")],
   ['runtime ECL preserves explicit zero exposure',runtime.includes("Core.isFiniteNumber(face)?face:1000000")],
-  ['runtime exposes certified model version',runtime.includes('App.meta.financialModelEngineVersion=ModelCore.VERSION')]
+  ['runtime exposes certified model version',runtime.includes('App.meta.financialModelEngineVersion=ModelCore.VERSION')],
+
+  ['stress normalization accepts revenue when revenue0 is absent',legacy.includes("const revenue0=has(sd,'revenue0')?sd.revenue0:sd.revenue;")],
+  ['stress defaults preserve explicit zero-valued assumptions',legacy.includes("const pick=(o,k,fallback)=>has(o,k)?o[k]:fallback;")],
+  ['stress PD preserves an explicit zero base probability',legacy.includes("const defaultPD=has(options,'defaultPD')?options.defaultPD:.05;")],
+  ['stress downside guards a zero base valuation denominator',legacy.includes('Math.abs(basePerShare)>EPS?val/basePerShare-1:null')],
+  ['portfolio rejects a zero total weight before normalization',legacy.includes('if(!finite(totalWeight)||totalWeight<=EPS)return null;')],
+  ['portfolio validates finite non-negative weight return and volatility inputs',legacy.includes('!finite(item.weight)||item.weight<0||!finite(item.expectedReturn)||!finite(item.volatility)||item.volatility<0')],
+  ['portfolio variance explicitly uses the stated pairwise correlation',legacy.includes('variance+=2*rho*weights[i]*weights[j]*clean[i].volatility*clean[j].volatility;')],
+  ['portfolio stress uses actual volatility without a synthetic fallback',legacy.includes('shock-=rate*item.volatility;')&&legacy.includes('shock-=bondSpread*item.volatility;')],
+  ['comparable valuation converts the relative multiple to fair price',legacy.includes('const value=finite(implied)&&implied>EPS?price/implied:null;')],
+  ['residual-income valuation converts total equity value to per-share value',legacy.includes('const value=ri.value/shares;')],
+  ['value-driver sensitivity uses explicit base values and a real base-value denominator',legacy.includes('[key]:base[key]-delta')&&legacy.includes('Math.abs(high.perShare-low.perShare)/Math.abs(baseDCF.perShare)')],
+  ['runtime routes stress portfolio and valuation matrix to legacy hardening core and exposes its version',runtime.includes('LegacyCore.stressRun')&&runtime.includes('LegacyCore.portfolioBuild')&&runtime.includes('LegacyCore.portfolioStress')&&runtime.includes('LegacyCore.valuationMatrix')&&runtime.includes('App.meta.legacyCalculationCoreVersion=LegacyCore.VERSION')]
 ];
 
 const banned=[
@@ -52,7 +66,14 @@ const banned=[
   ['legacy hard-coded 65 percent working-capital COGS base',/const cog\s*=\s*revenue\s*\*\s*0\.65/,model],
   ['legacy invented current-liability denominator',/ap\s*\|\|\s*1[\s\S]{0,80}ocl\s*\|\|\s*1/,model],
   ['legacy balance-sheet cash plug',/cash\s*=\s*liabEq\s*-\s*nonCashAssets/,model],
-  ['legacy ECL face fallback that destroys zero',/face\s*\|\|\s*1000000/,runtime]
+  ['legacy ECL face fallback that destroys zero',/face\s*\|\|\s*1000000/,runtime],
+  ['legacy stress revenue0-only eligibility guard',/sd\.revenue0==null/,legacy],
+  ['legacy stress truthy tax default',/sd\.tax\s*\|\|\s*\.21/,legacy],
+  ['legacy stress truthy PD fallback',/basePD\s*\|\|\s*\.05/,legacy],
+  ['legacy portfolio synthetic five-percent volatility fallback',/volatility\s*\|\|\s*0\.05/,legacy],
+  ['legacy comparable valuation current-price collapse',/impliedMean>0\?\s*sd\.price/,legacy],
+  ['legacy residual-income total-value versus per-share comparison',/ri\.value\s*\/\s*sd\.price/,legacy],
+  ['legacy value-driver unit denominator fallback',/baseVal\s*\|\|\s*1/,legacy]
 ];
 
 let failed=0;
