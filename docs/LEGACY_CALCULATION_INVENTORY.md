@@ -47,45 +47,45 @@ Generated mechanically from the production source to support the final modulariz
  1583 | 
 ```
 
-## simScore — line 13488 — owner `out`
+## simScore — line 13694 — owner `out`
 
 ```js
-13480 |   const W=typeof WorkstationCalculationCore!=='undefined'?WorkstationCalculationCore:null;
-13481 |   const L=typeof WorkstationLedgerCore!=='undefined'?WorkstationLedgerCore:null;
-13482 |   if(!W){console.error('Financial certification runtime: WorkstationCalculationCore missing');return;}
-13483 |   const installed=[];
-13484 |   const mark=name=>installed.push(name);
-13485 | 
-13486 |   if(typeof SimilarityEngine!=='undefined'&&SimilarityEngine){
-13487 |     SimilarityEngine.standardize=cases=>W.standardizeCases(cases,SimilarityEngine.FEATURES);
-13488 |     SimilarityEngine.simScore=(query,candidate,stats,weights)=>W.similarityScore(query,candidate,stats,weights,SimilarityEngine.FEATURES);
-13489 |     SimilarityEngine.normalizeWeights=weights=>W.normalizeWeightObject(weights);
-13490 |     SimilarityEngine.match=(query,cases,weights,mode,k)=>{
-13491 |       const useWeights=weights||SimilarityEngine.defaultWeights;
-13492 |       const limit=Number.isInteger(k)&&k>0?k:10;
-13493 |       const pool=mode==='strict'?(cases||[]).filter(c=>c&&query&&c.type===query.type):(cases||[]);
-13494 |       const stats=W.standardizeCases(pool,SimilarityEngine.FEATURES);
-13495 |       const scored=pool.map(c=>({case:c,sim:W.similarityScore(query,c,stats,useWeights,SimilarityEngine.FEATURES)})).sort((a,b)=>b.sim-a.sim);
-13496 |       return {matches:scored.slice(0,limit),total:pool.length,stats,weights:useWeights};
-13497 |     };
-13498 |     SimilarityEngine.matchReference=(query,refCases,weights,k)=>{
-13499 |       const useWeights=weights||SimilarityEngine.defaultWeights,limit=Number.isInteger(k)&&k>0?k:3,pool=refCases||[];
-13500 |       const stats=W.standardizeCases(pool,SimilarityEngine.FEATURES);
-13501 |       return pool.map(c=>({case:c,sim:W.similarityScore(query,c,stats,useWeights,SimilarityEngine.FEATURES)})).sort((a,b)=>b.sim-a.sim).slice(0,limit);
-13502 |     };
-13503 |     mark('SimilarityEngine');
-13504 |   }
-13505 |   if(typeof DataQualityEngine!=='undefined'&&DataQualityEngine){DataQualityEngine.score=ctx=>W.dataQualityScore(ctx);mark('DataQualityEngine.score');}
-13506 |   if(typeof ScoringEngine!=='undefined'&&ScoringEngine){ScoringEngine.score=(metrics,weights)=>W.preferenceScore(metrics,weights||ScoringEngine.DEFAULT_W||W.DEFAULT_PREFERENCE_WEIGHTS);mark('ScoringEngine.score');}
-13507 |   if(typeof PeerSimilarity!=='undefined'&&PeerSimilarity){PeerSimilarity.score=peers=>W.peerDataCoverage(peers);mark('PeerSimilarity.score');}
-13508 | 
-13509 |   if(typeof factorExposure==='function'){factorExposure=items=>W.factorExposure(items);mark('factorExposure');}
-13510 |   if(typeof performanceAttribution==='function'){performanceAttribution=(items,benchmarkRet)=>W.performanceAttribution(items,benchmarkRet);mark('performanceAttribution');}
-13511 |   if(typeof RiskContribution!=='undefined'&&RiskContribution){RiskContribution.compute=(port,corr)=>W.riskContribution(port,corr);mark('RiskContribution.compute');}
-13512 |   if(typeof PortfolioOptimizers!=='undefined'&&PortfolioOptimizers){
-13513 |     PortfolioOptimizers.equalWeight=items=>W.equalWeight(items);
-13514 |     PortfolioOptimizers.minimumVariance=(items,corr)=>W.minimumVariance(items,corr);
-13515 |     PortfolioOptimizers.maximumSharpe=(items,corr,rf)=>W.maximumSharpe(items,corr,rf==null?0:rf);
+13686 |   const L=typeof WorkstationLedgerCore!=='undefined'?WorkstationLedgerCore:null;
+13687 |   const S=typeof SimulationBacktestCore!=='undefined'?SimulationBacktestCore:null;
+13688 |   if(!W){console.error('Financial certification runtime: WorkstationCalculationCore missing');return;}
+13689 |   const installed=[];
+13690 |   const mark=name=>installed.push(name);
+13691 | 
+13692 |   if(typeof SimilarityEngine!=='undefined'&&SimilarityEngine){
+13693 |     SimilarityEngine.standardize=cases=>W.standardizeCases(cases,SimilarityEngine.FEATURES);
+13694 |     SimilarityEngine.simScore=(query,candidate,stats,weights)=>W.similarityScore(query,candidate,stats,weights,SimilarityEngine.FEATURES);
+13695 |     SimilarityEngine.normalizeWeights=weights=>W.normalizeWeightObject(weights);
+13696 |     SimilarityEngine.match=(query,cases,weights,mode,k)=>{
+13697 |       const useWeights=weights||SimilarityEngine.defaultWeights;
+13698 |       const limit=Number.isInteger(k)&&k>0?k:10;
+13699 |       const pool=mode==='strict'?(cases||[]).filter(c=>c&&query&&c.type===query.type):(cases||[]);
+13700 |       const stats=W.standardizeCases(pool,SimilarityEngine.FEATURES);
+13701 |       const scored=pool.map(c=>({case:c,sim:W.similarityScore(query,c,stats,useWeights,SimilarityEngine.FEATURES)})).sort((a,b)=>b.sim-a.sim);
+13702 |       return {matches:scored.slice(0,limit),total:pool.length,stats,weights:useWeights};
+13703 |     };
+13704 |     SimilarityEngine.matchReference=(query,refCases,weights,k)=>{
+13705 |       const useWeights=weights||SimilarityEngine.defaultWeights,limit=Number.isInteger(k)&&k>0?k:3,pool=refCases||[];
+13706 |       const stats=W.standardizeCases(pool,SimilarityEngine.FEATURES);
+13707 |       return pool.map(c=>({case:c,sim:W.similarityScore(query,c,stats,useWeights,SimilarityEngine.FEATURES)})).sort((a,b)=>b.sim-a.sim).slice(0,limit);
+13708 |     };
+13709 |     mark('SimilarityEngine');
+13710 |   }
+13711 |   if(typeof DataQualityEngine!=='undefined'&&DataQualityEngine){DataQualityEngine.score=ctx=>W.dataQualityScore(ctx);mark('DataQualityEngine.score');}
+13712 |   if(typeof ScoringEngine!=='undefined'&&ScoringEngine){ScoringEngine.score=(metrics,weights)=>W.preferenceScore(metrics,weights||ScoringEngine.DEFAULT_W||W.DEFAULT_PREFERENCE_WEIGHTS);mark('ScoringEngine.score');}
+13713 |   if(typeof PeerSimilarity!=='undefined'&&PeerSimilarity){PeerSimilarity.score=peers=>W.peerDataCoverage(peers);mark('PeerSimilarity.score');}
+13714 | 
+13715 |   if(typeof factorExposure==='function'){factorExposure=items=>W.factorExposure(items);mark('factorExposure');}
+13716 |   if(typeof performanceAttribution==='function'){performanceAttribution=(items,benchmarkRet)=>W.performanceAttribution(items,benchmarkRet);mark('performanceAttribution');}
+13717 |   if(typeof RiskContribution!=='undefined'&&RiskContribution){RiskContribution.compute=(port,corr)=>W.riskContribution(port,corr);mark('RiskContribution.compute');}
+13718 |   if(typeof PortfolioOptimizers!=='undefined'&&PortfolioOptimizers){
+13719 |     PortfolioOptimizers.equalWeight=items=>W.equalWeight(items);
+13720 |     PortfolioOptimizers.minimumVariance=(items,corr)=>W.minimumVariance(items,corr);
+13721 |     PortfolioOptimizers.maximumSharpe=(items,corr,rf)=>W.maximumSharpe(items,corr,rf==null?0:rf);
 ```
 
 ## score — line 1919 — owner `DataQualityEngine`
@@ -211,45 +211,45 @@ Generated mechanically from the production source to support the final modulariz
  8965 |       meta:{app:App.meta.appVersion,model:App.meta.modelVersion,schema:App.meta.schemaVersion,exportedAt:new Date().toISOString()},
 ```
 
-## score — line 13506 — owner `out`
+## score — line 13712 — owner `out`
 
 ```js
-13498 |     SimilarityEngine.matchReference=(query,refCases,weights,k)=>{
-13499 |       const useWeights=weights||SimilarityEngine.defaultWeights,limit=Number.isInteger(k)&&k>0?k:3,pool=refCases||[];
-13500 |       const stats=W.standardizeCases(pool,SimilarityEngine.FEATURES);
-13501 |       return pool.map(c=>({case:c,sim:W.similarityScore(query,c,stats,useWeights,SimilarityEngine.FEATURES)})).sort((a,b)=>b.sim-a.sim).slice(0,limit);
-13502 |     };
-13503 |     mark('SimilarityEngine');
-13504 |   }
-13505 |   if(typeof DataQualityEngine!=='undefined'&&DataQualityEngine){DataQualityEngine.score=ctx=>W.dataQualityScore(ctx);mark('DataQualityEngine.score');}
-13506 |   if(typeof ScoringEngine!=='undefined'&&ScoringEngine){ScoringEngine.score=(metrics,weights)=>W.preferenceScore(metrics,weights||ScoringEngine.DEFAULT_W||W.DEFAULT_PREFERENCE_WEIGHTS);mark('ScoringEngine.score');}
-13507 |   if(typeof PeerSimilarity!=='undefined'&&PeerSimilarity){PeerSimilarity.score=peers=>W.peerDataCoverage(peers);mark('PeerSimilarity.score');}
-13508 | 
-13509 |   if(typeof factorExposure==='function'){factorExposure=items=>W.factorExposure(items);mark('factorExposure');}
-13510 |   if(typeof performanceAttribution==='function'){performanceAttribution=(items,benchmarkRet)=>W.performanceAttribution(items,benchmarkRet);mark('performanceAttribution');}
-13511 |   if(typeof RiskContribution!=='undefined'&&RiskContribution){RiskContribution.compute=(port,corr)=>W.riskContribution(port,corr);mark('RiskContribution.compute');}
-13512 |   if(typeof PortfolioOptimizers!=='undefined'&&PortfolioOptimizers){
-13513 |     PortfolioOptimizers.equalWeight=items=>W.equalWeight(items);
-13514 |     PortfolioOptimizers.minimumVariance=(items,corr)=>W.minimumVariance(items,corr);
-13515 |     PortfolioOptimizers.maximumSharpe=(items,corr,rf)=>W.maximumSharpe(items,corr,rf==null?0:rf);
-13516 |     PortfolioOptimizers.riskParity=(items,corr)=>W.riskParity(items,corr);
-13517 |     mark('PortfolioOptimizers');
-13518 |   }
-13519 | 
-13520 |   if(L){
-13521 |     if(typeof wsDividendAmounts==='function'){wsDividendAmounts=tx=>L.dividendAmounts(tx);mark('wsDividendAmounts');}
-13522 |     if(typeof wsCalculateFromLedger==='function'){
-13523 |       wsCalculateFromLedger=(ws,_opts)=>L.calculateLedger(ws&&Array.isArray(ws.transactions)?ws.transactions:[],typeof wsBaseCurrency==='function'?wsBaseCurrency():'EUR');
-13524 |       mark('wsCalculateFromLedger');
-13525 |     }
-13526 |     if(typeof wsFxConvert==='function'){
-13527 |       wsFxConvert=(amount,currency)=>{const meta=typeof wsFxRateMeta==='function'?wsFxRateMeta(currency):null;return meta?W.fxConvert(amount,meta.rate):null;};
-13528 |       mark('wsFxConvert');
-13529 |     }
-13530 |     if(typeof wsPositionBaseValue==='function'){
-13531 |       wsPositionBaseValue=security=>{const ws=typeof wsPortfolio==='function'?wsPortfolio():null,p=ws&&ws.holdings?ws.holdings[security]:null;if(!p)return null;const pg=typeof wsGetPrice==='function'?wsGetPrice(security,ws):null;if(!pg)return null;const fx=typeof wsFxRate==='function'?wsFxRate(p.currency||(typeof wsBaseCurrency==='function'?wsBaseCurrency():'EUR')):null;return L.positionBaseValue(p,pg.price,fx);};
-13532 |       mark('wsPositionBaseValue');
-13533 |     }
+13704 |     SimilarityEngine.matchReference=(query,refCases,weights,k)=>{
+13705 |       const useWeights=weights||SimilarityEngine.defaultWeights,limit=Number.isInteger(k)&&k>0?k:3,pool=refCases||[];
+13706 |       const stats=W.standardizeCases(pool,SimilarityEngine.FEATURES);
+13707 |       return pool.map(c=>({case:c,sim:W.similarityScore(query,c,stats,useWeights,SimilarityEngine.FEATURES)})).sort((a,b)=>b.sim-a.sim).slice(0,limit);
+13708 |     };
+13709 |     mark('SimilarityEngine');
+13710 |   }
+13711 |   if(typeof DataQualityEngine!=='undefined'&&DataQualityEngine){DataQualityEngine.score=ctx=>W.dataQualityScore(ctx);mark('DataQualityEngine.score');}
+13712 |   if(typeof ScoringEngine!=='undefined'&&ScoringEngine){ScoringEngine.score=(metrics,weights)=>W.preferenceScore(metrics,weights||ScoringEngine.DEFAULT_W||W.DEFAULT_PREFERENCE_WEIGHTS);mark('ScoringEngine.score');}
+13713 |   if(typeof PeerSimilarity!=='undefined'&&PeerSimilarity){PeerSimilarity.score=peers=>W.peerDataCoverage(peers);mark('PeerSimilarity.score');}
+13714 | 
+13715 |   if(typeof factorExposure==='function'){factorExposure=items=>W.factorExposure(items);mark('factorExposure');}
+13716 |   if(typeof performanceAttribution==='function'){performanceAttribution=(items,benchmarkRet)=>W.performanceAttribution(items,benchmarkRet);mark('performanceAttribution');}
+13717 |   if(typeof RiskContribution!=='undefined'&&RiskContribution){RiskContribution.compute=(port,corr)=>W.riskContribution(port,corr);mark('RiskContribution.compute');}
+13718 |   if(typeof PortfolioOptimizers!=='undefined'&&PortfolioOptimizers){
+13719 |     PortfolioOptimizers.equalWeight=items=>W.equalWeight(items);
+13720 |     PortfolioOptimizers.minimumVariance=(items,corr)=>W.minimumVariance(items,corr);
+13721 |     PortfolioOptimizers.maximumSharpe=(items,corr,rf)=>W.maximumSharpe(items,corr,rf==null?0:rf);
+13722 |     PortfolioOptimizers.riskParity=(items,corr)=>W.riskParity(items,corr);
+13723 |     mark('PortfolioOptimizers');
+13724 |   }
+13725 | 
+13726 |   if(S&&typeof MonteCarlo!=='undefined'&&MonteCarlo){MonteCarlo.run=cfg=>S.monteCarloRun(cfg);mark('MonteCarlo.run');}
+13727 |   if(S&&typeof BacktestEngine!=='undefined'&&BacktestEngine){BacktestEngine.run=cfg=>S.backtestRun(cfg);mark('BacktestEngine.run');}
+13728 | 
+13729 |   if(L){
+13730 |     if(typeof wsDividendAmounts==='function'){wsDividendAmounts=tx=>L.dividendAmounts(tx);mark('wsDividendAmounts');}
+13731 |     if(typeof wsCalculateFromLedger==='function'){
+13732 |       wsCalculateFromLedger=(ws,_opts)=>L.calculateLedger(ws&&Array.isArray(ws.transactions)?ws.transactions:[],typeof wsBaseCurrency==='function'?wsBaseCurrency():'EUR');
+13733 |       mark('wsCalculateFromLedger');
+13734 |     }
+13735 |     if(typeof wsFxConvert==='function'){
+13736 |       wsFxConvert=(amount,currency)=>{const meta=typeof wsFxRateMeta==='function'?wsFxRateMeta(currency):null;return meta?W.fxConvert(amount,meta.rate):null;};
+13737 |       mark('wsFxConvert');
+13738 |     }
+13739 |     if(typeof wsPositionBaseValue==='function'){
 ```
 
 ## whatWouldChange — line 4792 — owner `ThesisConsistency`
@@ -744,45 +744,45 @@ Generated mechanically from the production source to support the final modulariz
  9049 |     return {available:true,windows,degradation,stability,warning,meanOos,meanIn};
 ```
 
-## run — line 13427 — owner `out`
+## run — line 13632 — owner `out`
 
 ```js
-13419 |       if(amount==null)return {pd,recovery,ead,lgd:null,el:null,error:'ECL requires finite PD/recovery in [0,1] and non-negative EAD.'};
-13420 |       const lgd=1-recovery;return {pd,recovery,ead,lgd,el:Math.round(amount*100)/100};
-13421 |     };
-13422 |     ECLV2.eadDefault=(face,_exposureType)=>Core.isFiniteNumber(face)&&face>=0?face:null;
-13423 |     mark('ECLV2');
-13424 |   }
-13425 | 
-13426 |   if(LegacyCore && typeof StressTestEngine!=='undefined' && StressTestEngine){
-13427 |     StressTestEngine.run=(sd,scenarios)=>{
-13428 |       const currentPD=(typeof App!=='undefined'&&App&&App.state&&App.state.results&&App.state.results.stock&&App.state.results.stock.defaultPD!=null)?App.state.results.stock.defaultPD:.05;
-13429 |       const useScenarios=scenarios==null?StressTestEngine.PREDEFINED:scenarios;
-13430 |       return LegacyCore.stressRun(sd,useScenarios,{defaultPD:currentPD});
-13431 |     };
-13432 |     mark('StressTestEngine.run');
-13433 |   }
-13434 | 
-13435 |   if(LegacyCore && typeof PortfolioEngine!=='undefined' && PortfolioEngine){
-13436 |     PortfolioEngine.build=(items)=>{
-13437 |       const rf=(typeof App!=='undefined'&&App&&App.state&&App.state.stockData&&App.state.stockData.rf!=null)?App.state.stockData.rf:.03;
-13438 |       return LegacyCore.portfolioBuild(items,{riskFreeRate:rf,correlation:.4});
-13439 |     };
-13440 |     PortfolioEngine.stress=(port,scenario)=>LegacyCore.portfolioStress(port,scenario||{});
-13441 |     mark('PortfolioEngine.build/stress');
-13442 |   }
-13443 | 
-13444 |   if(LegacyCore && typeof ValuationMatrixV2!=='undefined' && ValuationMatrixV2){
-13445 |     ValuationMatrixV2.build=(sd)=>{
-13446 |       const result=(typeof App!=='undefined'&&App&&App.state&&App.state.results&&App.state.results.stock)?App.state.results.stock:{};
-13447 |       return LegacyCore.valuationMatrix(sd,result);
-13448 |     };
-13449 |     ValuationMatrixV2.driversHTML=(_mx,sd)=>{
-13450 |       const rows=LegacyCore.valuationDrivers(sd);
-13451 |       if(!rows||!rows.length)return '';
-13452 |       return `<h4 class="mt">TOP VALUE DRIVERS</h4><div class="gridlist">${rows.map((r,i)=>`<div class="metricline"><span class="l">${i+1}. ${r.label}</span><span class="v">${fmt.pct(r.impact,1)} of base value</span></div>`).join('')}</div>`;
-13453 |     };
-13454 |     mark('ValuationMatrixV2.build/driversHTML');
+13624 |       if(amount==null)return {pd,recovery,ead,lgd:null,el:null,error:'ECL requires finite PD/recovery in [0,1] and non-negative EAD.'};
+13625 |       const lgd=1-recovery;return {pd,recovery,ead,lgd,el:Math.round(amount*100)/100};
+13626 |     };
+13627 |     ECLV2.eadDefault=(face,_exposureType)=>Core.isFiniteNumber(face)&&face>=0?face:null;
+13628 |     mark('ECLV2');
+13629 |   }
+13630 | 
+13631 |   if(LegacyCore && typeof StressTestEngine!=='undefined' && StressTestEngine){
+13632 |     StressTestEngine.run=(sd,scenarios)=>{
+13633 |       const currentPD=(typeof App!=='undefined'&&App&&App.state&&App.state.results&&App.state.results.stock&&App.state.results.stock.defaultPD!=null)?App.state.results.stock.defaultPD:.05;
+13634 |       const useScenarios=scenarios==null?StressTestEngine.PREDEFINED:scenarios;
+13635 |       return LegacyCore.stressRun(sd,useScenarios,{defaultPD:currentPD});
+13636 |     };
+13637 |     mark('StressTestEngine.run');
+13638 |   }
+13639 | 
+13640 |   if(LegacyCore && typeof PortfolioEngine!=='undefined' && PortfolioEngine){
+13641 |     PortfolioEngine.build=(items)=>{
+13642 |       const rf=(typeof App!=='undefined'&&App&&App.state&&App.state.stockData&&App.state.stockData.rf!=null)?App.state.stockData.rf:.03;
+13643 |       return LegacyCore.portfolioBuild(items,{riskFreeRate:rf,correlation:.4});
+13644 |     };
+13645 |     PortfolioEngine.stress=(port,scenario)=>LegacyCore.portfolioStress(port,scenario||{});
+13646 |     mark('PortfolioEngine.build/stress');
+13647 |   }
+13648 | 
+13649 |   if(LegacyCore && typeof ValuationMatrixV2!=='undefined' && ValuationMatrixV2){
+13650 |     ValuationMatrixV2.build=(sd)=>{
+13651 |       const result=(typeof App!=='undefined'&&App&&App.state&&App.state.results&&App.state.results.stock)?App.state.results.stock:{};
+13652 |       return LegacyCore.valuationMatrix(sd,result);
+13653 |     };
+13654 |     ValuationMatrixV2.driversHTML=(_mx,sd)=>{
+13655 |       const rows=LegacyCore.valuationDrivers(sd);
+13656 |       if(!rows||!rows.length)return '';
+13657 |       return `<h4 class="mt">TOP VALUE DRIVERS</h4><div class="gridlist">${rows.map((r,i)=>`<div class="metricline"><span class="l">${i+1}. ${r.label}</span><span class="v">${fmt.pct(r.impact,1)} of base value</span></div>`).join('')}</div>`;
+13658 |     };
+13659 |     mark('ValuationMatrixV2.build/driversHTML');
 ```
 
 ## monitor — line 5315 — owner `ThesisConsistencyV3`
@@ -1236,45 +1236,45 @@ Generated mechanically from the production source to support the final modulariz
 12898 |     const corr=corrMatrix||Array.from({length:n},(_,i)=>Array.from({length:n},(_,j)=>i===j?1:.4));
 ```
 
-## performanceAttribution — line 13510 — owner `out`
+## performanceAttribution — line 13716 — owner `out`
 
 ```js
-13502 |     };
-13503 |     mark('SimilarityEngine');
-13504 |   }
-13505 |   if(typeof DataQualityEngine!=='undefined'&&DataQualityEngine){DataQualityEngine.score=ctx=>W.dataQualityScore(ctx);mark('DataQualityEngine.score');}
-13506 |   if(typeof ScoringEngine!=='undefined'&&ScoringEngine){ScoringEngine.score=(metrics,weights)=>W.preferenceScore(metrics,weights||ScoringEngine.DEFAULT_W||W.DEFAULT_PREFERENCE_WEIGHTS);mark('ScoringEngine.score');}
-13507 |   if(typeof PeerSimilarity!=='undefined'&&PeerSimilarity){PeerSimilarity.score=peers=>W.peerDataCoverage(peers);mark('PeerSimilarity.score');}
-13508 | 
-13509 |   if(typeof factorExposure==='function'){factorExposure=items=>W.factorExposure(items);mark('factorExposure');}
-13510 |   if(typeof performanceAttribution==='function'){performanceAttribution=(items,benchmarkRet)=>W.performanceAttribution(items,benchmarkRet);mark('performanceAttribution');}
-13511 |   if(typeof RiskContribution!=='undefined'&&RiskContribution){RiskContribution.compute=(port,corr)=>W.riskContribution(port,corr);mark('RiskContribution.compute');}
-13512 |   if(typeof PortfolioOptimizers!=='undefined'&&PortfolioOptimizers){
-13513 |     PortfolioOptimizers.equalWeight=items=>W.equalWeight(items);
-13514 |     PortfolioOptimizers.minimumVariance=(items,corr)=>W.minimumVariance(items,corr);
-13515 |     PortfolioOptimizers.maximumSharpe=(items,corr,rf)=>W.maximumSharpe(items,corr,rf==null?0:rf);
-13516 |     PortfolioOptimizers.riskParity=(items,corr)=>W.riskParity(items,corr);
-13517 |     mark('PortfolioOptimizers');
-13518 |   }
-13519 | 
-13520 |   if(L){
-13521 |     if(typeof wsDividendAmounts==='function'){wsDividendAmounts=tx=>L.dividendAmounts(tx);mark('wsDividendAmounts');}
-13522 |     if(typeof wsCalculateFromLedger==='function'){
-13523 |       wsCalculateFromLedger=(ws,_opts)=>L.calculateLedger(ws&&Array.isArray(ws.transactions)?ws.transactions:[],typeof wsBaseCurrency==='function'?wsBaseCurrency():'EUR');
-13524 |       mark('wsCalculateFromLedger');
-13525 |     }
-13526 |     if(typeof wsFxConvert==='function'){
-13527 |       wsFxConvert=(amount,currency)=>{const meta=typeof wsFxRateMeta==='function'?wsFxRateMeta(currency):null;return meta?W.fxConvert(amount,meta.rate):null;};
-13528 |       mark('wsFxConvert');
-13529 |     }
-13530 |     if(typeof wsPositionBaseValue==='function'){
-13531 |       wsPositionBaseValue=security=>{const ws=typeof wsPortfolio==='function'?wsPortfolio():null,p=ws&&ws.holdings?ws.holdings[security]:null;if(!p)return null;const pg=typeof wsGetPrice==='function'?wsGetPrice(security,ws):null;if(!pg)return null;const fx=typeof wsFxRate==='function'?wsFxRate(p.currency||(typeof wsBaseCurrency==='function'?wsBaseCurrency():'EUR')):null;return L.positionBaseValue(p,pg.price,fx);};
-13532 |       mark('wsPositionBaseValue');
-13533 |     }
-13534 |     if(typeof wsMarketValue==='function'){
-13535 |       wsMarketValue=()=>{const ws=typeof wsPortfolio==='function'?wsPortfolio():null,pos=ws&&ws.holdings?ws.holdings:{};const entries=Object.keys(pos).map(k=>{const p=pos[k],pg=typeof wsGetPrice==='function'?wsGetPrice(k,ws):null,meta=typeof wsFxRateMeta==='function'?wsFxRateMeta(p.currency||(typeof wsBaseCurrency==='function'?wsBaseCurrency():'EUR')):null;return {position:p,price:pg?pg.price:null,fxRate:meta?meta.rate:null};});return L.marketValueSummary(entries);};
-13536 |       mark('wsMarketValue');
-13537 |     }
+13708 |     };
+13709 |     mark('SimilarityEngine');
+13710 |   }
+13711 |   if(typeof DataQualityEngine!=='undefined'&&DataQualityEngine){DataQualityEngine.score=ctx=>W.dataQualityScore(ctx);mark('DataQualityEngine.score');}
+13712 |   if(typeof ScoringEngine!=='undefined'&&ScoringEngine){ScoringEngine.score=(metrics,weights)=>W.preferenceScore(metrics,weights||ScoringEngine.DEFAULT_W||W.DEFAULT_PREFERENCE_WEIGHTS);mark('ScoringEngine.score');}
+13713 |   if(typeof PeerSimilarity!=='undefined'&&PeerSimilarity){PeerSimilarity.score=peers=>W.peerDataCoverage(peers);mark('PeerSimilarity.score');}
+13714 | 
+13715 |   if(typeof factorExposure==='function'){factorExposure=items=>W.factorExposure(items);mark('factorExposure');}
+13716 |   if(typeof performanceAttribution==='function'){performanceAttribution=(items,benchmarkRet)=>W.performanceAttribution(items,benchmarkRet);mark('performanceAttribution');}
+13717 |   if(typeof RiskContribution!=='undefined'&&RiskContribution){RiskContribution.compute=(port,corr)=>W.riskContribution(port,corr);mark('RiskContribution.compute');}
+13718 |   if(typeof PortfolioOptimizers!=='undefined'&&PortfolioOptimizers){
+13719 |     PortfolioOptimizers.equalWeight=items=>W.equalWeight(items);
+13720 |     PortfolioOptimizers.minimumVariance=(items,corr)=>W.minimumVariance(items,corr);
+13721 |     PortfolioOptimizers.maximumSharpe=(items,corr,rf)=>W.maximumSharpe(items,corr,rf==null?0:rf);
+13722 |     PortfolioOptimizers.riskParity=(items,corr)=>W.riskParity(items,corr);
+13723 |     mark('PortfolioOptimizers');
+13724 |   }
+13725 | 
+13726 |   if(S&&typeof MonteCarlo!=='undefined'&&MonteCarlo){MonteCarlo.run=cfg=>S.monteCarloRun(cfg);mark('MonteCarlo.run');}
+13727 |   if(S&&typeof BacktestEngine!=='undefined'&&BacktestEngine){BacktestEngine.run=cfg=>S.backtestRun(cfg);mark('BacktestEngine.run');}
+13728 | 
+13729 |   if(L){
+13730 |     if(typeof wsDividendAmounts==='function'){wsDividendAmounts=tx=>L.dividendAmounts(tx);mark('wsDividendAmounts');}
+13731 |     if(typeof wsCalculateFromLedger==='function'){
+13732 |       wsCalculateFromLedger=(ws,_opts)=>L.calculateLedger(ws&&Array.isArray(ws.transactions)?ws.transactions:[],typeof wsBaseCurrency==='function'?wsBaseCurrency():'EUR');
+13733 |       mark('wsCalculateFromLedger');
+13734 |     }
+13735 |     if(typeof wsFxConvert==='function'){
+13736 |       wsFxConvert=(amount,currency)=>{const meta=typeof wsFxRateMeta==='function'?wsFxRateMeta(currency):null;return meta?W.fxConvert(amount,meta.rate):null;};
+13737 |       mark('wsFxConvert');
+13738 |     }
+13739 |     if(typeof wsPositionBaseValue==='function'){
+13740 |       wsPositionBaseValue=security=>{const ws=typeof wsPortfolio==='function'?wsPortfolio():null,p=ws&&ws.holdings?ws.holdings[security]:null;if(!p)return null;const pg=typeof wsGetPrice==='function'?wsGetPrice(security,ws):null;if(!pg)return null;const fx=typeof wsFxRate==='function'?wsFxRate(p.currency||(typeof wsBaseCurrency==='function'?wsBaseCurrency():'EUR')):null;return L.positionBaseValue(p,pg.price,fx);};
+13741 |       mark('wsPositionBaseValue');
+13742 |     }
+13743 |     if(typeof wsMarketValue==='function'){
 ```
 
 ## creditRatios — line 7193 — owner `BootstrapMC`
@@ -2261,127 +2261,127 @@ Generated mechanically from the production source to support the final modulariz
  8686 |     // documentation
 ```
 
-## compute — line 13338 — owner `installReport`
+## compute — line 13543 — owner `installReport`
 
 ```js
-13330 |       if(r.error)return {error:r.error,value:null,rows:[]};
-13331 |       return {value:r.value,bookValue0,pvRI:r.pvRI,tvRI:r.continuingValue,pvTV:r.pvContinuing,rows:r.rows.map(x=>({t:x.t,income:x.netIncome,charge:x.equityCharge,ri:x.residualIncome,pvRI:x.pvRI,bv:x.endingBV}))};
-13332 |     };
-13333 |     ValuationEngine.comparables=(companyMultiple,peers)=>Core.comparables(companyMultiple,peers);
-13334 |     mark('ValuationEngine');
-13335 |   }
-13336 | 
-13337 |   if(typeof FinancialRatios!=='undefined' && FinancialRatios){
-13338 |     FinancialRatios.compute=(f)=>Core.financialRatios(f||{});
-13339 |     FinancialRatios.dupont=(r)=>({netMargin:r.netMargin,assetTurnover:r.assetTurnover,equityMultiplier:r.equityMultiplier,roe:r.netMargin!=null&&r.assetTurnover!=null&&r.equityMultiplier!=null?r.netMargin*r.assetTurnover*r.equityMultiplier:null});
-13340 |     mark('FinancialRatios');
-13341 |   }
-13342 | 
-13343 |   if(ModelCore && typeof FinancialModelEngine!=='undefined' && FinancialModelEngine){
-13344 |     FinancialModelEngine.defaults=()=>{
-13345 |       const currency=(typeof App!=='undefined'&&App&&App.state&&App.state.settings&&App.state.settings.currency)||'EUR';
-13346 |       return ModelCore.defaults(currency);
-13347 |     };
-13348 |     FinancialModelEngine.fillDefaults=(m,sd)=>ModelCore.fillDefaults(m,sd||{});
-13349 |     FinancialModelEngine.build=(m,sd)=>{
-13350 |       const out=ModelCore.build(m,sd||{});
-13351 |       if(Array.isArray(out.covenants) && typeof fmt!=='undefined')out.covenants=out.covenants.map(c=>({...c,fmt:c.format==='ratio'?fmt.x:fmt.money}));
-13352 |       return out;
-13353 |     };
-13354 |     mark('FinancialModelEngine.build/fillDefaults/defaults');
-13355 |   }
-13356 | 
-13357 |   if(typeof XIRR!=='undefined' && XIRR){
-13358 |     XIRR.xnpv=(rate,cashflows,dates)=>Core.xnpv(rate,cashflows,dates);
-13359 |     XIRR.xirr=(cashflows,dates,_guess=.1)=>Core.xirr(cashflows,dates);
-13360 |     XIRR.xirrHTML=(cashflows,dates)=>{
-13361 |       const r=Core.xirr(cashflows,dates);
-13362 |       if(r==null)return '<div class="banner warn">XIRR could not be determined — the irregular cash-flow pattern may have no unique root.</div>';
-13363 |       return `<div class="card"><div class="card-title">XIRR (irregular-period IRR)</div><div class="grid g2">${kpi('XIRR',fmt.pct(r,2),'annualized, irregular dates')}</div><div class="formula">Solve Σ CF_i/(1+XIRR)^((date_i−date_0)/365) = 0</div><div class="banner info">XIRR handles cash flows that arrive at irregular dates by discounting each to its actual year-fraction. It annualizes the return correctly for non-annual periods.</div></div>`;
-13364 |     };
-13365 |     mark('XIRR');
+13535 |       if(r.error)return {error:r.error,value:null,rows:[]};
+13536 |       return {value:r.value,bookValue0,pvRI:r.pvRI,tvRI:r.continuingValue,pvTV:r.pvContinuing,rows:r.rows.map(x=>({t:x.t,income:x.netIncome,charge:x.equityCharge,ri:x.residualIncome,pvRI:x.pvRI,bv:x.endingBV}))};
+13537 |     };
+13538 |     ValuationEngine.comparables=(companyMultiple,peers)=>Core.comparables(companyMultiple,peers);
+13539 |     mark('ValuationEngine');
+13540 |   }
+13541 | 
+13542 |   if(typeof FinancialRatios!=='undefined' && FinancialRatios){
+13543 |     FinancialRatios.compute=(f)=>Core.financialRatios(f||{});
+13544 |     FinancialRatios.dupont=(r)=>({netMargin:r.netMargin,assetTurnover:r.assetTurnover,equityMultiplier:r.equityMultiplier,roe:r.netMargin!=null&&r.assetTurnover!=null&&r.equityMultiplier!=null?r.netMargin*r.assetTurnover*r.equityMultiplier:null});
+13545 |     mark('FinancialRatios');
+13546 |   }
+13547 | 
+13548 |   if(ModelCore && typeof FinancialModelEngine!=='undefined' && FinancialModelEngine){
+13549 |     FinancialModelEngine.defaults=()=>{
+13550 |       const currency=(typeof App!=='undefined'&&App&&App.state&&App.state.settings&&App.state.settings.currency)||'EUR';
+13551 |       return ModelCore.defaults(currency);
+13552 |     };
+13553 |     FinancialModelEngine.fillDefaults=(m,sd)=>ModelCore.fillDefaults(m,sd||{});
+13554 |     FinancialModelEngine.build=(m,sd)=>{
+13555 |       const out=ModelCore.build(m,sd||{});
+13556 |       if(Array.isArray(out.covenants) && typeof fmt!=='undefined')out.covenants=out.covenants.map(c=>({...c,fmt:c.format==='ratio'?fmt.x:fmt.money}));
+13557 |       return out;
+13558 |     };
+13559 |     mark('FinancialModelEngine.build/fillDefaults/defaults');
+13560 |   }
+13561 | 
+13562 |   if(typeof XIRR!=='undefined' && XIRR){
+13563 |     XIRR.xnpv=(rate,cashflows,dates)=>Core.xnpv(rate,cashflows,dates);
+13564 |     XIRR.xirr=(cashflows,dates,_guess=.1)=>Core.xirr(cashflows,dates);
+13565 |     XIRR.xirrHTML=(cashflows,dates)=>{
+13566 |       const r=Core.xirr(cashflows,dates);
+13567 |       if(r==null)return '<div class="banner warn">XIRR could not be determined — the irregular cash-flow pattern may have no unique root.</div>';
+13568 |       return `<div class="card"><div class="card-title">XIRR (irregular-period IRR)</div><div class="grid g2">${kpi('XIRR',fmt.pct(r,2),'annualized, irregular dates')}</div><div class="formula">Solve Σ CF_i/(1+XIRR)^((date_i−date_0)/365) = 0</div><div class="banner info">XIRR handles cash flows that arrive at irregular dates by discounting each to its actual year-fraction. It annualizes the return correctly for non-annual periods.</div></div>`;
+13569 |     };
+13570 |     mark('XIRR');
 ```
 
-## compute — line 13417 — owner `out`
+## compute — line 13622 — owner `out`
 
 ```js
-13409 |   }
-13410 | 
-13411 |   if(RiskCore && typeof MertonDiag!=='undefined' && MertonDiag){
-13412 |     MertonDiag.trace=(E,sigmaE,D,r,T)=>RiskCore.mertonTrace(E,sigmaE,D,r,T);
-13413 |     mark('MertonDiag.trace');
-13414 |   }
-13415 | 
-13416 |   if(typeof ECLV2!=='undefined' && ECLV2){
-13417 |     ECLV2.compute=(pd,recovery,ead)=>{
-13418 |       const amount=RiskCore?RiskCore.expectedLossAmount(pd,recovery,ead):(Core.isFiniteNumber(pd)&&Core.isFiniteNumber(recovery)&&Core.isFiniteNumber(ead)&&pd>=0&&pd<=1&&recovery>=0&&recovery<=1&&ead>=0?pd*(1-recovery)*ead:null);
-13419 |       if(amount==null)return {pd,recovery,ead,lgd:null,el:null,error:'ECL requires finite PD/recovery in [0,1] and non-negative EAD.'};
-13420 |       const lgd=1-recovery;return {pd,recovery,ead,lgd,el:Math.round(amount*100)/100};
-13421 |     };
-13422 |     ECLV2.eadDefault=(face,_exposureType)=>Core.isFiniteNumber(face)&&face>=0?face:null;
-13423 |     mark('ECLV2');
-13424 |   }
-13425 | 
-13426 |   if(LegacyCore && typeof StressTestEngine!=='undefined' && StressTestEngine){
-13427 |     StressTestEngine.run=(sd,scenarios)=>{
-13428 |       const currentPD=(typeof App!=='undefined'&&App&&App.state&&App.state.results&&App.state.results.stock&&App.state.results.stock.defaultPD!=null)?App.state.results.stock.defaultPD:.05;
-13429 |       const useScenarios=scenarios==null?StressTestEngine.PREDEFINED:scenarios;
-13430 |       return LegacyCore.stressRun(sd,useScenarios,{defaultPD:currentPD});
-13431 |     };
-13432 |     mark('StressTestEngine.run');
-13433 |   }
-13434 | 
-13435 |   if(LegacyCore && typeof PortfolioEngine!=='undefined' && PortfolioEngine){
-13436 |     PortfolioEngine.build=(items)=>{
-13437 |       const rf=(typeof App!=='undefined'&&App&&App.state&&App.state.stockData&&App.state.stockData.rf!=null)?App.state.stockData.rf:.03;
-13438 |       return LegacyCore.portfolioBuild(items,{riskFreeRate:rf,correlation:.4});
-13439 |     };
-13440 |     PortfolioEngine.stress=(port,scenario)=>LegacyCore.portfolioStress(port,scenario||{});
-13441 |     mark('PortfolioEngine.build/stress');
-13442 |   }
-13443 | 
-13444 |   if(LegacyCore && typeof ValuationMatrixV2!=='undefined' && ValuationMatrixV2){
+13614 |   }
+13615 | 
+13616 |   if(RiskCore && typeof MertonDiag!=='undefined' && MertonDiag){
+13617 |     MertonDiag.trace=(E,sigmaE,D,r,T)=>RiskCore.mertonTrace(E,sigmaE,D,r,T);
+13618 |     mark('MertonDiag.trace');
+13619 |   }
+13620 | 
+13621 |   if(typeof ECLV2!=='undefined' && ECLV2){
+13622 |     ECLV2.compute=(pd,recovery,ead)=>{
+13623 |       const amount=RiskCore?RiskCore.expectedLossAmount(pd,recovery,ead):(Core.isFiniteNumber(pd)&&Core.isFiniteNumber(recovery)&&Core.isFiniteNumber(ead)&&pd>=0&&pd<=1&&recovery>=0&&recovery<=1&&ead>=0?pd*(1-recovery)*ead:null);
+13624 |       if(amount==null)return {pd,recovery,ead,lgd:null,el:null,error:'ECL requires finite PD/recovery in [0,1] and non-negative EAD.'};
+13625 |       const lgd=1-recovery;return {pd,recovery,ead,lgd,el:Math.round(amount*100)/100};
+13626 |     };
+13627 |     ECLV2.eadDefault=(face,_exposureType)=>Core.isFiniteNumber(face)&&face>=0?face:null;
+13628 |     mark('ECLV2');
+13629 |   }
+13630 | 
+13631 |   if(LegacyCore && typeof StressTestEngine!=='undefined' && StressTestEngine){
+13632 |     StressTestEngine.run=(sd,scenarios)=>{
+13633 |       const currentPD=(typeof App!=='undefined'&&App&&App.state&&App.state.results&&App.state.results.stock&&App.state.results.stock.defaultPD!=null)?App.state.results.stock.defaultPD:.05;
+13634 |       const useScenarios=scenarios==null?StressTestEngine.PREDEFINED:scenarios;
+13635 |       return LegacyCore.stressRun(sd,useScenarios,{defaultPD:currentPD});
+13636 |     };
+13637 |     mark('StressTestEngine.run');
+13638 |   }
+13639 | 
+13640 |   if(LegacyCore && typeof PortfolioEngine!=='undefined' && PortfolioEngine){
+13641 |     PortfolioEngine.build=(items)=>{
+13642 |       const rf=(typeof App!=='undefined'&&App&&App.state&&App.state.stockData&&App.state.stockData.rf!=null)?App.state.stockData.rf:.03;
+13643 |       return LegacyCore.portfolioBuild(items,{riskFreeRate:rf,correlation:.4});
+13644 |     };
+13645 |     PortfolioEngine.stress=(port,scenario)=>LegacyCore.portfolioStress(port,scenario||{});
+13646 |     mark('PortfolioEngine.build/stress');
+13647 |   }
+13648 | 
+13649 |   if(LegacyCore && typeof ValuationMatrixV2!=='undefined' && ValuationMatrixV2){
 ```
 
-## compute — line 13511 — owner `out`
+## compute — line 13717 — owner `out`
 
 ```js
-13503 |     mark('SimilarityEngine');
-13504 |   }
-13505 |   if(typeof DataQualityEngine!=='undefined'&&DataQualityEngine){DataQualityEngine.score=ctx=>W.dataQualityScore(ctx);mark('DataQualityEngine.score');}
-13506 |   if(typeof ScoringEngine!=='undefined'&&ScoringEngine){ScoringEngine.score=(metrics,weights)=>W.preferenceScore(metrics,weights||ScoringEngine.DEFAULT_W||W.DEFAULT_PREFERENCE_WEIGHTS);mark('ScoringEngine.score');}
-13507 |   if(typeof PeerSimilarity!=='undefined'&&PeerSimilarity){PeerSimilarity.score=peers=>W.peerDataCoverage(peers);mark('PeerSimilarity.score');}
-13508 | 
-13509 |   if(typeof factorExposure==='function'){factorExposure=items=>W.factorExposure(items);mark('factorExposure');}
-13510 |   if(typeof performanceAttribution==='function'){performanceAttribution=(items,benchmarkRet)=>W.performanceAttribution(items,benchmarkRet);mark('performanceAttribution');}
-13511 |   if(typeof RiskContribution!=='undefined'&&RiskContribution){RiskContribution.compute=(port,corr)=>W.riskContribution(port,corr);mark('RiskContribution.compute');}
-13512 |   if(typeof PortfolioOptimizers!=='undefined'&&PortfolioOptimizers){
-13513 |     PortfolioOptimizers.equalWeight=items=>W.equalWeight(items);
-13514 |     PortfolioOptimizers.minimumVariance=(items,corr)=>W.minimumVariance(items,corr);
-13515 |     PortfolioOptimizers.maximumSharpe=(items,corr,rf)=>W.maximumSharpe(items,corr,rf==null?0:rf);
-13516 |     PortfolioOptimizers.riskParity=(items,corr)=>W.riskParity(items,corr);
-13517 |     mark('PortfolioOptimizers');
-13518 |   }
-13519 | 
-13520 |   if(L){
-13521 |     if(typeof wsDividendAmounts==='function'){wsDividendAmounts=tx=>L.dividendAmounts(tx);mark('wsDividendAmounts');}
-13522 |     if(typeof wsCalculateFromLedger==='function'){
-13523 |       wsCalculateFromLedger=(ws,_opts)=>L.calculateLedger(ws&&Array.isArray(ws.transactions)?ws.transactions:[],typeof wsBaseCurrency==='function'?wsBaseCurrency():'EUR');
-13524 |       mark('wsCalculateFromLedger');
-13525 |     }
-13526 |     if(typeof wsFxConvert==='function'){
-13527 |       wsFxConvert=(amount,currency)=>{const meta=typeof wsFxRateMeta==='function'?wsFxRateMeta(currency):null;return meta?W.fxConvert(amount,meta.rate):null;};
-13528 |       mark('wsFxConvert');
-13529 |     }
-13530 |     if(typeof wsPositionBaseValue==='function'){
-13531 |       wsPositionBaseValue=security=>{const ws=typeof wsPortfolio==='function'?wsPortfolio():null,p=ws&&ws.holdings?ws.holdings[security]:null;if(!p)return null;const pg=typeof wsGetPrice==='function'?wsGetPrice(security,ws):null;if(!pg)return null;const fx=typeof wsFxRate==='function'?wsFxRate(p.currency||(typeof wsBaseCurrency==='function'?wsBaseCurrency():'EUR')):null;return L.positionBaseValue(p,pg.price,fx);};
-13532 |       mark('wsPositionBaseValue');
-13533 |     }
-13534 |     if(typeof wsMarketValue==='function'){
-13535 |       wsMarketValue=()=>{const ws=typeof wsPortfolio==='function'?wsPortfolio():null,pos=ws&&ws.holdings?ws.holdings:{};const entries=Object.keys(pos).map(k=>{const p=pos[k],pg=typeof wsGetPrice==='function'?wsGetPrice(k,ws):null,meta=typeof wsFxRateMeta==='function'?wsFxRateMeta(p.currency||(typeof wsBaseCurrency==='function'?wsBaseCurrency():'EUR')):null;return {position:p,price:pg?pg.price:null,fxRate:meta?meta.rate:null};});return L.marketValueSummary(entries);};
-13536 |       mark('wsMarketValue');
-13537 |     }
-13538 |     if(typeof wsCashSummary==='function'){
+13709 |     mark('SimilarityEngine');
+13710 |   }
+13711 |   if(typeof DataQualityEngine!=='undefined'&&DataQualityEngine){DataQualityEngine.score=ctx=>W.dataQualityScore(ctx);mark('DataQualityEngine.score');}
+13712 |   if(typeof ScoringEngine!=='undefined'&&ScoringEngine){ScoringEngine.score=(metrics,weights)=>W.preferenceScore(metrics,weights||ScoringEngine.DEFAULT_W||W.DEFAULT_PREFERENCE_WEIGHTS);mark('ScoringEngine.score');}
+13713 |   if(typeof PeerSimilarity!=='undefined'&&PeerSimilarity){PeerSimilarity.score=peers=>W.peerDataCoverage(peers);mark('PeerSimilarity.score');}
+13714 | 
+13715 |   if(typeof factorExposure==='function'){factorExposure=items=>W.factorExposure(items);mark('factorExposure');}
+13716 |   if(typeof performanceAttribution==='function'){performanceAttribution=(items,benchmarkRet)=>W.performanceAttribution(items,benchmarkRet);mark('performanceAttribution');}
+13717 |   if(typeof RiskContribution!=='undefined'&&RiskContribution){RiskContribution.compute=(port,corr)=>W.riskContribution(port,corr);mark('RiskContribution.compute');}
+13718 |   if(typeof PortfolioOptimizers!=='undefined'&&PortfolioOptimizers){
+13719 |     PortfolioOptimizers.equalWeight=items=>W.equalWeight(items);
+13720 |     PortfolioOptimizers.minimumVariance=(items,corr)=>W.minimumVariance(items,corr);
+13721 |     PortfolioOptimizers.maximumSharpe=(items,corr,rf)=>W.maximumSharpe(items,corr,rf==null?0:rf);
+13722 |     PortfolioOptimizers.riskParity=(items,corr)=>W.riskParity(items,corr);
+13723 |     mark('PortfolioOptimizers');
+13724 |   }
+13725 | 
+13726 |   if(S&&typeof MonteCarlo!=='undefined'&&MonteCarlo){MonteCarlo.run=cfg=>S.monteCarloRun(cfg);mark('MonteCarlo.run');}
+13727 |   if(S&&typeof BacktestEngine!=='undefined'&&BacktestEngine){BacktestEngine.run=cfg=>S.backtestRun(cfg);mark('BacktestEngine.run');}
+13728 | 
+13729 |   if(L){
+13730 |     if(typeof wsDividendAmounts==='function'){wsDividendAmounts=tx=>L.dividendAmounts(tx);mark('wsDividendAmounts');}
+13731 |     if(typeof wsCalculateFromLedger==='function'){
+13732 |       wsCalculateFromLedger=(ws,_opts)=>L.calculateLedger(ws&&Array.isArray(ws.transactions)?ws.transactions:[],typeof wsBaseCurrency==='function'?wsBaseCurrency():'EUR');
+13733 |       mark('wsCalculateFromLedger');
+13734 |     }
+13735 |     if(typeof wsFxConvert==='function'){
+13736 |       wsFxConvert=(amount,currency)=>{const meta=typeof wsFxRateMeta==='function'?wsFxRateMeta(currency):null;return meta?W.fxConvert(amount,meta.rate):null;};
+13737 |       mark('wsFxConvert');
+13738 |     }
+13739 |     if(typeof wsPositionBaseValue==='function'){
+13740 |       wsPositionBaseValue=security=>{const ws=typeof wsPortfolio==='function'?wsPortfolio():null,p=ws&&ws.holdings?ws.holdings[security]:null;if(!p)return null;const pg=typeof wsGetPrice==='function'?wsGetPrice(security,ws):null;if(!pg)return null;const fx=typeof wsFxRate==='function'?wsFxRate(p.currency||(typeof wsBaseCurrency==='function'?wsBaseCurrency():'EUR')):null;return L.positionBaseValue(p,pg.price,fx);};
+13741 |       mark('wsPositionBaseValue');
+13742 |     }
+13743 |     if(typeof wsMarketValue==='function'){
+13744 |       wsMarketValue=()=>{const ws=typeof wsPortfolio==='function'?wsPortfolio():null,pos=ws&&ws.holdings?ws.holdings:{};const entries=Object.keys(pos).map(k=>{const p=pos[k],pg=typeof wsGetPrice==='function'?wsGetPrice(k,ws):null,meta=typeof wsFxRateMeta==='function'?wsFxRateMeta(p.currency||(typeof wsBaseCurrency==='function'?wsBaseCurrency():'EUR')):null;return {position:p,price:pg?pg.price:null,fxRate:meta?meta.rate:null};});return L.marketValueSummary(entries);};
 ```
 
 ## minimumVariance — line 9122 — owner `PortfolioOptimizers`
@@ -2466,45 +2466,45 @@ Generated mechanically from the production source to support the final modulariz
 12951 |       }
 ```
 
-## minimumVariance — line 13514 — owner `out`
+## minimumVariance — line 13720 — owner `out`
 
 ```js
-13506 |   if(typeof ScoringEngine!=='undefined'&&ScoringEngine){ScoringEngine.score=(metrics,weights)=>W.preferenceScore(metrics,weights||ScoringEngine.DEFAULT_W||W.DEFAULT_PREFERENCE_WEIGHTS);mark('ScoringEngine.score');}
-13507 |   if(typeof PeerSimilarity!=='undefined'&&PeerSimilarity){PeerSimilarity.score=peers=>W.peerDataCoverage(peers);mark('PeerSimilarity.score');}
-13508 | 
-13509 |   if(typeof factorExposure==='function'){factorExposure=items=>W.factorExposure(items);mark('factorExposure');}
-13510 |   if(typeof performanceAttribution==='function'){performanceAttribution=(items,benchmarkRet)=>W.performanceAttribution(items,benchmarkRet);mark('performanceAttribution');}
-13511 |   if(typeof RiskContribution!=='undefined'&&RiskContribution){RiskContribution.compute=(port,corr)=>W.riskContribution(port,corr);mark('RiskContribution.compute');}
-13512 |   if(typeof PortfolioOptimizers!=='undefined'&&PortfolioOptimizers){
-13513 |     PortfolioOptimizers.equalWeight=items=>W.equalWeight(items);
-13514 |     PortfolioOptimizers.minimumVariance=(items,corr)=>W.minimumVariance(items,corr);
-13515 |     PortfolioOptimizers.maximumSharpe=(items,corr,rf)=>W.maximumSharpe(items,corr,rf==null?0:rf);
-13516 |     PortfolioOptimizers.riskParity=(items,corr)=>W.riskParity(items,corr);
-13517 |     mark('PortfolioOptimizers');
-13518 |   }
-13519 | 
-13520 |   if(L){
-13521 |     if(typeof wsDividendAmounts==='function'){wsDividendAmounts=tx=>L.dividendAmounts(tx);mark('wsDividendAmounts');}
-13522 |     if(typeof wsCalculateFromLedger==='function'){
-13523 |       wsCalculateFromLedger=(ws,_opts)=>L.calculateLedger(ws&&Array.isArray(ws.transactions)?ws.transactions:[],typeof wsBaseCurrency==='function'?wsBaseCurrency():'EUR');
-13524 |       mark('wsCalculateFromLedger');
-13525 |     }
-13526 |     if(typeof wsFxConvert==='function'){
-13527 |       wsFxConvert=(amount,currency)=>{const meta=typeof wsFxRateMeta==='function'?wsFxRateMeta(currency):null;return meta?W.fxConvert(amount,meta.rate):null;};
-13528 |       mark('wsFxConvert');
-13529 |     }
-13530 |     if(typeof wsPositionBaseValue==='function'){
-13531 |       wsPositionBaseValue=security=>{const ws=typeof wsPortfolio==='function'?wsPortfolio():null,p=ws&&ws.holdings?ws.holdings[security]:null;if(!p)return null;const pg=typeof wsGetPrice==='function'?wsGetPrice(security,ws):null;if(!pg)return null;const fx=typeof wsFxRate==='function'?wsFxRate(p.currency||(typeof wsBaseCurrency==='function'?wsBaseCurrency():'EUR')):null;return L.positionBaseValue(p,pg.price,fx);};
-13532 |       mark('wsPositionBaseValue');
-13533 |     }
-13534 |     if(typeof wsMarketValue==='function'){
-13535 |       wsMarketValue=()=>{const ws=typeof wsPortfolio==='function'?wsPortfolio():null,pos=ws&&ws.holdings?ws.holdings:{};const entries=Object.keys(pos).map(k=>{const p=pos[k],pg=typeof wsGetPrice==='function'?wsGetPrice(k,ws):null,meta=typeof wsFxRateMeta==='function'?wsFxRateMeta(p.currency||(typeof wsBaseCurrency==='function'?wsBaseCurrency():'EUR')):null;return {position:p,price:pg?pg.price:null,fxRate:meta?meta.rate:null};});return L.marketValueSummary(entries);};
-13536 |       mark('wsMarketValue');
-13537 |     }
-13538 |     if(typeof wsCashSummary==='function'){
-13539 |       wsCashSummary=()=>{const ws=typeof wsPortfolio==='function'?wsPortfolio():null;if(!ws)return null;const mv=typeof wsMarketValue==='function'?wsMarketValue():null;return L.cashSummary(ws.cashAccounts||{},ws.fxRates||{},typeof wsBaseCurrency==='function'?wsBaseCurrency():'EUR',mv&&Number.isFinite(mv.mv)?mv.mv:0);};
-13540 |       mark('wsCashSummary');
-13541 |     }
+13712 |   if(typeof ScoringEngine!=='undefined'&&ScoringEngine){ScoringEngine.score=(metrics,weights)=>W.preferenceScore(metrics,weights||ScoringEngine.DEFAULT_W||W.DEFAULT_PREFERENCE_WEIGHTS);mark('ScoringEngine.score');}
+13713 |   if(typeof PeerSimilarity!=='undefined'&&PeerSimilarity){PeerSimilarity.score=peers=>W.peerDataCoverage(peers);mark('PeerSimilarity.score');}
+13714 | 
+13715 |   if(typeof factorExposure==='function'){factorExposure=items=>W.factorExposure(items);mark('factorExposure');}
+13716 |   if(typeof performanceAttribution==='function'){performanceAttribution=(items,benchmarkRet)=>W.performanceAttribution(items,benchmarkRet);mark('performanceAttribution');}
+13717 |   if(typeof RiskContribution!=='undefined'&&RiskContribution){RiskContribution.compute=(port,corr)=>W.riskContribution(port,corr);mark('RiskContribution.compute');}
+13718 |   if(typeof PortfolioOptimizers!=='undefined'&&PortfolioOptimizers){
+13719 |     PortfolioOptimizers.equalWeight=items=>W.equalWeight(items);
+13720 |     PortfolioOptimizers.minimumVariance=(items,corr)=>W.minimumVariance(items,corr);
+13721 |     PortfolioOptimizers.maximumSharpe=(items,corr,rf)=>W.maximumSharpe(items,corr,rf==null?0:rf);
+13722 |     PortfolioOptimizers.riskParity=(items,corr)=>W.riskParity(items,corr);
+13723 |     mark('PortfolioOptimizers');
+13724 |   }
+13725 | 
+13726 |   if(S&&typeof MonteCarlo!=='undefined'&&MonteCarlo){MonteCarlo.run=cfg=>S.monteCarloRun(cfg);mark('MonteCarlo.run');}
+13727 |   if(S&&typeof BacktestEngine!=='undefined'&&BacktestEngine){BacktestEngine.run=cfg=>S.backtestRun(cfg);mark('BacktestEngine.run');}
+13728 | 
+13729 |   if(L){
+13730 |     if(typeof wsDividendAmounts==='function'){wsDividendAmounts=tx=>L.dividendAmounts(tx);mark('wsDividendAmounts');}
+13731 |     if(typeof wsCalculateFromLedger==='function'){
+13732 |       wsCalculateFromLedger=(ws,_opts)=>L.calculateLedger(ws&&Array.isArray(ws.transactions)?ws.transactions:[],typeof wsBaseCurrency==='function'?wsBaseCurrency():'EUR');
+13733 |       mark('wsCalculateFromLedger');
+13734 |     }
+13735 |     if(typeof wsFxConvert==='function'){
+13736 |       wsFxConvert=(amount,currency)=>{const meta=typeof wsFxRateMeta==='function'?wsFxRateMeta(currency):null;return meta?W.fxConvert(amount,meta.rate):null;};
+13737 |       mark('wsFxConvert');
+13738 |     }
+13739 |     if(typeof wsPositionBaseValue==='function'){
+13740 |       wsPositionBaseValue=security=>{const ws=typeof wsPortfolio==='function'?wsPortfolio():null,p=ws&&ws.holdings?ws.holdings[security]:null;if(!p)return null;const pg=typeof wsGetPrice==='function'?wsGetPrice(security,ws):null;if(!pg)return null;const fx=typeof wsFxRate==='function'?wsFxRate(p.currency||(typeof wsBaseCurrency==='function'?wsBaseCurrency():'EUR')):null;return L.positionBaseValue(p,pg.price,fx);};
+13741 |       mark('wsPositionBaseValue');
+13742 |     }
+13743 |     if(typeof wsMarketValue==='function'){
+13744 |       wsMarketValue=()=>{const ws=typeof wsPortfolio==='function'?wsPortfolio():null,pos=ws&&ws.holdings?ws.holdings:{};const entries=Object.keys(pos).map(k=>{const p=pos[k],pg=typeof wsGetPrice==='function'?wsGetPrice(k,ws):null,meta=typeof wsFxRateMeta==='function'?wsFxRateMeta(p.currency||(typeof wsBaseCurrency==='function'?wsBaseCurrency():'EUR')):null;return {position:p,price:pg?pg.price:null,fxRate:meta?meta.rate:null};});return L.marketValueSummary(entries);};
+13745 |       mark('wsMarketValue');
+13746 |     }
+13747 |     if(typeof wsCashSummary==='function'){
 ```
 
 ## maximumSharpe — line 9142 — owner `PortfolioOptimizers`
@@ -2589,45 +2589,45 @@ Generated mechanically from the production source to support the final modulariz
 12965 |         if(items.every(x=>x.volatility<=EPS))return equalWeight(items);
 ```
 
-## maximumSharpe — line 13515 — owner `out`
+## maximumSharpe — line 13721 — owner `out`
 
 ```js
-13507 |   if(typeof PeerSimilarity!=='undefined'&&PeerSimilarity){PeerSimilarity.score=peers=>W.peerDataCoverage(peers);mark('PeerSimilarity.score');}
-13508 | 
-13509 |   if(typeof factorExposure==='function'){factorExposure=items=>W.factorExposure(items);mark('factorExposure');}
-13510 |   if(typeof performanceAttribution==='function'){performanceAttribution=(items,benchmarkRet)=>W.performanceAttribution(items,benchmarkRet);mark('performanceAttribution');}
-13511 |   if(typeof RiskContribution!=='undefined'&&RiskContribution){RiskContribution.compute=(port,corr)=>W.riskContribution(port,corr);mark('RiskContribution.compute');}
-13512 |   if(typeof PortfolioOptimizers!=='undefined'&&PortfolioOptimizers){
-13513 |     PortfolioOptimizers.equalWeight=items=>W.equalWeight(items);
-13514 |     PortfolioOptimizers.minimumVariance=(items,corr)=>W.minimumVariance(items,corr);
-13515 |     PortfolioOptimizers.maximumSharpe=(items,corr,rf)=>W.maximumSharpe(items,corr,rf==null?0:rf);
-13516 |     PortfolioOptimizers.riskParity=(items,corr)=>W.riskParity(items,corr);
-13517 |     mark('PortfolioOptimizers');
-13518 |   }
-13519 | 
-13520 |   if(L){
-13521 |     if(typeof wsDividendAmounts==='function'){wsDividendAmounts=tx=>L.dividendAmounts(tx);mark('wsDividendAmounts');}
-13522 |     if(typeof wsCalculateFromLedger==='function'){
-13523 |       wsCalculateFromLedger=(ws,_opts)=>L.calculateLedger(ws&&Array.isArray(ws.transactions)?ws.transactions:[],typeof wsBaseCurrency==='function'?wsBaseCurrency():'EUR');
-13524 |       mark('wsCalculateFromLedger');
-13525 |     }
-13526 |     if(typeof wsFxConvert==='function'){
-13527 |       wsFxConvert=(amount,currency)=>{const meta=typeof wsFxRateMeta==='function'?wsFxRateMeta(currency):null;return meta?W.fxConvert(amount,meta.rate):null;};
-13528 |       mark('wsFxConvert');
-13529 |     }
-13530 |     if(typeof wsPositionBaseValue==='function'){
-13531 |       wsPositionBaseValue=security=>{const ws=typeof wsPortfolio==='function'?wsPortfolio():null,p=ws&&ws.holdings?ws.holdings[security]:null;if(!p)return null;const pg=typeof wsGetPrice==='function'?wsGetPrice(security,ws):null;if(!pg)return null;const fx=typeof wsFxRate==='function'?wsFxRate(p.currency||(typeof wsBaseCurrency==='function'?wsBaseCurrency():'EUR')):null;return L.positionBaseValue(p,pg.price,fx);};
-13532 |       mark('wsPositionBaseValue');
-13533 |     }
-13534 |     if(typeof wsMarketValue==='function'){
-13535 |       wsMarketValue=()=>{const ws=typeof wsPortfolio==='function'?wsPortfolio():null,pos=ws&&ws.holdings?ws.holdings:{};const entries=Object.keys(pos).map(k=>{const p=pos[k],pg=typeof wsGetPrice==='function'?wsGetPrice(k,ws):null,meta=typeof wsFxRateMeta==='function'?wsFxRateMeta(p.currency||(typeof wsBaseCurrency==='function'?wsBaseCurrency():'EUR')):null;return {position:p,price:pg?pg.price:null,fxRate:meta?meta.rate:null};});return L.marketValueSummary(entries);};
-13536 |       mark('wsMarketValue');
-13537 |     }
-13538 |     if(typeof wsCashSummary==='function'){
-13539 |       wsCashSummary=()=>{const ws=typeof wsPortfolio==='function'?wsPortfolio():null;if(!ws)return null;const mv=typeof wsMarketValue==='function'?wsMarketValue():null;return L.cashSummary(ws.cashAccounts||{},ws.fxRates||{},typeof wsBaseCurrency==='function'?wsBaseCurrency():'EUR',mv&&Number.isFinite(mv.mv)?mv.mv:0);};
-13540 |       mark('wsCashSummary');
-13541 |     }
-13542 |     if(typeof wsUnrealized==='function'){
+13713 |   if(typeof PeerSimilarity!=='undefined'&&PeerSimilarity){PeerSimilarity.score=peers=>W.peerDataCoverage(peers);mark('PeerSimilarity.score');}
+13714 | 
+13715 |   if(typeof factorExposure==='function'){factorExposure=items=>W.factorExposure(items);mark('factorExposure');}
+13716 |   if(typeof performanceAttribution==='function'){performanceAttribution=(items,benchmarkRet)=>W.performanceAttribution(items,benchmarkRet);mark('performanceAttribution');}
+13717 |   if(typeof RiskContribution!=='undefined'&&RiskContribution){RiskContribution.compute=(port,corr)=>W.riskContribution(port,corr);mark('RiskContribution.compute');}
+13718 |   if(typeof PortfolioOptimizers!=='undefined'&&PortfolioOptimizers){
+13719 |     PortfolioOptimizers.equalWeight=items=>W.equalWeight(items);
+13720 |     PortfolioOptimizers.minimumVariance=(items,corr)=>W.minimumVariance(items,corr);
+13721 |     PortfolioOptimizers.maximumSharpe=(items,corr,rf)=>W.maximumSharpe(items,corr,rf==null?0:rf);
+13722 |     PortfolioOptimizers.riskParity=(items,corr)=>W.riskParity(items,corr);
+13723 |     mark('PortfolioOptimizers');
+13724 |   }
+13725 | 
+13726 |   if(S&&typeof MonteCarlo!=='undefined'&&MonteCarlo){MonteCarlo.run=cfg=>S.monteCarloRun(cfg);mark('MonteCarlo.run');}
+13727 |   if(S&&typeof BacktestEngine!=='undefined'&&BacktestEngine){BacktestEngine.run=cfg=>S.backtestRun(cfg);mark('BacktestEngine.run');}
+13728 | 
+13729 |   if(L){
+13730 |     if(typeof wsDividendAmounts==='function'){wsDividendAmounts=tx=>L.dividendAmounts(tx);mark('wsDividendAmounts');}
+13731 |     if(typeof wsCalculateFromLedger==='function'){
+13732 |       wsCalculateFromLedger=(ws,_opts)=>L.calculateLedger(ws&&Array.isArray(ws.transactions)?ws.transactions:[],typeof wsBaseCurrency==='function'?wsBaseCurrency():'EUR');
+13733 |       mark('wsCalculateFromLedger');
+13734 |     }
+13735 |     if(typeof wsFxConvert==='function'){
+13736 |       wsFxConvert=(amount,currency)=>{const meta=typeof wsFxRateMeta==='function'?wsFxRateMeta(currency):null;return meta?W.fxConvert(amount,meta.rate):null;};
+13737 |       mark('wsFxConvert');
+13738 |     }
+13739 |     if(typeof wsPositionBaseValue==='function'){
+13740 |       wsPositionBaseValue=security=>{const ws=typeof wsPortfolio==='function'?wsPortfolio():null,p=ws&&ws.holdings?ws.holdings[security]:null;if(!p)return null;const pg=typeof wsGetPrice==='function'?wsGetPrice(security,ws):null;if(!pg)return null;const fx=typeof wsFxRate==='function'?wsFxRate(p.currency||(typeof wsBaseCurrency==='function'?wsBaseCurrency():'EUR')):null;return L.positionBaseValue(p,pg.price,fx);};
+13741 |       mark('wsPositionBaseValue');
+13742 |     }
+13743 |     if(typeof wsMarketValue==='function'){
+13744 |       wsMarketValue=()=>{const ws=typeof wsPortfolio==='function'?wsPortfolio():null,pos=ws&&ws.holdings?ws.holdings:{};const entries=Object.keys(pos).map(k=>{const p=pos[k],pg=typeof wsGetPrice==='function'?wsGetPrice(k,ws):null,meta=typeof wsFxRateMeta==='function'?wsFxRateMeta(p.currency||(typeof wsBaseCurrency==='function'?wsBaseCurrency():'EUR')):null;return {position:p,price:pg?pg.price:null,fxRate:meta?meta.rate:null};});return L.marketValueSummary(entries);};
+13745 |       mark('wsMarketValue');
+13746 |     }
+13747 |     if(typeof wsCashSummary==='function'){
+13748 |       wsCashSummary=()=>{const ws=typeof wsPortfolio==='function'?wsPortfolio():null;if(!ws)return null;const mv=typeof wsMarketValue==='function'?wsMarketValue():null;return L.cashSummary(ws.cashAccounts||{},ws.fxRates||{},typeof wsBaseCurrency==='function'?wsBaseCurrency():'EUR',mv&&Number.isFinite(mv.mv)?mv.mv:0);};
 ```
 
 ## wsDividendAmounts — line 9607 — owner `FinancialValidators`
@@ -2712,45 +2712,45 @@ Generated mechanically from the production source to support the final modulariz
  9651 |       pos.fxBasis= prevCost+cost>0? ((prevCost*pos.fxBasis)+(cost*fxB))/(prevCost+cost) : fxB;
 ```
 
-## wsCalculateFromLedger — line 13523 — owner `out`
+## wsCalculateFromLedger — line 13732 — owner `out`
 
 ```js
-13515 |     PortfolioOptimizers.maximumSharpe=(items,corr,rf)=>W.maximumSharpe(items,corr,rf==null?0:rf);
-13516 |     PortfolioOptimizers.riskParity=(items,corr)=>W.riskParity(items,corr);
-13517 |     mark('PortfolioOptimizers');
-13518 |   }
-13519 | 
-13520 |   if(L){
-13521 |     if(typeof wsDividendAmounts==='function'){wsDividendAmounts=tx=>L.dividendAmounts(tx);mark('wsDividendAmounts');}
-13522 |     if(typeof wsCalculateFromLedger==='function'){
-13523 |       wsCalculateFromLedger=(ws,_opts)=>L.calculateLedger(ws&&Array.isArray(ws.transactions)?ws.transactions:[],typeof wsBaseCurrency==='function'?wsBaseCurrency():'EUR');
-13524 |       mark('wsCalculateFromLedger');
-13525 |     }
-13526 |     if(typeof wsFxConvert==='function'){
-13527 |       wsFxConvert=(amount,currency)=>{const meta=typeof wsFxRateMeta==='function'?wsFxRateMeta(currency):null;return meta?W.fxConvert(amount,meta.rate):null;};
-13528 |       mark('wsFxConvert');
-13529 |     }
-13530 |     if(typeof wsPositionBaseValue==='function'){
-13531 |       wsPositionBaseValue=security=>{const ws=typeof wsPortfolio==='function'?wsPortfolio():null,p=ws&&ws.holdings?ws.holdings[security]:null;if(!p)return null;const pg=typeof wsGetPrice==='function'?wsGetPrice(security,ws):null;if(!pg)return null;const fx=typeof wsFxRate==='function'?wsFxRate(p.currency||(typeof wsBaseCurrency==='function'?wsBaseCurrency():'EUR')):null;return L.positionBaseValue(p,pg.price,fx);};
-13532 |       mark('wsPositionBaseValue');
-13533 |     }
-13534 |     if(typeof wsMarketValue==='function'){
-13535 |       wsMarketValue=()=>{const ws=typeof wsPortfolio==='function'?wsPortfolio():null,pos=ws&&ws.holdings?ws.holdings:{};const entries=Object.keys(pos).map(k=>{const p=pos[k],pg=typeof wsGetPrice==='function'?wsGetPrice(k,ws):null,meta=typeof wsFxRateMeta==='function'?wsFxRateMeta(p.currency||(typeof wsBaseCurrency==='function'?wsBaseCurrency():'EUR')):null;return {position:p,price:pg?pg.price:null,fxRate:meta?meta.rate:null};});return L.marketValueSummary(entries);};
-13536 |       mark('wsMarketValue');
-13537 |     }
-13538 |     if(typeof wsCashSummary==='function'){
-13539 |       wsCashSummary=()=>{const ws=typeof wsPortfolio==='function'?wsPortfolio():null;if(!ws)return null;const mv=typeof wsMarketValue==='function'?wsMarketValue():null;return L.cashSummary(ws.cashAccounts||{},ws.fxRates||{},typeof wsBaseCurrency==='function'?wsBaseCurrency():'EUR',mv&&Number.isFinite(mv.mv)?mv.mv:0);};
-13540 |       mark('wsCashSummary');
-13541 |     }
-13542 |     if(typeof wsUnrealized==='function'){
-13543 |       wsUnrealized=(security,price)=>{const ws=typeof wsPortfolio==='function'?wsPortfolio():null,p=ws&&ws.holdings?ws.holdings[security]:null;const r=L.positionUnrealized(p,price);return r?r.unrealizedPnl:null;};
-13544 |       mark('wsUnrealized');
-13545 |     }
-13546 |   }
-13547 | 
-13548 |   if(typeof wsTWR==='function'){wsTWR=snapshots=>W.timeWeightedReturnFromSnapshots(snapshots);mark('wsTWR');}
-13549 |   if(typeof wsMWR==='function'){wsMWR=snapshots=>W.moneyWeightedReturnFromSnapshots(snapshots);mark('wsMWR');}
-13550 |   if(typeof wsAnnualized==='function'){wsAnnualized=(twr,days)=>W.annualizeReturn(twr,days);mark('wsAnnualized');}
+13724 |   }
+13725 | 
+13726 |   if(S&&typeof MonteCarlo!=='undefined'&&MonteCarlo){MonteCarlo.run=cfg=>S.monteCarloRun(cfg);mark('MonteCarlo.run');}
+13727 |   if(S&&typeof BacktestEngine!=='undefined'&&BacktestEngine){BacktestEngine.run=cfg=>S.backtestRun(cfg);mark('BacktestEngine.run');}
+13728 | 
+13729 |   if(L){
+13730 |     if(typeof wsDividendAmounts==='function'){wsDividendAmounts=tx=>L.dividendAmounts(tx);mark('wsDividendAmounts');}
+13731 |     if(typeof wsCalculateFromLedger==='function'){
+13732 |       wsCalculateFromLedger=(ws,_opts)=>L.calculateLedger(ws&&Array.isArray(ws.transactions)?ws.transactions:[],typeof wsBaseCurrency==='function'?wsBaseCurrency():'EUR');
+13733 |       mark('wsCalculateFromLedger');
+13734 |     }
+13735 |     if(typeof wsFxConvert==='function'){
+13736 |       wsFxConvert=(amount,currency)=>{const meta=typeof wsFxRateMeta==='function'?wsFxRateMeta(currency):null;return meta?W.fxConvert(amount,meta.rate):null;};
+13737 |       mark('wsFxConvert');
+13738 |     }
+13739 |     if(typeof wsPositionBaseValue==='function'){
+13740 |       wsPositionBaseValue=security=>{const ws=typeof wsPortfolio==='function'?wsPortfolio():null,p=ws&&ws.holdings?ws.holdings[security]:null;if(!p)return null;const pg=typeof wsGetPrice==='function'?wsGetPrice(security,ws):null;if(!pg)return null;const fx=typeof wsFxRate==='function'?wsFxRate(p.currency||(typeof wsBaseCurrency==='function'?wsBaseCurrency():'EUR')):null;return L.positionBaseValue(p,pg.price,fx);};
+13741 |       mark('wsPositionBaseValue');
+13742 |     }
+13743 |     if(typeof wsMarketValue==='function'){
+13744 |       wsMarketValue=()=>{const ws=typeof wsPortfolio==='function'?wsPortfolio():null,pos=ws&&ws.holdings?ws.holdings:{};const entries=Object.keys(pos).map(k=>{const p=pos[k],pg=typeof wsGetPrice==='function'?wsGetPrice(k,ws):null,meta=typeof wsFxRateMeta==='function'?wsFxRateMeta(p.currency||(typeof wsBaseCurrency==='function'?wsBaseCurrency():'EUR')):null;return {position:p,price:pg?pg.price:null,fxRate:meta?meta.rate:null};});return L.marketValueSummary(entries);};
+13745 |       mark('wsMarketValue');
+13746 |     }
+13747 |     if(typeof wsCashSummary==='function'){
+13748 |       wsCashSummary=()=>{const ws=typeof wsPortfolio==='function'?wsPortfolio():null;if(!ws)return null;const mv=typeof wsMarketValue==='function'?wsMarketValue():null;return L.cashSummary(ws.cashAccounts||{},ws.fxRates||{},typeof wsBaseCurrency==='function'?wsBaseCurrency():'EUR',mv&&Number.isFinite(mv.mv)?mv.mv:0);};
+13749 |       mark('wsCashSummary');
+13750 |     }
+13751 |     if(typeof wsUnrealized==='function'){
+13752 |       wsUnrealized=(security,price)=>{const ws=typeof wsPortfolio==='function'?wsPortfolio():null,p=ws&&ws.holdings?ws.holdings[security]:null;const r=L.positionUnrealized(p,price);return r?r.unrealizedPnl:null;};
+13753 |       mark('wsUnrealized');
+13754 |     }
+13755 |   }
+13756 | 
+13757 |   if(typeof wsTWR==='function'){wsTWR=snapshots=>W.timeWeightedReturnFromSnapshots(snapshots);mark('wsTWR');}
+13758 |   if(typeof wsMWR==='function'){wsMWR=snapshots=>W.moneyWeightedReturnFromSnapshots(snapshots);mark('wsMWR');}
+13759 |   if(typeof wsAnnualized==='function'){wsAnnualized=(twr,days)=>W.annualizeReturn(twr,days);mark('wsAnnualized');}
 ```
 
 ## wsFxRateMeta — line 9704 — owner `accounts`
@@ -2835,45 +2835,45 @@ Generated mechanically from the production source to support the final modulariz
  9747 | function wsPositionBaseValue(k){
 ```
 
-## wsFxConvert — line 13527 — owner `out`
+## wsFxConvert — line 13736 — owner `out`
 
 ```js
-13519 | 
-13520 |   if(L){
-13521 |     if(typeof wsDividendAmounts==='function'){wsDividendAmounts=tx=>L.dividendAmounts(tx);mark('wsDividendAmounts');}
-13522 |     if(typeof wsCalculateFromLedger==='function'){
-13523 |       wsCalculateFromLedger=(ws,_opts)=>L.calculateLedger(ws&&Array.isArray(ws.transactions)?ws.transactions:[],typeof wsBaseCurrency==='function'?wsBaseCurrency():'EUR');
-13524 |       mark('wsCalculateFromLedger');
-13525 |     }
-13526 |     if(typeof wsFxConvert==='function'){
-13527 |       wsFxConvert=(amount,currency)=>{const meta=typeof wsFxRateMeta==='function'?wsFxRateMeta(currency):null;return meta?W.fxConvert(amount,meta.rate):null;};
-13528 |       mark('wsFxConvert');
-13529 |     }
-13530 |     if(typeof wsPositionBaseValue==='function'){
-13531 |       wsPositionBaseValue=security=>{const ws=typeof wsPortfolio==='function'?wsPortfolio():null,p=ws&&ws.holdings?ws.holdings[security]:null;if(!p)return null;const pg=typeof wsGetPrice==='function'?wsGetPrice(security,ws):null;if(!pg)return null;const fx=typeof wsFxRate==='function'?wsFxRate(p.currency||(typeof wsBaseCurrency==='function'?wsBaseCurrency():'EUR')):null;return L.positionBaseValue(p,pg.price,fx);};
-13532 |       mark('wsPositionBaseValue');
-13533 |     }
-13534 |     if(typeof wsMarketValue==='function'){
-13535 |       wsMarketValue=()=>{const ws=typeof wsPortfolio==='function'?wsPortfolio():null,pos=ws&&ws.holdings?ws.holdings:{};const entries=Object.keys(pos).map(k=>{const p=pos[k],pg=typeof wsGetPrice==='function'?wsGetPrice(k,ws):null,meta=typeof wsFxRateMeta==='function'?wsFxRateMeta(p.currency||(typeof wsBaseCurrency==='function'?wsBaseCurrency():'EUR')):null;return {position:p,price:pg?pg.price:null,fxRate:meta?meta.rate:null};});return L.marketValueSummary(entries);};
-13536 |       mark('wsMarketValue');
-13537 |     }
-13538 |     if(typeof wsCashSummary==='function'){
-13539 |       wsCashSummary=()=>{const ws=typeof wsPortfolio==='function'?wsPortfolio():null;if(!ws)return null;const mv=typeof wsMarketValue==='function'?wsMarketValue():null;return L.cashSummary(ws.cashAccounts||{},ws.fxRates||{},typeof wsBaseCurrency==='function'?wsBaseCurrency():'EUR',mv&&Number.isFinite(mv.mv)?mv.mv:0);};
-13540 |       mark('wsCashSummary');
-13541 |     }
-13542 |     if(typeof wsUnrealized==='function'){
-13543 |       wsUnrealized=(security,price)=>{const ws=typeof wsPortfolio==='function'?wsPortfolio():null,p=ws&&ws.holdings?ws.holdings[security]:null;const r=L.positionUnrealized(p,price);return r?r.unrealizedPnl:null;};
-13544 |       mark('wsUnrealized');
-13545 |     }
-13546 |   }
-13547 | 
-13548 |   if(typeof wsTWR==='function'){wsTWR=snapshots=>W.timeWeightedReturnFromSnapshots(snapshots);mark('wsTWR');}
-13549 |   if(typeof wsMWR==='function'){wsMWR=snapshots=>W.moneyWeightedReturnFromSnapshots(snapshots);mark('wsMWR');}
-13550 |   if(typeof wsAnnualized==='function'){wsAnnualized=(twr,days)=>W.annualizeReturn(twr,days);mark('wsAnnualized');}
-13551 |   if(typeof wsCaptureRatios==='function'){wsCaptureRatios=(p,b,a)=>{const r=W.captureRatios(p,b,a);return r?{upside:r.upside,downside:r.downside,beta:r.beta,te:r.te,ir:r.ir,alpha:r.alpha,periods:r.n}:null;};mark('wsCaptureRatios');}
-13552 |   if(typeof wsPerfRisk==='function'){wsPerfRisk=(returns,annualFactor)=>W.performanceRisk(returns,annualFactor,.02);mark('wsPerfRisk');}
-13553 |   if(typeof wsPeriodReturns==='function'){wsPeriodReturns=snapshots=>W.periodReturnsFromSnapshots(snapshots);mark('wsPeriodReturns');}
-13554 | 
+13728 | 
+13729 |   if(L){
+13730 |     if(typeof wsDividendAmounts==='function'){wsDividendAmounts=tx=>L.dividendAmounts(tx);mark('wsDividendAmounts');}
+13731 |     if(typeof wsCalculateFromLedger==='function'){
+13732 |       wsCalculateFromLedger=(ws,_opts)=>L.calculateLedger(ws&&Array.isArray(ws.transactions)?ws.transactions:[],typeof wsBaseCurrency==='function'?wsBaseCurrency():'EUR');
+13733 |       mark('wsCalculateFromLedger');
+13734 |     }
+13735 |     if(typeof wsFxConvert==='function'){
+13736 |       wsFxConvert=(amount,currency)=>{const meta=typeof wsFxRateMeta==='function'?wsFxRateMeta(currency):null;return meta?W.fxConvert(amount,meta.rate):null;};
+13737 |       mark('wsFxConvert');
+13738 |     }
+13739 |     if(typeof wsPositionBaseValue==='function'){
+13740 |       wsPositionBaseValue=security=>{const ws=typeof wsPortfolio==='function'?wsPortfolio():null,p=ws&&ws.holdings?ws.holdings[security]:null;if(!p)return null;const pg=typeof wsGetPrice==='function'?wsGetPrice(security,ws):null;if(!pg)return null;const fx=typeof wsFxRate==='function'?wsFxRate(p.currency||(typeof wsBaseCurrency==='function'?wsBaseCurrency():'EUR')):null;return L.positionBaseValue(p,pg.price,fx);};
+13741 |       mark('wsPositionBaseValue');
+13742 |     }
+13743 |     if(typeof wsMarketValue==='function'){
+13744 |       wsMarketValue=()=>{const ws=typeof wsPortfolio==='function'?wsPortfolio():null,pos=ws&&ws.holdings?ws.holdings:{};const entries=Object.keys(pos).map(k=>{const p=pos[k],pg=typeof wsGetPrice==='function'?wsGetPrice(k,ws):null,meta=typeof wsFxRateMeta==='function'?wsFxRateMeta(p.currency||(typeof wsBaseCurrency==='function'?wsBaseCurrency():'EUR')):null;return {position:p,price:pg?pg.price:null,fxRate:meta?meta.rate:null};});return L.marketValueSummary(entries);};
+13745 |       mark('wsMarketValue');
+13746 |     }
+13747 |     if(typeof wsCashSummary==='function'){
+13748 |       wsCashSummary=()=>{const ws=typeof wsPortfolio==='function'?wsPortfolio():null;if(!ws)return null;const mv=typeof wsMarketValue==='function'?wsMarketValue():null;return L.cashSummary(ws.cashAccounts||{},ws.fxRates||{},typeof wsBaseCurrency==='function'?wsBaseCurrency():'EUR',mv&&Number.isFinite(mv.mv)?mv.mv:0);};
+13749 |       mark('wsCashSummary');
+13750 |     }
+13751 |     if(typeof wsUnrealized==='function'){
+13752 |       wsUnrealized=(security,price)=>{const ws=typeof wsPortfolio==='function'?wsPortfolio():null,p=ws&&ws.holdings?ws.holdings[security]:null;const r=L.positionUnrealized(p,price);return r?r.unrealizedPnl:null;};
+13753 |       mark('wsUnrealized');
+13754 |     }
+13755 |   }
+13756 | 
+13757 |   if(typeof wsTWR==='function'){wsTWR=snapshots=>W.timeWeightedReturnFromSnapshots(snapshots);mark('wsTWR');}
+13758 |   if(typeof wsMWR==='function'){wsMWR=snapshots=>W.moneyWeightedReturnFromSnapshots(snapshots);mark('wsMWR');}
+13759 |   if(typeof wsAnnualized==='function'){wsAnnualized=(twr,days)=>W.annualizeReturn(twr,days);mark('wsAnnualized');}
+13760 |   if(typeof wsCaptureRatios==='function'){wsCaptureRatios=(p,b,a)=>{const r=W.captureRatios(p,b,a);return r?{upside:r.upside,downside:r.downside,beta:r.beta,te:r.te,ir:r.ir,alpha:r.alpha,periods:r.n}:null;};mark('wsCaptureRatios');}
+13761 |   if(typeof wsPerfRisk==='function'){wsPerfRisk=(returns,annualFactor)=>W.performanceRisk(returns,annualFactor,.02);mark('wsPerfRisk');}
+13762 |   if(typeof wsPeriodReturns==='function'){wsPeriodReturns=snapshots=>W.periodReturnsFromSnapshots(snapshots);mark('wsPeriodReturns');}
+13763 | 
 ```
 
 ## wsMarketValue — line 9723 — owner `accounts`
@@ -2917,45 +2917,45 @@ Generated mechanically from the production source to support the final modulariz
  9750 |   const pg=wsGetPrice(k, ws); if(!pg)return null;
 ```
 
-## wsMarketValue — line 13535 — owner `out`
+## wsMarketValue — line 13744 — owner `out`
 
 ```js
-13527 |       wsFxConvert=(amount,currency)=>{const meta=typeof wsFxRateMeta==='function'?wsFxRateMeta(currency):null;return meta?W.fxConvert(amount,meta.rate):null;};
-13528 |       mark('wsFxConvert');
-13529 |     }
-13530 |     if(typeof wsPositionBaseValue==='function'){
-13531 |       wsPositionBaseValue=security=>{const ws=typeof wsPortfolio==='function'?wsPortfolio():null,p=ws&&ws.holdings?ws.holdings[security]:null;if(!p)return null;const pg=typeof wsGetPrice==='function'?wsGetPrice(security,ws):null;if(!pg)return null;const fx=typeof wsFxRate==='function'?wsFxRate(p.currency||(typeof wsBaseCurrency==='function'?wsBaseCurrency():'EUR')):null;return L.positionBaseValue(p,pg.price,fx);};
-13532 |       mark('wsPositionBaseValue');
-13533 |     }
-13534 |     if(typeof wsMarketValue==='function'){
-13535 |       wsMarketValue=()=>{const ws=typeof wsPortfolio==='function'?wsPortfolio():null,pos=ws&&ws.holdings?ws.holdings:{};const entries=Object.keys(pos).map(k=>{const p=pos[k],pg=typeof wsGetPrice==='function'?wsGetPrice(k,ws):null,meta=typeof wsFxRateMeta==='function'?wsFxRateMeta(p.currency||(typeof wsBaseCurrency==='function'?wsBaseCurrency():'EUR')):null;return {position:p,price:pg?pg.price:null,fxRate:meta?meta.rate:null};});return L.marketValueSummary(entries);};
-13536 |       mark('wsMarketValue');
-13537 |     }
-13538 |     if(typeof wsCashSummary==='function'){
-13539 |       wsCashSummary=()=>{const ws=typeof wsPortfolio==='function'?wsPortfolio():null;if(!ws)return null;const mv=typeof wsMarketValue==='function'?wsMarketValue():null;return L.cashSummary(ws.cashAccounts||{},ws.fxRates||{},typeof wsBaseCurrency==='function'?wsBaseCurrency():'EUR',mv&&Number.isFinite(mv.mv)?mv.mv:0);};
-13540 |       mark('wsCashSummary');
-13541 |     }
-13542 |     if(typeof wsUnrealized==='function'){
-13543 |       wsUnrealized=(security,price)=>{const ws=typeof wsPortfolio==='function'?wsPortfolio():null,p=ws&&ws.holdings?ws.holdings[security]:null;const r=L.positionUnrealized(p,price);return r?r.unrealizedPnl:null;};
-13544 |       mark('wsUnrealized');
-13545 |     }
-13546 |   }
-13547 | 
-13548 |   if(typeof wsTWR==='function'){wsTWR=snapshots=>W.timeWeightedReturnFromSnapshots(snapshots);mark('wsTWR');}
-13549 |   if(typeof wsMWR==='function'){wsMWR=snapshots=>W.moneyWeightedReturnFromSnapshots(snapshots);mark('wsMWR');}
-13550 |   if(typeof wsAnnualized==='function'){wsAnnualized=(twr,days)=>W.annualizeReturn(twr,days);mark('wsAnnualized');}
-13551 |   if(typeof wsCaptureRatios==='function'){wsCaptureRatios=(p,b,a)=>{const r=W.captureRatios(p,b,a);return r?{upside:r.upside,downside:r.downside,beta:r.beta,te:r.te,ir:r.ir,alpha:r.alpha,periods:r.n}:null;};mark('wsCaptureRatios');}
-13552 |   if(typeof wsPerfRisk==='function'){wsPerfRisk=(returns,annualFactor)=>W.performanceRisk(returns,annualFactor,.02);mark('wsPerfRisk');}
-13553 |   if(typeof wsPeriodReturns==='function'){wsPeriodReturns=snapshots=>W.periodReturnsFromSnapshots(snapshots);mark('wsPeriodReturns');}
-13554 | 
-13555 |   if(typeof App!=='undefined'&&App&&App.meta){
-13556 |     App.meta.workstationCalculationCoreVersion=W.VERSION;
-13557 |     if(L)App.meta.workstationLedgerCoreVersion=L.VERSION;
-13558 |   }
-13559 |   const prior=globalThis.__FINANCIAL_CERTIFICATION__||{};
-13560 |   const priorInstalled=Array.isArray(prior.installed)?prior.installed:[];
-13561 |   globalThis.__FINANCIAL_CERTIFICATION__=Object.freeze(Object.assign({},prior,{
-13562 |     workstationVersion:W.VERSION,
+13736 |       wsFxConvert=(amount,currency)=>{const meta=typeof wsFxRateMeta==='function'?wsFxRateMeta(currency):null;return meta?W.fxConvert(amount,meta.rate):null;};
+13737 |       mark('wsFxConvert');
+13738 |     }
+13739 |     if(typeof wsPositionBaseValue==='function'){
+13740 |       wsPositionBaseValue=security=>{const ws=typeof wsPortfolio==='function'?wsPortfolio():null,p=ws&&ws.holdings?ws.holdings[security]:null;if(!p)return null;const pg=typeof wsGetPrice==='function'?wsGetPrice(security,ws):null;if(!pg)return null;const fx=typeof wsFxRate==='function'?wsFxRate(p.currency||(typeof wsBaseCurrency==='function'?wsBaseCurrency():'EUR')):null;return L.positionBaseValue(p,pg.price,fx);};
+13741 |       mark('wsPositionBaseValue');
+13742 |     }
+13743 |     if(typeof wsMarketValue==='function'){
+13744 |       wsMarketValue=()=>{const ws=typeof wsPortfolio==='function'?wsPortfolio():null,pos=ws&&ws.holdings?ws.holdings:{};const entries=Object.keys(pos).map(k=>{const p=pos[k],pg=typeof wsGetPrice==='function'?wsGetPrice(k,ws):null,meta=typeof wsFxRateMeta==='function'?wsFxRateMeta(p.currency||(typeof wsBaseCurrency==='function'?wsBaseCurrency():'EUR')):null;return {position:p,price:pg?pg.price:null,fxRate:meta?meta.rate:null};});return L.marketValueSummary(entries);};
+13745 |       mark('wsMarketValue');
+13746 |     }
+13747 |     if(typeof wsCashSummary==='function'){
+13748 |       wsCashSummary=()=>{const ws=typeof wsPortfolio==='function'?wsPortfolio():null;if(!ws)return null;const mv=typeof wsMarketValue==='function'?wsMarketValue():null;return L.cashSummary(ws.cashAccounts||{},ws.fxRates||{},typeof wsBaseCurrency==='function'?wsBaseCurrency():'EUR',mv&&Number.isFinite(mv.mv)?mv.mv:0);};
+13749 |       mark('wsCashSummary');
+13750 |     }
+13751 |     if(typeof wsUnrealized==='function'){
+13752 |       wsUnrealized=(security,price)=>{const ws=typeof wsPortfolio==='function'?wsPortfolio():null,p=ws&&ws.holdings?ws.holdings[security]:null;const r=L.positionUnrealized(p,price);return r?r.unrealizedPnl:null;};
+13753 |       mark('wsUnrealized');
+13754 |     }
+13755 |   }
+13756 | 
+13757 |   if(typeof wsTWR==='function'){wsTWR=snapshots=>W.timeWeightedReturnFromSnapshots(snapshots);mark('wsTWR');}
+13758 |   if(typeof wsMWR==='function'){wsMWR=snapshots=>W.moneyWeightedReturnFromSnapshots(snapshots);mark('wsMWR');}
+13759 |   if(typeof wsAnnualized==='function'){wsAnnualized=(twr,days)=>W.annualizeReturn(twr,days);mark('wsAnnualized');}
+13760 |   if(typeof wsCaptureRatios==='function'){wsCaptureRatios=(p,b,a)=>{const r=W.captureRatios(p,b,a);return r?{upside:r.upside,downside:r.downside,beta:r.beta,te:r.te,ir:r.ir,alpha:r.alpha,periods:r.n}:null;};mark('wsCaptureRatios');}
+13761 |   if(typeof wsPerfRisk==='function'){wsPerfRisk=(returns,annualFactor)=>W.performanceRisk(returns,annualFactor,.02);mark('wsPerfRisk');}
+13762 |   if(typeof wsPeriodReturns==='function'){wsPeriodReturns=snapshots=>W.periodReturnsFromSnapshots(snapshots);mark('wsPeriodReturns');}
+13763 | 
+13764 |   if(typeof App!=='undefined'&&App&&App.meta){
+13765 |     App.meta.workstationCalculationCoreVersion=W.VERSION;
+13766 |     if(L)App.meta.workstationLedgerCoreVersion=L.VERSION;
+13767 |     if(S)App.meta.simulationBacktestCoreVersion=S.VERSION;
+13768 |   }
+13769 |   const prior=globalThis.__FINANCIAL_CERTIFICATION__||{};
+13770 |   const priorInstalled=Array.isArray(prior.installed)?prior.installed:[];
+13771 |   globalThis.__FINANCIAL_CERTIFICATION__=Object.freeze(Object.assign({},prior,{
 ```
 
 ## wsPositionBaseValue — line 9747 — owner `accounts`
@@ -3040,45 +3040,45 @@ Generated mechanically from the production source to support the final modulariz
  9789 | }
 ```
 
-## wsCashSummary — line 13539 — owner `out`
+## wsCashSummary — line 13748 — owner `out`
 
 ```js
-13531 |       wsPositionBaseValue=security=>{const ws=typeof wsPortfolio==='function'?wsPortfolio():null,p=ws&&ws.holdings?ws.holdings[security]:null;if(!p)return null;const pg=typeof wsGetPrice==='function'?wsGetPrice(security,ws):null;if(!pg)return null;const fx=typeof wsFxRate==='function'?wsFxRate(p.currency||(typeof wsBaseCurrency==='function'?wsBaseCurrency():'EUR')):null;return L.positionBaseValue(p,pg.price,fx);};
-13532 |       mark('wsPositionBaseValue');
-13533 |     }
-13534 |     if(typeof wsMarketValue==='function'){
-13535 |       wsMarketValue=()=>{const ws=typeof wsPortfolio==='function'?wsPortfolio():null,pos=ws&&ws.holdings?ws.holdings:{};const entries=Object.keys(pos).map(k=>{const p=pos[k],pg=typeof wsGetPrice==='function'?wsGetPrice(k,ws):null,meta=typeof wsFxRateMeta==='function'?wsFxRateMeta(p.currency||(typeof wsBaseCurrency==='function'?wsBaseCurrency():'EUR')):null;return {position:p,price:pg?pg.price:null,fxRate:meta?meta.rate:null};});return L.marketValueSummary(entries);};
-13536 |       mark('wsMarketValue');
-13537 |     }
-13538 |     if(typeof wsCashSummary==='function'){
-13539 |       wsCashSummary=()=>{const ws=typeof wsPortfolio==='function'?wsPortfolio():null;if(!ws)return null;const mv=typeof wsMarketValue==='function'?wsMarketValue():null;return L.cashSummary(ws.cashAccounts||{},ws.fxRates||{},typeof wsBaseCurrency==='function'?wsBaseCurrency():'EUR',mv&&Number.isFinite(mv.mv)?mv.mv:0);};
-13540 |       mark('wsCashSummary');
-13541 |     }
-13542 |     if(typeof wsUnrealized==='function'){
-13543 |       wsUnrealized=(security,price)=>{const ws=typeof wsPortfolio==='function'?wsPortfolio():null,p=ws&&ws.holdings?ws.holdings[security]:null;const r=L.positionUnrealized(p,price);return r?r.unrealizedPnl:null;};
-13544 |       mark('wsUnrealized');
-13545 |     }
-13546 |   }
-13547 | 
-13548 |   if(typeof wsTWR==='function'){wsTWR=snapshots=>W.timeWeightedReturnFromSnapshots(snapshots);mark('wsTWR');}
-13549 |   if(typeof wsMWR==='function'){wsMWR=snapshots=>W.moneyWeightedReturnFromSnapshots(snapshots);mark('wsMWR');}
-13550 |   if(typeof wsAnnualized==='function'){wsAnnualized=(twr,days)=>W.annualizeReturn(twr,days);mark('wsAnnualized');}
-13551 |   if(typeof wsCaptureRatios==='function'){wsCaptureRatios=(p,b,a)=>{const r=W.captureRatios(p,b,a);return r?{upside:r.upside,downside:r.downside,beta:r.beta,te:r.te,ir:r.ir,alpha:r.alpha,periods:r.n}:null;};mark('wsCaptureRatios');}
-13552 |   if(typeof wsPerfRisk==='function'){wsPerfRisk=(returns,annualFactor)=>W.performanceRisk(returns,annualFactor,.02);mark('wsPerfRisk');}
-13553 |   if(typeof wsPeriodReturns==='function'){wsPeriodReturns=snapshots=>W.periodReturnsFromSnapshots(snapshots);mark('wsPeriodReturns');}
-13554 | 
-13555 |   if(typeof App!=='undefined'&&App&&App.meta){
-13556 |     App.meta.workstationCalculationCoreVersion=W.VERSION;
-13557 |     if(L)App.meta.workstationLedgerCoreVersion=L.VERSION;
-13558 |   }
-13559 |   const prior=globalThis.__FINANCIAL_CERTIFICATION__||{};
-13560 |   const priorInstalled=Array.isArray(prior.installed)?prior.installed:[];
-13561 |   globalThis.__FINANCIAL_CERTIFICATION__=Object.freeze(Object.assign({},prior,{
-13562 |     workstationVersion:W.VERSION,
-13563 |     workstationLedgerVersion:L?L.VERSION:null,
-13564 |     installed:priorInstalled.concat(installed),
-13565 |     workstationInstalled:Object.freeze(installed.slice())
-13566 |   }));
+13740 |       wsPositionBaseValue=security=>{const ws=typeof wsPortfolio==='function'?wsPortfolio():null,p=ws&&ws.holdings?ws.holdings[security]:null;if(!p)return null;const pg=typeof wsGetPrice==='function'?wsGetPrice(security,ws):null;if(!pg)return null;const fx=typeof wsFxRate==='function'?wsFxRate(p.currency||(typeof wsBaseCurrency==='function'?wsBaseCurrency():'EUR')):null;return L.positionBaseValue(p,pg.price,fx);};
+13741 |       mark('wsPositionBaseValue');
+13742 |     }
+13743 |     if(typeof wsMarketValue==='function'){
+13744 |       wsMarketValue=()=>{const ws=typeof wsPortfolio==='function'?wsPortfolio():null,pos=ws&&ws.holdings?ws.holdings:{};const entries=Object.keys(pos).map(k=>{const p=pos[k],pg=typeof wsGetPrice==='function'?wsGetPrice(k,ws):null,meta=typeof wsFxRateMeta==='function'?wsFxRateMeta(p.currency||(typeof wsBaseCurrency==='function'?wsBaseCurrency():'EUR')):null;return {position:p,price:pg?pg.price:null,fxRate:meta?meta.rate:null};});return L.marketValueSummary(entries);};
+13745 |       mark('wsMarketValue');
+13746 |     }
+13747 |     if(typeof wsCashSummary==='function'){
+13748 |       wsCashSummary=()=>{const ws=typeof wsPortfolio==='function'?wsPortfolio():null;if(!ws)return null;const mv=typeof wsMarketValue==='function'?wsMarketValue():null;return L.cashSummary(ws.cashAccounts||{},ws.fxRates||{},typeof wsBaseCurrency==='function'?wsBaseCurrency():'EUR',mv&&Number.isFinite(mv.mv)?mv.mv:0);};
+13749 |       mark('wsCashSummary');
+13750 |     }
+13751 |     if(typeof wsUnrealized==='function'){
+13752 |       wsUnrealized=(security,price)=>{const ws=typeof wsPortfolio==='function'?wsPortfolio():null,p=ws&&ws.holdings?ws.holdings[security]:null;const r=L.positionUnrealized(p,price);return r?r.unrealizedPnl:null;};
+13753 |       mark('wsUnrealized');
+13754 |     }
+13755 |   }
+13756 | 
+13757 |   if(typeof wsTWR==='function'){wsTWR=snapshots=>W.timeWeightedReturnFromSnapshots(snapshots);mark('wsTWR');}
+13758 |   if(typeof wsMWR==='function'){wsMWR=snapshots=>W.moneyWeightedReturnFromSnapshots(snapshots);mark('wsMWR');}
+13759 |   if(typeof wsAnnualized==='function'){wsAnnualized=(twr,days)=>W.annualizeReturn(twr,days);mark('wsAnnualized');}
+13760 |   if(typeof wsCaptureRatios==='function'){wsCaptureRatios=(p,b,a)=>{const r=W.captureRatios(p,b,a);return r?{upside:r.upside,downside:r.downside,beta:r.beta,te:r.te,ir:r.ir,alpha:r.alpha,periods:r.n}:null;};mark('wsCaptureRatios');}
+13761 |   if(typeof wsPerfRisk==='function'){wsPerfRisk=(returns,annualFactor)=>W.performanceRisk(returns,annualFactor,.02);mark('wsPerfRisk');}
+13762 |   if(typeof wsPeriodReturns==='function'){wsPeriodReturns=snapshots=>W.periodReturnsFromSnapshots(snapshots);mark('wsPeriodReturns');}
+13763 | 
+13764 |   if(typeof App!=='undefined'&&App&&App.meta){
+13765 |     App.meta.workstationCalculationCoreVersion=W.VERSION;
+13766 |     if(L)App.meta.workstationLedgerCoreVersion=L.VERSION;
+13767 |     if(S)App.meta.simulationBacktestCoreVersion=S.VERSION;
+13768 |   }
+13769 |   const prior=globalThis.__FINANCIAL_CERTIFICATION__||{};
+13770 |   const priorInstalled=Array.isArray(prior.installed)?prior.installed:[];
+13771 |   globalThis.__FINANCIAL_CERTIFICATION__=Object.freeze(Object.assign({},prior,{
+13772 |     workstationVersion:W.VERSION,
+13773 |     workstationLedgerVersion:L?L.VERSION:null,
+13774 |     simulationBacktestVersion:S?S.VERSION:null,
+13775 |     installed:priorInstalled.concat(installed),
 ```
 
 ## wsReconcile — line 9795 — owner `localCash`
@@ -3204,45 +3204,45 @@ Generated mechanically from the production source to support the final modulariz
  9911 |     ${kpi("Market value",mv.mv>0?fmt.money(mv.mv):"—")}
 ```
 
-## wsUnrealized — line 13543 — owner `out`
+## wsUnrealized — line 13752 — owner `out`
 
 ```js
-13535 |       wsMarketValue=()=>{const ws=typeof wsPortfolio==='function'?wsPortfolio():null,pos=ws&&ws.holdings?ws.holdings:{};const entries=Object.keys(pos).map(k=>{const p=pos[k],pg=typeof wsGetPrice==='function'?wsGetPrice(k,ws):null,meta=typeof wsFxRateMeta==='function'?wsFxRateMeta(p.currency||(typeof wsBaseCurrency==='function'?wsBaseCurrency():'EUR')):null;return {position:p,price:pg?pg.price:null,fxRate:meta?meta.rate:null};});return L.marketValueSummary(entries);};
-13536 |       mark('wsMarketValue');
-13537 |     }
-13538 |     if(typeof wsCashSummary==='function'){
-13539 |       wsCashSummary=()=>{const ws=typeof wsPortfolio==='function'?wsPortfolio():null;if(!ws)return null;const mv=typeof wsMarketValue==='function'?wsMarketValue():null;return L.cashSummary(ws.cashAccounts||{},ws.fxRates||{},typeof wsBaseCurrency==='function'?wsBaseCurrency():'EUR',mv&&Number.isFinite(mv.mv)?mv.mv:0);};
-13540 |       mark('wsCashSummary');
-13541 |     }
-13542 |     if(typeof wsUnrealized==='function'){
-13543 |       wsUnrealized=(security,price)=>{const ws=typeof wsPortfolio==='function'?wsPortfolio():null,p=ws&&ws.holdings?ws.holdings[security]:null;const r=L.positionUnrealized(p,price);return r?r.unrealizedPnl:null;};
-13544 |       mark('wsUnrealized');
-13545 |     }
-13546 |   }
-13547 | 
-13548 |   if(typeof wsTWR==='function'){wsTWR=snapshots=>W.timeWeightedReturnFromSnapshots(snapshots);mark('wsTWR');}
-13549 |   if(typeof wsMWR==='function'){wsMWR=snapshots=>W.moneyWeightedReturnFromSnapshots(snapshots);mark('wsMWR');}
-13550 |   if(typeof wsAnnualized==='function'){wsAnnualized=(twr,days)=>W.annualizeReturn(twr,days);mark('wsAnnualized');}
-13551 |   if(typeof wsCaptureRatios==='function'){wsCaptureRatios=(p,b,a)=>{const r=W.captureRatios(p,b,a);return r?{upside:r.upside,downside:r.downside,beta:r.beta,te:r.te,ir:r.ir,alpha:r.alpha,periods:r.n}:null;};mark('wsCaptureRatios');}
-13552 |   if(typeof wsPerfRisk==='function'){wsPerfRisk=(returns,annualFactor)=>W.performanceRisk(returns,annualFactor,.02);mark('wsPerfRisk');}
-13553 |   if(typeof wsPeriodReturns==='function'){wsPeriodReturns=snapshots=>W.periodReturnsFromSnapshots(snapshots);mark('wsPeriodReturns');}
-13554 | 
-13555 |   if(typeof App!=='undefined'&&App&&App.meta){
-13556 |     App.meta.workstationCalculationCoreVersion=W.VERSION;
-13557 |     if(L)App.meta.workstationLedgerCoreVersion=L.VERSION;
-13558 |   }
-13559 |   const prior=globalThis.__FINANCIAL_CERTIFICATION__||{};
-13560 |   const priorInstalled=Array.isArray(prior.installed)?prior.installed:[];
-13561 |   globalThis.__FINANCIAL_CERTIFICATION__=Object.freeze(Object.assign({},prior,{
-13562 |     workstationVersion:W.VERSION,
-13563 |     workstationLedgerVersion:L?L.VERSION:null,
-13564 |     installed:priorInstalled.concat(installed),
-13565 |     workstationInstalled:Object.freeze(installed.slice())
-13566 |   }));
-13567 | })();
-13568 | /* FINANCIAL_CERTIFICATION_RUNTIME_END */
-13569 | window.addEventListener("DOMContentLoaded",init);
-13570 | 
+13744 |       wsMarketValue=()=>{const ws=typeof wsPortfolio==='function'?wsPortfolio():null,pos=ws&&ws.holdings?ws.holdings:{};const entries=Object.keys(pos).map(k=>{const p=pos[k],pg=typeof wsGetPrice==='function'?wsGetPrice(k,ws):null,meta=typeof wsFxRateMeta==='function'?wsFxRateMeta(p.currency||(typeof wsBaseCurrency==='function'?wsBaseCurrency():'EUR')):null;return {position:p,price:pg?pg.price:null,fxRate:meta?meta.rate:null};});return L.marketValueSummary(entries);};
+13745 |       mark('wsMarketValue');
+13746 |     }
+13747 |     if(typeof wsCashSummary==='function'){
+13748 |       wsCashSummary=()=>{const ws=typeof wsPortfolio==='function'?wsPortfolio():null;if(!ws)return null;const mv=typeof wsMarketValue==='function'?wsMarketValue():null;return L.cashSummary(ws.cashAccounts||{},ws.fxRates||{},typeof wsBaseCurrency==='function'?wsBaseCurrency():'EUR',mv&&Number.isFinite(mv.mv)?mv.mv:0);};
+13749 |       mark('wsCashSummary');
+13750 |     }
+13751 |     if(typeof wsUnrealized==='function'){
+13752 |       wsUnrealized=(security,price)=>{const ws=typeof wsPortfolio==='function'?wsPortfolio():null,p=ws&&ws.holdings?ws.holdings[security]:null;const r=L.positionUnrealized(p,price);return r?r.unrealizedPnl:null;};
+13753 |       mark('wsUnrealized');
+13754 |     }
+13755 |   }
+13756 | 
+13757 |   if(typeof wsTWR==='function'){wsTWR=snapshots=>W.timeWeightedReturnFromSnapshots(snapshots);mark('wsTWR');}
+13758 |   if(typeof wsMWR==='function'){wsMWR=snapshots=>W.moneyWeightedReturnFromSnapshots(snapshots);mark('wsMWR');}
+13759 |   if(typeof wsAnnualized==='function'){wsAnnualized=(twr,days)=>W.annualizeReturn(twr,days);mark('wsAnnualized');}
+13760 |   if(typeof wsCaptureRatios==='function'){wsCaptureRatios=(p,b,a)=>{const r=W.captureRatios(p,b,a);return r?{upside:r.upside,downside:r.downside,beta:r.beta,te:r.te,ir:r.ir,alpha:r.alpha,periods:r.n}:null;};mark('wsCaptureRatios');}
+13761 |   if(typeof wsPerfRisk==='function'){wsPerfRisk=(returns,annualFactor)=>W.performanceRisk(returns,annualFactor,.02);mark('wsPerfRisk');}
+13762 |   if(typeof wsPeriodReturns==='function'){wsPeriodReturns=snapshots=>W.periodReturnsFromSnapshots(snapshots);mark('wsPeriodReturns');}
+13763 | 
+13764 |   if(typeof App!=='undefined'&&App&&App.meta){
+13765 |     App.meta.workstationCalculationCoreVersion=W.VERSION;
+13766 |     if(L)App.meta.workstationLedgerCoreVersion=L.VERSION;
+13767 |     if(S)App.meta.simulationBacktestCoreVersion=S.VERSION;
+13768 |   }
+13769 |   const prior=globalThis.__FINANCIAL_CERTIFICATION__||{};
+13770 |   const priorInstalled=Array.isArray(prior.installed)?prior.installed:[];
+13771 |   globalThis.__FINANCIAL_CERTIFICATION__=Object.freeze(Object.assign({},prior,{
+13772 |     workstationVersion:W.VERSION,
+13773 |     workstationLedgerVersion:L?L.VERSION:null,
+13774 |     simulationBacktestVersion:S?S.VERSION:null,
+13775 |     installed:priorInstalled.concat(installed),
+13776 |     workstationInstalled:Object.freeze(installed.slice())
+13777 |   }));
+13778 | })();
+13779 | /* FINANCIAL_CERTIFICATION_RUNTIME_END */
 ```
 
 ## wsTWR — line 10229 — owner `order`
@@ -3409,39 +3409,41 @@ Generated mechanically from the production source to support the final modulariz
 11907 |   function periodReturnsArray(snaps2){ return (typeof WorkstationCalculationCore!=="undefined"?WorkstationCalculationCore.periodReturnsFromSnapshots(snaps2):null)||[]; }
 ```
 
-## wsPerfRisk — line 13552 — owner `out`
+## wsPerfRisk — line 13761 — owner `out`
 
 ```js
-13544 |       mark('wsUnrealized');
-13545 |     }
-13546 |   }
-13547 | 
-13548 |   if(typeof wsTWR==='function'){wsTWR=snapshots=>W.timeWeightedReturnFromSnapshots(snapshots);mark('wsTWR');}
-13549 |   if(typeof wsMWR==='function'){wsMWR=snapshots=>W.moneyWeightedReturnFromSnapshots(snapshots);mark('wsMWR');}
-13550 |   if(typeof wsAnnualized==='function'){wsAnnualized=(twr,days)=>W.annualizeReturn(twr,days);mark('wsAnnualized');}
-13551 |   if(typeof wsCaptureRatios==='function'){wsCaptureRatios=(p,b,a)=>{const r=W.captureRatios(p,b,a);return r?{upside:r.upside,downside:r.downside,beta:r.beta,te:r.te,ir:r.ir,alpha:r.alpha,periods:r.n}:null;};mark('wsCaptureRatios');}
-13552 |   if(typeof wsPerfRisk==='function'){wsPerfRisk=(returns,annualFactor)=>W.performanceRisk(returns,annualFactor,.02);mark('wsPerfRisk');}
-13553 |   if(typeof wsPeriodReturns==='function'){wsPeriodReturns=snapshots=>W.periodReturnsFromSnapshots(snapshots);mark('wsPeriodReturns');}
-13554 | 
-13555 |   if(typeof App!=='undefined'&&App&&App.meta){
-13556 |     App.meta.workstationCalculationCoreVersion=W.VERSION;
-13557 |     if(L)App.meta.workstationLedgerCoreVersion=L.VERSION;
-13558 |   }
-13559 |   const prior=globalThis.__FINANCIAL_CERTIFICATION__||{};
-13560 |   const priorInstalled=Array.isArray(prior.installed)?prior.installed:[];
-13561 |   globalThis.__FINANCIAL_CERTIFICATION__=Object.freeze(Object.assign({},prior,{
-13562 |     workstationVersion:W.VERSION,
-13563 |     workstationLedgerVersion:L?L.VERSION:null,
-13564 |     installed:priorInstalled.concat(installed),
-13565 |     workstationInstalled:Object.freeze(installed.slice())
-13566 |   }));
-13567 | })();
-13568 | /* FINANCIAL_CERTIFICATION_RUNTIME_END */
-13569 | window.addEventListener("DOMContentLoaded",init);
-13570 | 
-13571 | </script></body>
-13572 | </html>
-13573 | 
+13753 |       mark('wsUnrealized');
+13754 |     }
+13755 |   }
+13756 | 
+13757 |   if(typeof wsTWR==='function'){wsTWR=snapshots=>W.timeWeightedReturnFromSnapshots(snapshots);mark('wsTWR');}
+13758 |   if(typeof wsMWR==='function'){wsMWR=snapshots=>W.moneyWeightedReturnFromSnapshots(snapshots);mark('wsMWR');}
+13759 |   if(typeof wsAnnualized==='function'){wsAnnualized=(twr,days)=>W.annualizeReturn(twr,days);mark('wsAnnualized');}
+13760 |   if(typeof wsCaptureRatios==='function'){wsCaptureRatios=(p,b,a)=>{const r=W.captureRatios(p,b,a);return r?{upside:r.upside,downside:r.downside,beta:r.beta,te:r.te,ir:r.ir,alpha:r.alpha,periods:r.n}:null;};mark('wsCaptureRatios');}
+13761 |   if(typeof wsPerfRisk==='function'){wsPerfRisk=(returns,annualFactor)=>W.performanceRisk(returns,annualFactor,.02);mark('wsPerfRisk');}
+13762 |   if(typeof wsPeriodReturns==='function'){wsPeriodReturns=snapshots=>W.periodReturnsFromSnapshots(snapshots);mark('wsPeriodReturns');}
+13763 | 
+13764 |   if(typeof App!=='undefined'&&App&&App.meta){
+13765 |     App.meta.workstationCalculationCoreVersion=W.VERSION;
+13766 |     if(L)App.meta.workstationLedgerCoreVersion=L.VERSION;
+13767 |     if(S)App.meta.simulationBacktestCoreVersion=S.VERSION;
+13768 |   }
+13769 |   const prior=globalThis.__FINANCIAL_CERTIFICATION__||{};
+13770 |   const priorInstalled=Array.isArray(prior.installed)?prior.installed:[];
+13771 |   globalThis.__FINANCIAL_CERTIFICATION__=Object.freeze(Object.assign({},prior,{
+13772 |     workstationVersion:W.VERSION,
+13773 |     workstationLedgerVersion:L?L.VERSION:null,
+13774 |     simulationBacktestVersion:S?S.VERSION:null,
+13775 |     installed:priorInstalled.concat(installed),
+13776 |     workstationInstalled:Object.freeze(installed.slice())
+13777 |   }));
+13778 | })();
+13779 | /* FINANCIAL_CERTIFICATION_RUNTIME_END */
+13780 | window.addEventListener("DOMContentLoaded",init);
+13781 | 
+13782 | </script></body>
+13783 | </html>
+13784 | 
 ```
 
 ## periodReturnsArray — line 11907 — owner `rets`
