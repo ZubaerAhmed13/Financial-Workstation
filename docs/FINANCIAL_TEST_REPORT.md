@@ -2,32 +2,50 @@
 
 ## Final status
 
-**PASS — EXPANDED CERTIFIED CALCULATION SCOPE**
+**PASS — COMPLETE MODULAR CALCULATION CERTIFICATION SLICE**
 
-The independently tested calculation cores, explicitly mapped production paths, generated standalone workstation, desktop cross-browser passes, and mobile responsive pass satisfy the repository certification gates for the current boundary.
+The independently tested calculation cores, explicitly mapped production paths, generated standalone workstation, desktop cross-browser passes, mobile responsive pass, and final workstation-route browser suite satisfy the repository certification gates for the current documented boundary.
 
 ## Verified evidence
 
-- Risk/credit expansion workflow run: **34472841478**
-- Generated evidence/deployable branch commit: `6d0a2199344d6cbdfb5e19657f78ece84c74833d`
+- Full completion workflow run: **34497988919** (run #87)
+- Tested source head: `895d8a1e886784d5d920a291d77eb3a223bc27a5`
+- Generated evidence/deployable branch commit: `cbdb4c9ab0f05f7e538e6465324630484114c949`
 - FinanceCore: **v1.1.0**
 - FinancialModelCore: **v1.0.0**
 - LegacyCalculationCore: **v1.0.0**
 - RiskCreditCore: **v1.0.0**
+- WorkstationCalculationCore: **v1.0.0**
+- WorkstationLedgerCore: **v1.0.0**
+- SimulationBacktestCore: **v1.0.0**
 - Certified source gate: **84/84 passed** (60 positive structure/routing controls + 24 banned-pattern absence controls)
-- Automated Node tests: **202/202 passed, 0 failed**
-- Original named regressions: **8/8 passing**
-- Three-statement regressions: **15/15 passing**
-- Legacy hardening regressions: **14/14 passing**
-- Risk/credit regressions: **22/22 passing**
+- Final workstation source/ownership gate: **62/62 passed** (52 positive controls + 10 banned-pattern controls)
+- Automated Node tests: **277/277 passed, 0 failed**
 - Production artifact verification: **65/65 passed**
-- Generated standalone HTML: **1,055,772 bytes**
-- Contextual static audit: **435/435 leads enumerated/classified, 0 unclassified**
-- Calculation-sensitive / algorithmic-review leads: **226**. These are review leads, not confirmed defects.
+- Final workstation artifact verification: **38/38 passed**
+- Generated standalone HTML: **1,108,820 bytes**
+- Contextual static audit: **451/451 broad leads enumerated/classified, 0 unclassified**
+- Calculation-sensitive / algorithmic-review leads: **231**. These are review leads, not confirmed defects.
+- Legacy calculation inventory: **36 targets / 85 occurrences**
+
+## Permanent regression coverage
+
+The integrated suite retains all previous regression families and adds the final modularization controls:
+
+- **8 `REG-*`** original regressions;
+- **15 `FM-REG-*`** three-statement regressions;
+- **14 `LC-REG-*`** legacy stress/portfolio/valuation regressions;
+- **22 `RC-REG-*`** risk/credit regressions;
+- **32 `WC-REG-*`** workstation calculation regressions;
+- **12 `WL-REG-*`** workstation ledger regressions;
+- **12 `SB-REG-*`** simulation/backtest regressions;
+- **19 `WR-REG-*`** workstation production-routing regressions.
+
+The simulation/backtest regressions specifically certify zero-preserving Monte Carlo inputs, non-positive initial-capital rejection, deterministic seeded simulation, simulation/step validation, exact zero-volatility target behavior, backtest capital/rebalance validation, no current-bar lookahead, turnover/slippage costs, two-sided flip costs, filtered-signal alignment, timestamp-based cadence inference, and benchmark active-return annualization on the same basis.
 
 ## Browser evidence
 
-The same generated standalone artifact passes all four CI targets:
+The same generated standalone artifact passes all four primary browser-smoke targets:
 
 | Target | Views | Tabs | Page errors | Console errors | External requests | Runtime checks | Layout |
 |---|---:|---:|---:|---:|---:|---:|---|
@@ -36,76 +54,54 @@ The same generated standalone artifact passes all four CI targets:
 | WebKit desktop | 42/42 | 59 | 0 | 0 | 0 | 17/17 | no body overflow |
 | Chromium mobile 390×844 | 42/42 | 59 | 0 | 0 | 0 | 17/17 | no body overflow; menu visible and opens |
 
-The browser-level runtime assertions cover median, NPV, IRR, modified duration, recovery, MACD, RSI, DCF rejection, the three-statement model, XIRR, ECL, stress testing, portfolio analysis, the multi-method valuation matrix, risk/VaR calculations, credit curves/Altman, and Merton diagnostics.
+The primary runtime assertions cover median, NPV, IRR, modified duration, recovery, MACD, RSI, DCF rejection, the three-statement model, XIRR, ECL, stress testing, portfolio analysis, the multi-method valuation matrix, risk/VaR calculations, credit curves/Altman, and Merton diagnostics.
 
-## Newly closed risk/credit defects
+A separate final workstation-route browser suite also passes **15/15 checks on every one of the four targets**, with zero page errors, zero console errors, and zero external HTTP(S) requests. Those checks cover core versions, data-quality scoring, peer zero-coverage semantics, attribution, risk contribution, optimizer behavior, withdrawals, dividends, performance calculations, segment forecasting, SOTP, Monte Carlo, backtesting, backtest cadence, and production-route ownership.
 
-This pass fixes and permanently tests these production problems:
+## Final modular calculation promotions
 
-- **Parametric VaR confidence handling:** arbitrary valid confidence levels use an inverse-normal quantile instead of silently falling back to 95% when the input is not exactly 99%.
-- **Historical VaR / Expected Shortfall:** empirical quantiles are interpolated and ES handles fractional lower-tail mass rather than relying on a brittle integer cutoff.
-- **Monte Carlo VaR/ES denominators:** non-positive current value is rejected instead of dividing by zero.
-- **Imported-history annualization:** periods/year are inferred from timestamp cadence (daily, weekly, monthly, quarterly, semiannual, annual). When timestamps are insufficient, the legacy 252 fallback is explicitly marked rather than silently assumed.
-- **Sharpe/Sortino scale:** the hardened risk summary annualizes periodic risk-adjusted returns consistently with periods/year.
-- **Altman validation:** zero numerators remain valid financial data; missing/zero required denominators return unavailable rather than fabricated ratios.
-- **Credit PD interpolation:** intermediate horizons use their actual horizon weight; for example BBB 7-year cumulative PD is linearly interpolated to `0.064` between 5-year `0.04` and 10-year `0.10`, rather than using a midpoint that corresponds to 7.5 years.
-- **Credit-curve extrapolation:** horizons outside the configured table are not silently extrapolated.
-- **Merton structural model:** inputs are validated, asset value is solved by bounded bisection, volatility iteration must meet explicit residual tolerances, and PD is returned only after convergence.
-- **Merton diagnostics:** actual distance-to-default is propagated; the report no longer overwrites it with literal zero.
-- **ECL missing data:** legitimate zero PD/EAD is preserved and missing EAD remains missing; the UI/runtime no longer manufactures an exposure of 1,000,000.
+### Workstation calculations
+
+`WorkstationCalculationCore v1.0.0` owns the promoted calculation paths behind similarity/scoring, data quality, peer coverage, factor exposure, performance attribution, risk contribution, portfolio optimizers, FX conversion, TWR/MWR/annualization, capture ratios, performance risk, period returns, segment forecasting and SOTP-related calculations that are explicitly routed and regression-tested.
+
+### Workstation ledger
+
+`WorkstationLedgerCore v1.0.0` owns the promoted transaction/portfolio-ledger calculations explicitly routed through the workstation runtime, including dividend amounts, ledger reconstruction, position base value, market-value summary, cash summary and position unrealized P&L. Valid zeroes are preserved and malformed financial inputs are not silently converted into fabricated amounts.
+
+### Monte Carlo
+
+`MonteCarlo.run` is routed through `SimulationBacktestCore.monteCarloRun`. The certified path validates configuration, preserves legitimate zero expected return and zero volatility, rejects non-positive initial capital, uses deterministic seeded GBM for reproducible regression evidence, and avoids truthy fallbacks that would manufacture assumptions.
+
+### Backtesting
+
+`BacktestEngine.run` is routed through `SimulationBacktestCore.backtestRun`. The certified path prevents current-close signals from earning the already-completed same-bar return, retains original signal alignment when date filters are applied, deducts turnover-based transaction costs/slippage when turnover occurs, charges two-sided turnover on direct position flips, validates initial capital and rebalance intervals, and infers annualization cadence from timestamps rather than blindly applying 252 periods/year.
 
 ## Production-routed certified paths
 
-The runtime installer now routes tested calculation code into production for:
+The runtime installers now route tested calculation code into production for the previously certified finance/model/legacy/risk-credit paths plus the final workstation slice. This includes:
 
-- `LoanEngine.npv` / `LoanEngine.irr`;
-- selected `CalcEngine` return/risk/technical calculations, including cadence inference and annualized risk summary;
-- CSV price-series import and header detection;
-- bond modified duration, price sensitivity and DV01;
-- CAPM/WACC;
-- DCF, DDM, residual income and comparables;
-- core financial ratios and large-number formatting;
-- `FinancialModelEngine.defaults`, `fillDefaults` and `build`;
-- irregular-date XNPV/XIRR;
-- validated ECL;
-- stress testing, portfolio construction/stress and multi-method valuation through `LegacyCalculationCore`;
-- historical/parametric/Monte-Carlo VaR and Expected Shortfall through `RiskCreditCore`;
-- Altman Z/Z-prime, rating PD interpolation, credit curves, Merton and Merton diagnostics through `RiskCreditCore`.
+- `LoanEngine.npv` / `LoanEngine.irr`, selected `CalcEngine` functions, CSV import, bond analytics, CAPM/WACC, valuation, financial ratios, model engine, XIRR and ECL;
+- stress, portfolio construction/stress and multi-method valuation via `LegacyCalculationCore`;
+- VaR/ES, cadence-aware risk, Altman, rating PD/credit curves and Merton via `RiskCreditCore`;
+- `SimilarityEngine`, `DataQualityEngine.score`, `ScoringEngine.score`, `PeerSimilarity.score`, factor exposure, attribution, risk contribution and portfolio optimizers via `WorkstationCalculationCore`;
+- routed workstation ledger/value/cash/unrealized calculations via `WorkstationLedgerCore`;
+- workstation performance helpers explicitly installed through `WorkstationCalculationCore`;
+- `MonteCarlo.run` and `BacktestEngine.run` via `SimulationBacktestCore`.
 
-Legacy rendering/presentation helpers remain intact unless a narrow build-boundary correction is explicitly verified.
-
-## Permanent regression controls
-
-The prior **8 `REG-*`**, **15 `FM-REG-*`**, and **14 `LC-REG-*`** controls remain mandatory and passing.
-
-The current pass adds **22 `RC-REG-*`** controls covering:
-
-- arbitrary-confidence inverse-normal VaR;
-- interpolated empirical VaR and fractional-tail ES;
-- Monte Carlo denominator validation and zero terminal value handling;
-- daily/weekly/monthly cadence inference;
-- annualized Sharpe and zero-volatility semantics;
-- Altman zero/missing denominator behavior;
-- correct in-range PD interpolation and no out-of-range extrapolation;
-- zero-preserving expected loss and invalid probability validation;
-- Merton convergence, debt sensitivity, horizon validation, residual tolerances and actual distance-to-default propagation.
-
-## Retained model/runtime hardening
-
-The previous releases remain certified: three-statement growth/debt/cash/working-capital/reconciliation mechanics; zero-preserving debt/covenant form boundaries; XIRR using a 365-day basis; stress zero semantics; portfolio validation and variance/stress handling; comparable fair-price conversion; residual-income per-share conversion; and value-driver denominator safety.
+Legacy rendering, UI, orchestration, and composition helpers remain intact unless a narrow build-boundary correction is explicitly verified.
 
 ## CI gates
 
-The workflow validates source syntax, the **84-check source gate**, all **202 Node tests**, the production single-file build, regex/contextual audits, the **65-check artifact gate**, then installs pinned Playwright **1.55.0** and exercises Chromium, Firefox, WebKit, and Chromium mobile. Certification branches regenerate the root artifact and deterministic browser/static-audit evidence.
+The completion workflow validates source syntax; the **84-check certified-core gate**; the **62-check workstation ownership/source gate**; all **277 Node tests**; the deterministic single-file production build; regex/contextual audits; the **65-check existing artifact gate**; the **38-check final workstation artifact gate**; pinned Playwright **1.55.0** browser smoke across Chromium, Firefox, WebKit and Chromium mobile; and the separate 15-check final workstation-route suite across those same four targets. Certification branches regenerate deterministic evidence only when generated evidence actually changes.
 
 ## Static-audit inventory and certification boundary
 
-`STATIC_AUDIT_FINDINGS.md` inventories **435 broad regex leads** with **0 unclassified**. **226** are conservatively categorized as calculation-sensitive or algorithmic-review. This deliberately over-matches defaults, guards, parser behavior, rounding, sentinels, and legacy implementations that may be superseded by certified runtime routing; it is not a list of 226 proven bugs.
+`STATIC_AUDIT_FINDINGS.md` inventories **451 broad regex leads** with **0 unclassified**. **231** are conservatively categorized as calculation-sensitive or algorithmic-review. This deliberately over-matches defaults, guards, parser behavior, rounding, sentinels, and legacy implementations that may already be superseded by certified runtime routing; it is not a list of 231 proven bugs.
 
-The certification claim is precise: **FinanceCore, FinancialModelCore, LegacyCalculationCore, RiskCreditCore, and the production paths explicitly mapped and tested through them are certified, together with the narrow build-boundary corrections documented above. Other legacy analytical helpers remain outside the formal boundary until separately tested and promoted.** Broad browser smoke proves application/runtime compatibility, not every mathematical combination of every helper.
+The certification claim is deliberately precise: **FinanceCore, FinancialModelCore, LegacyCalculationCore, RiskCreditCore, WorkstationCalculationCore, WorkstationLedgerCore, SimulationBacktestCore, and only the production calculation paths explicitly routed and tested through those cores are certified, together with documented narrow build-boundary corrections. Legacy UI/rendering/orchestration/composition wrappers are not automatically independently algorithm-certified merely because they call a certified core. Other unrouted legacy analytical helpers remain outside the formal boundary until separately tested and promoted.** Browser smoke verifies application/runtime compatibility and the named production routes; it does not prove every mathematical combination of every input.
 
 ## Conclusion
 
-**PASS — EXPANDED CERTIFIED CALCULATION SCOPE.**
+**PASS — COMPLETE MODULAR CALCULATION CERTIFICATION SLICE.**
 
-The high-risk risk/credit/frequency defects identified in this pass are now routed through independently testable code with permanent regressions and verified in the generated offline workstation across Chromium, Firefox, WebKit and the mobile responsive target.
+The identified high-risk calculation routes in this phase, including the final Monte Carlo and backtest paths, are now independently testable, permanently regression-controlled, routed into the generated offline workstation, and exercised through public production APIs across Chromium, Firefox, WebKit and the mobile responsive target. Final release status still depends on the exact-head branch/PR/main CI and Pages checks recorded by the release chain.

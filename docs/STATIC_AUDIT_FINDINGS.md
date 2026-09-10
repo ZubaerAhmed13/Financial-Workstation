@@ -3,36 +3,36 @@
 This file is generated from the deployable `dist/index.html`. Every regex lead from `scripts/static-audit.js` is enumerated with a source line, owner hint, stable fingerprint and contextual disposition. These are review leads, not automatic defects.
 
 - Target: `index.html`
-- Total pattern hits: **435**
-- Calculation-sensitive / algorithmic-review hits: **226**
+- Total pattern hits: **451**
+- Calculation-sensitive / algorithmic-review hits: **231**
 - Unclassified hits: **0**
 
 ## Counts by pattern
 
 | Pattern | Count |
 |---|---:|
-| truthy-value checks | 142 |
-| Math.round usage | 53 |
-| Infinity literals | 13 |
-| generic OR zero | 173 |
+| truthy-value checks | 161 |
+| Math.round usage | 59 |
+| Infinity literals | 15 |
+| generic OR zero | 162 |
 | toFixed usage | 24 |
 | parseInt usage | 3 |
-| fallback-to-zero coercions | 24 |
-| NaN literals | 3 |
+| fallback-to-zero coercions | 23 |
+| NaN literals | 4 |
 
 ## Counts by contextual disposition
 
 | Disposition | Count |
 |---|---:|
-| algorithm/parser sentinel | 16 |
+| algorithm/parser sentinel | 19 |
 | algorithmic rounding | 2 |
-| calculation-sensitive numeric fallback | 176 |
-| calculation-sensitive presence guard | 48 |
-| DOM/object presence guard | 94 |
+| calculation-sensitive numeric fallback | 164 |
+| calculation-sensitive presence guard | 65 |
+| DOM/object presence guard | 96 |
 | general numeric/default fallback | 4 |
 | input/parser boundary | 3 |
 | parser/default fallback | 3 |
-| presentation/UI rounding | 75 |
+| presentation/UI rounding | 81 |
 | UI/default-state fallback | 14 |
 
 ## Calculation-sensitive / algorithmic-review leads
@@ -828,89 +828,33 @@ This file is generated from the deployable `dist/index.html`. Every regex lead f
 - Match: `||0`
 - Source: `for(let y=0;y<ny;y++){ growth.push((Number($("#seg_"+i+"_g_"+y)?.value)||0)/100); margin.push((Number($("#seg_"+i+"_m_"+y)?.value)||0)/100); }`
 
-### 40b56f4885610501 — generic OR zero — line 7346
-
-- Owner hint: `segmentForecastRender`
-- Disposition: **calculation-sensitive numeric fallback**
-- Match: `||0`
-- Source: `const out=segs.map(s=>{ const revs=[]; let r=total*s.share; for(let y=0;y<ny;y++){ revs.push(r); r*=(1+(s.growth[y]||0)); } return {name:s.name,revs,margins:s.margin}; });`
-
-### 8ae47a12da06b8bc — generic OR zero — line 7349
-
-- Owner hint: `segmentForecastRender`
-- Disposition: **calculation-sensitive numeric fallback**
-- Match: `||0`
-- Source: `out.forEach(s=>{ s.revs.forEach((v,y)=>{ totalRevs[y]+=v; totalEbitda[y]+=v*(s.margins[y]||0); }); });`
-
-### 61285879537bfa9a — generic OR zero — line 7368
+### 61285879537bfa9a — generic OR zero — line 7367
 
 - Owner hint: `sotpRender`
 - Disposition: **calculation-sensitive numeric fallback**
 - Match: `||0`
 - Source: `if(!sotp.parts.length) sotp.parts=[{name:"Core Business",value:sd.marketCap||0,multiple:10,metric:sd.netIncome||0},{name:"Cash / Investments",value:sd.cash||0,multiple:1,metric:sd.cash||0}];`
 
-### 61285879537bfa9a — generic OR zero — line 7368
+### 61285879537bfa9a — generic OR zero — line 7367
 
 - Owner hint: `sotpRender`
 - Disposition: **calculation-sensitive numeric fallback**
 - Match: `||0`
 - Source: `if(!sotp.parts.length) sotp.parts=[{name:"Core Business",value:sd.marketCap||0,multiple:10,metric:sd.netIncome||0},{name:"Cash / Investments",value:sd.cash||0,multiple:1,metric:sd.cash||0}];`
 
-### 61285879537bfa9a — generic OR zero — line 7368
+### 61285879537bfa9a — generic OR zero — line 7367
 
 - Owner hint: `sotpRender`
 - Disposition: **calculation-sensitive numeric fallback**
 - Match: `||0`
 - Source: `if(!sotp.parts.length) sotp.parts=[{name:"Core Business",value:sd.marketCap||0,multiple:10,metric:sd.netIncome||0},{name:"Cash / Investments",value:sd.cash||0,multiple:1,metric:sd.cash||0}];`
 
-### 61285879537bfa9a — generic OR zero — line 7368
+### 61285879537bfa9a — generic OR zero — line 7367
 
 - Owner hint: `sotpRender`
 - Disposition: **calculation-sensitive numeric fallback**
 - Match: `||0`
 - Source: `if(!sotp.parts.length) sotp.parts=[{name:"Core Business",value:sd.marketCap||0,multiple:10,metric:sd.netIncome||0},{name:"Cash / Investments",value:sd.cash||0,multiple:1,metric:sd.cash||0}];`
-
-### 27dfc6f3b1e387be — fallback-to-zero coercions — line 7386
-
-- Owner hint: `sotpRender`
-- Disposition: **calculation-sensitive numeric fallback**
-- Match: `Number($("#sotp_"+i+"_value")?.value)||0`
-- Source: `const parts=sotp.parts.map((p,i)=>{ const value=Number($("#sotp_"+i+"_value")?.value)||0; const mult=Number($("#sotp_"+i+"_mult")?.value)||1; const metric=Number($("#sotp_"+i+"_metric")?.value)||0; return {name:$("#sotp_"+i+"_name")?.value||p.name, value: value!==0? value: mult*metric, mult, metric}; });`
-
-### 27dfc6f3b1e387be — fallback-to-zero coercions — line 7386
-
-- Owner hint: `sotpRender`
-- Disposition: **calculation-sensitive numeric fallback**
-- Match: `Number($("#sotp_"+i+"_metric")?.value)||0`
-- Source: `const parts=sotp.parts.map((p,i)=>{ const value=Number($("#sotp_"+i+"_value")?.value)||0; const mult=Number($("#sotp_"+i+"_mult")?.value)||1; const metric=Number($("#sotp_"+i+"_metric")?.value)||0; return {name:$("#sotp_"+i+"_name")?.value||p.name, value: value!==0? value: mult*metric, mult, metric}; });`
-
-### 2428d04674e1d5df — generic OR zero — line 7386
-
-- Owner hint: `sotpRender`
-- Disposition: **calculation-sensitive numeric fallback**
-- Match: `||0`
-- Source: `const parts=sotp.parts.map((p,i)=>{ const value=Number($("#sotp_"+i+"_value")?.value)||0; const mult=Number($("#sotp_"+i+"_mult")?.value)||1; const metric=Number($("#sotp_"+i+"_metric")?.value)||0; return {name:$("#sotp_"+i+"_name")?.value||p.name, value: value!==0? value: mult*metric, mult, metric}; });`
-
-### 2428d04674e1d5df — generic OR zero — line 7386
-
-- Owner hint: `sotpRender`
-- Disposition: **calculation-sensitive numeric fallback**
-- Match: `||0`
-- Source: `const parts=sotp.parts.map((p,i)=>{ const value=Number($("#sotp_"+i+"_value")?.value)||0; const mult=Number($("#sotp_"+i+"_mult")?.value)||1; const metric=Number($("#sotp_"+i+"_metric")?.value)||0; return {name:$("#sotp_"+i+"_name")?.value||p.name, value: value!==0? value: mult*metric, mult, metric}; });`
-
-### d7d30a43520f5779 — generic OR zero — line 7389
-
-- Owner hint: `sotpRender`
-- Disposition: **calculation-sensitive numeric fallback**
-- Match: `||0`
-- Source: `const equityValue=totalEV-(sd.netDebt||0);`
-
-### 8cf8054b0e37f9f6 — generic OR zero — line 7393
-
-- Owner hint: `sotpRender`
-- Disposition: **calculation-sensitive numeric fallback**
-- Match: `||0`
-- Source: `<div class="tablewrap"><table class="data"><thead><tr><th>Part</th><th class="num">Value</th></tr></thead><tbody>${parts.map(p=>\`<tr><td>${esc(p.name)}</td><td class="num">${fmt.money(p.value)}</td></tr>\`).join("")}<tr><td><b>Total EV</b></td><td class="num"><b>${fmt.money(totalEV)}</b></td></tr><tr><td>Net debt</td><td class="num">${fmt.money(sd.netDebt||0)}</td></tr><tr><td><b>Equity value</b></td><td class="num"><b>${fmt.money(equityValue)}</b></td></tr><tr><td><b>Per share</b></td><td class="num"><b>${fmt.money(perShare)}</b></td></tr></tbody></table></div>`
 
 ### 248f49d2039ff963 — generic OR zero — line 7482
 
@@ -1381,27 +1325,6 @@ This file is generated from the deployable `dist/index.html`. Every regex lead f
 - Match: `||0`
 - Source: `const b=$("#perf_snap"); if(b)b.addEventListener("click",()=>{ const mv=Number($("#perf_mv").value)||wsMarketValue().mv||0; const flow=Number($("#perf_flow").value)||0;`
 
-### 950db2e7722f5a3f — generic OR zero — line 10395
-
-- Owner hint: `computeBenchmark`
-- Disposition: **calculation-sensitive numeric fallback**
-- Match: `||0`
-- Source: `const portRets=[]; for(let i=1;i<snaps.length;i++){ const start=snaps[i-1].mv||0, end=snaps[i].mv||0, flow=snaps[i].cashFlow||0; if(start>0)portRets.push((end-flow)/start-1); }`
-
-### 950db2e7722f5a3f — generic OR zero — line 10395
-
-- Owner hint: `computeBenchmark`
-- Disposition: **calculation-sensitive numeric fallback**
-- Match: `||0`
-- Source: `const portRets=[]; for(let i=1;i<snaps.length;i++){ const start=snaps[i-1].mv||0, end=snaps[i].mv||0, flow=snaps[i].cashFlow||0; if(start>0)portRets.push((end-flow)/start-1); }`
-
-### 950db2e7722f5a3f — generic OR zero — line 10395
-
-- Owner hint: `computeBenchmark`
-- Disposition: **calculation-sensitive numeric fallback**
-- Match: `||0`
-- Source: `const portRets=[]; for(let i=1;i<snaps.length;i++){ const start=snaps[i-1].mv||0, end=snaps[i].mv||0, flow=snaps[i].cashFlow||0; if(start>0)portRets.push((end-flow)/start-1); }`
-
 ### ae766e4fc15b7c10 — truthy-value checks — line 10710
 
 - Owner hint: `wsFreshness`
@@ -1471,27 +1394,6 @@ This file is generated from the deployable `dist/index.html`. Every regex lead f
 - Disposition: **calculation-sensitive numeric fallback**
 - Match: `||0`
 - Source: `const sortino= CalcEngine.sortino(periodRets,0.02/annualFactor||0.02/252);`
-
-### 73f1c1d9a15607f1 — generic OR zero — line 11907
-
-- Owner hint: `periodReturnsArray`
-- Disposition: **calculation-sensitive numeric fallback**
-- Match: `||0`
-- Source: `function periodReturnsArray(snaps2){ const a=[]; for(let i=1;i<snaps2.length;i++){ const s=snaps2[i-1].mv||0; const e=snaps2[i].mv||0; const f=snaps2[i].cashFlow||0; if(s>0)a.push((e-f)/s-1); } return a; }`
-
-### 73f1c1d9a15607f1 — generic OR zero — line 11907
-
-- Owner hint: `periodReturnsArray`
-- Disposition: **calculation-sensitive numeric fallback**
-- Match: `||0`
-- Source: `function periodReturnsArray(snaps2){ const a=[]; for(let i=1;i<snaps2.length;i++){ const s=snaps2[i-1].mv||0; const e=snaps2[i].mv||0; const f=snaps2[i].cashFlow||0; if(s>0)a.push((e-f)/s-1); } return a; }`
-
-### 73f1c1d9a15607f1 — generic OR zero — line 11907
-
-- Owner hint: `periodReturnsArray`
-- Disposition: **calculation-sensitive numeric fallback**
-- Match: `||0`
-- Source: `function periodReturnsArray(snaps2){ const a=[]; for(let i=1;i<snaps2.length;i++){ const s=snaps2[i-1].mv||0; const e=snaps2[i].mv||0; const f=snaps2[i].cashFlow||0; if(s>0)a.push((e-f)/s-1); } return a; }`
 
 ### 12c3d4d2a08af5ac — fallback-to-zero coercions — line 11959
 
@@ -1584,40 +1486,173 @@ This file is generated from the deployable `dist/index.html`. Every regex lead f
 - Match: `||0`
 - Source: `return {iterations:x.iterations||0,converged:!!x.converged,residual:finite(x.residualEquity)?Math.abs(x.residualEquity):null,residualVol:finite(x.residualVol)?Math.abs(x.residualVol):null,distanceToDefault:finite(x.distanceToDefault)?x.distanceToDefault:null,pd:finite(x.pd)?x.pd:null,error:x.error||null};`
 
-### 5c0282a9fb526c69 — truthy-value checks — line 12743
+### a6ff05064257af02 — truthy-value checks — line 12810
 
-- Owner hint: `mertonTrace`
+- Owner hint: `preferenceScore`
+- Disposition: **calculation-sensitive presence guard**
+- Match: `if(!normalized)`
+- Source: `const normalized=normalizeWeightObject(weights);if(!normalized)return null;`
+
+### 90c3f4df742f9f10 — truthy-value checks — line 12853
+
+- Owner hint: `factorExposure`
+- Disposition: **calculation-sensitive presence guard**
+- Match: `if(!norm)`
+- Source: `const norm=normalizeItems(items);if(!norm)return null;`
+
+### 37f18cc5dc266dc0 — truthy-value checks — line 12895
+
+- Owner hint: `riskContribution`
+- Disposition: **calculation-sensitive presence guard**
+- Match: `if(!norm)`
+- Source: `const norm=normalizeItems(port.items);if(!norm)return null;`
+
+### db28f0d35ee8b9f9 — truthy-value checks — line 12926
+
+- Owner hint: `minimumVariance`
+- Disposition: **calculation-sensitive presence guard**
+- Match: `if(!cov)`
+- Source: `const cov=covarianceFromItems(items,corrMatrix);if(!cov)return null;`
+
+### 6ebe1dae9c4d0c49 — truthy-value checks — line 12940
+
+- Owner hint: `maximumSharpe`
+- Disposition: **calculation-sensitive presence guard**
+- Match: `if(!cov)`
+- Source: `const cov=covarianceFromItems(items,corrMatrix);if(!cov)return null;`
+
+### b48fd9e62be33f6a — truthy-value checks — line 12941
+
+- Owner hint: `maximumSharpe`
+- Disposition: **calculation-sensitive presence guard**
+- Match: `if(!w)`
+- Source: `let w=minimumVariance(items,corrMatrix);if(!w)return null;`
+
+### 9363d8354a5cf401 — truthy-value checks — line 12952
+
+- Owner hint: `maximumSharpe`
+- Disposition: **calculation-sensitive presence guard**
+- Match: `if(!improved)`
+- Source: `if(!improved){step*=.5;if(step<1e-7)break;}`
+
+### 8fbd131fd8129e71 — truthy-value checks — line 12958
+
+- Owner hint: `riskParity`
+- Disposition: **calculation-sensitive presence guard**
+- Match: `if(!cov)`
+- Source: `const cov=covarianceFromItems(items,corrMatrix);if(!cov)return null;`
+
+### 21da93e5cada76ee — truthy-value checks — line 12994
+
+- Owner hint: `sumOfParts`
+- Disposition: **calculation-sensitive presence guard**
+- Match: `if(!p)`
+- Source: `if(!p)return null;let value=null,source=null;`
+
+### fcafec5d6d68021e — fallback-to-zero coercions — line 13004
+
+- Owner hint: `mulberry32`
+- Disposition: **calculation-sensitive numeric fallback**
+- Match: `Number(seed)||0`
+- Source: `function mulberry32(seed){let a=(Number(seed)||0)>>>0;return function(){a|=0;a=a+0x6D2B79F5|0;let t=Math.imul(a^a>>>15,1|a);t=t+Math.imul(t^t>>>7,61|t)^t;return ((t^t>>>14)>>>0)/4294967296;};}`
+
+### 5447e421fae7d39a — generic OR zero — line 13004
+
+- Owner hint: `mulberry32`
+- Disposition: **calculation-sensitive numeric fallback**
+- Match: `||0`
+- Source: `function mulberry32(seed){let a=(Number(seed)||0)>>>0;return function(){a|=0;a=a+0x6D2B79F5|0;let t=Math.imul(a^a>>>15,1|a);t=t+Math.imul(t^t>>>7,61|t)^t;return ((t^t>>>14)>>>0)/4294967296;};}`
+
+### 46b95fc05cdf21fb — truthy-value checks — line 13041
+
+- Owner hint: `timeWeightedReturnFromSnapshots`
+- Disposition: **calculation-sensitive presence guard**
+- Match: `if(!returns)`
+- Source: `const returns=periodReturnsFromSnapshots(snapshots);if(!returns)return null;`
+
+### 1fbf6e8f8dbc62be — truthy-value checks — line 13169
+
+- Owner hint: `calculateLedger`
+- Disposition: **calculation-sensitive presence guard**
+- Match: `if(!key)`
+- Source: `if(!key){warnings.push({index,code:'LEDGER-DIVIDEND-INVALID',message:'Dividend security is missing.'});return;}`
+
+### 039df648b08bacbf — truthy-value checks — line 13170
+
+- Owner hint: `calculateLedger`
+- Disposition: **calculation-sensitive presence guard**
+- Match: `if(!da)`
+- Source: `const da=dividendAmounts(tx);if(!da){warnings.push({index,code:'LEDGER-DIVIDEND-INVALID',message:'Invalid dividend transaction skipped.'});return;}`
+
+### 21e5050c4cb0effc — truthy-value checks — line 13198
+
+- Owner hint: `positionUnrealized`
+- Disposition: **calculation-sensitive presence guard**
+- Match: `if(!position)`
+- Source: `if(!position)return null;const qty=finite(position.quantity)?position.quantity:position.qty;`
+
+### 920c331c4b6ca8b7 — truthy-value checks — line 13448
+
+- Owner hint: `backtestRun`
 - Disposition: **calculation-sensitive presence guard**
 - Match: `if(!Core)`
 - Source: `if(!Core){ console.error('Financial certification runtime: FinanceCore missing'); return; }`
 
-### 313d8ce37164294e — truthy-value checks — line 12747
+### 333da83e20b6efab — truthy-value checks — line 13452
 
-- Owner hint: `mertonTrace`
+- Owner hint: `backtestRun`
 - Disposition: **calculation-sensitive presence guard**
 - Match: `if(!ModelCore)`
 - Source: `if(!ModelCore)installReport.warnings.push('FinancialModelCore missing; three-statement model is outside the expanded certification boundary.');`
 
-### 088c1f9309fc6ca2 — truthy-value checks — line 12748
+### cd5e1e5c73ce6140 — truthy-value checks — line 13453
 
-- Owner hint: `mertonTrace`
+- Owner hint: `backtestRun`
 - Disposition: **calculation-sensitive presence guard**
 - Match: `if(!LegacyCore)`
 - Source: `if(!LegacyCore)installReport.warnings.push('LegacyCalculationCore missing; stress, portfolio and multi-method valuation remain outside the expanded certification boundary.');`
 
-### 88517af14022c940 — truthy-value checks — line 12749
+### bc2115340c4afe46 — truthy-value checks — line 13454
 
-- Owner hint: `mertonTrace`
+- Owner hint: `backtestRun`
 - Disposition: **calculation-sensitive presence guard**
 - Match: `if(!RiskCore)`
 - Source: `if(!RiskCore)installReport.warnings.push('RiskCreditCore missing; VaR/ES, credit curves, Altman and Merton remain outside the expanded certification boundary.');`
 
-### 67fa0ca520fef201 — truthy-value checks — line 12753
+### 88b07570836aec70 — truthy-value checks — line 13458
 
-- Owner hint: `mertonTrace`
+- Owner hint: `backtestRun`
 - Disposition: **calculation-sensitive presence guard**
 - Match: `if(!a)`
 - Source: `const a=Core.abbreviate(v); if(!a) return '—';`
+
+### 6b95b77be0e9ccec — truthy-value checks — line 13688
+
+- Owner hint: `top-level/unknown`
+- Disposition: **calculation-sensitive presence guard**
+- Match: `if(!W)`
+- Source: `if(!W){console.error('Financial certification runtime: WorkstationCalculationCore missing');return;}`
+
+### fdf36342a9752fb4 — truthy-value checks — line 13740
+
+- Owner hint: `top-level/unknown`
+- Disposition: **calculation-sensitive presence guard**
+- Match: `if(!p)`
+- Source: `wsPositionBaseValue=security=>{const ws=typeof wsPortfolio==='function'?wsPortfolio():null,p=ws&&ws.holdings?ws.holdings[security]:null;if(!p)return null;const pg=typeof wsGetPrice==='function'?wsGetPrice(security,ws):null;if(!pg)return null;const fx=typeof wsFxRate==='function'?wsFxRate(p.currency||(typeof wsBaseCurrency==='function'?wsBaseCurrency():'EUR')):null;return L.positionBaseValue(p,pg.price,fx);};`
+
+### fdf36342a9752fb4 — truthy-value checks — line 13740
+
+- Owner hint: `top-level/unknown`
+- Disposition: **calculation-sensitive presence guard**
+- Match: `if(!pg)`
+- Source: `wsPositionBaseValue=security=>{const ws=typeof wsPortfolio==='function'?wsPortfolio():null,p=ws&&ws.holdings?ws.holdings[security]:null;if(!p)return null;const pg=typeof wsGetPrice==='function'?wsGetPrice(security,ws):null;if(!pg)return null;const fx=typeof wsFxRate==='function'?wsFxRate(p.currency||(typeof wsBaseCurrency==='function'?wsBaseCurrency():'EUR')):null;return L.positionBaseValue(p,pg.price,fx);};`
+
+### d9fd9e504cb740d8 — truthy-value checks — line 13748
+
+- Owner hint: `top-level/unknown`
+- Disposition: **calculation-sensitive presence guard**
+- Match: `if(!ws)`
+- Source: `wsCashSummary=()=>{const ws=typeof wsPortfolio==='function'?wsPortfolio():null;if(!ws)return null;const mv=typeof wsMarketValue==='function'?wsMarketValue():null;return L.cashSummary(ws.cashAccounts||{},ws.fxRates||{},typeof wsBaseCurrency==='function'?wsBaseCurrency():'EUR',mv&&Number.isFinite(mv.mv)?mv.mv:0);};`
 
 ## Complete lead inventory
 
@@ -1866,18 +1901,13 @@ This file is generated from the deployable `dist/index.html`. Every regex lead f
 | `f93317b3ef02518e` | fallback-to-zero coercions | 7341 | `segmentForecastRender` | calculation-sensitive numeric fallback | `for(let y=0;y<ny;y++){ growth.push((Number($("#seg_"+i+"_g_"+y)?.value)\|\|0)/100); margin.push((Number($("#seg_"+i+"_m_"+y)?.value)\|\|0)/100); }` |
 | `7009a99933e66333` | generic OR zero | 7341 | `segmentForecastRender` | calculation-sensitive numeric fallback | `for(let y=0;y<ny;y++){ growth.push((Number($("#seg_"+i+"_g_"+y)?.value)\|\|0)/100); margin.push((Number($("#seg_"+i+"_m_"+y)?.value)\|\|0)/100); }` |
 | `7009a99933e66333` | generic OR zero | 7341 | `segmentForecastRender` | calculation-sensitive numeric fallback | `for(let y=0;y<ny;y++){ growth.push((Number($("#seg_"+i+"_g_"+y)?.value)\|\|0)/100); margin.push((Number($("#seg_"+i+"_m_"+y)?.value)\|\|0)/100); }` |
-| `40b56f4885610501` | generic OR zero | 7346 | `segmentForecastRender` | calculation-sensitive numeric fallback | `const out=segs.map(s=>{ const revs=[]; let r=total*s.share; for(let y=0;y<ny;y++){ revs.push(r); r*=(1+(s.growth[y]\|\|0)); } return {name:s.name,revs,margins:s.margin}; });` |
-| `8ae47a12da06b8bc` | generic OR zero | 7349 | `segmentForecastRender` | calculation-sensitive numeric fallback | `out.forEach(s=>{ s.revs.forEach((v,y)=>{ totalRevs[y]+=v; totalEbitda[y]+=v*(s.margins[y]\|\|0); }); });` |
-| `61285879537bfa9a` | generic OR zero | 7368 | `sotpRender` | calculation-sensitive numeric fallback | `if(!sotp.parts.length) sotp.parts=[{name:"Core Business",value:sd.marketCap\|\|0,multiple:10,metric:sd.netIncome\|\|0},{name:"Cash / Investments",value:sd.cash\|\|0,multiple:1,metric:sd.cash\|\|0}];` |
-| `61285879537bfa9a` | generic OR zero | 7368 | `sotpRender` | calculation-sensitive numeric fallback | `if(!sotp.parts.length) sotp.parts=[{name:"Core Business",value:sd.marketCap\|\|0,multiple:10,metric:sd.netIncome\|\|0},{name:"Cash / Investments",value:sd.cash\|\|0,multiple:1,metric:sd.cash\|\|0}];` |
-| `61285879537bfa9a` | generic OR zero | 7368 | `sotpRender` | calculation-sensitive numeric fallback | `if(!sotp.parts.length) sotp.parts=[{name:"Core Business",value:sd.marketCap\|\|0,multiple:10,metric:sd.netIncome\|\|0},{name:"Cash / Investments",value:sd.cash\|\|0,multiple:1,metric:sd.cash\|\|0}];` |
-| `61285879537bfa9a` | generic OR zero | 7368 | `sotpRender` | calculation-sensitive numeric fallback | `if(!sotp.parts.length) sotp.parts=[{name:"Core Business",value:sd.marketCap\|\|0,multiple:10,metric:sd.netIncome\|\|0},{name:"Cash / Investments",value:sd.cash\|\|0,multiple:1,metric:sd.cash\|\|0}];` |
-| `27dfc6f3b1e387be` | fallback-to-zero coercions | 7386 | `sotpRender` | calculation-sensitive numeric fallback | `const parts=sotp.parts.map((p,i)=>{ const value=Number($("#sotp_"+i+"_value")?.value)\|\|0; const mult=Number($("#sotp_"+i+"_mult")?.value)\|\|1; const metric=Number($("#sotp_"+i+"_metric")?.value)\|\|0; return {name:$("#sotp_"+i+"_name")?.value\|\|p.name, value: value!==0? value: mult*metric, mult, metric}; });` |
-| `27dfc6f3b1e387be` | fallback-to-zero coercions | 7386 | `sotpRender` | calculation-sensitive numeric fallback | `const parts=sotp.parts.map((p,i)=>{ const value=Number($("#sotp_"+i+"_value")?.value)\|\|0; const mult=Number($("#sotp_"+i+"_mult")?.value)\|\|1; const metric=Number($("#sotp_"+i+"_metric")?.value)\|\|0; return {name:$("#sotp_"+i+"_name")?.value\|\|p.name, value: value!==0? value: mult*metric, mult, metric}; });` |
-| `2428d04674e1d5df` | generic OR zero | 7386 | `sotpRender` | calculation-sensitive numeric fallback | `const parts=sotp.parts.map((p,i)=>{ const value=Number($("#sotp_"+i+"_value")?.value)\|\|0; const mult=Number($("#sotp_"+i+"_mult")?.value)\|\|1; const metric=Number($("#sotp_"+i+"_metric")?.value)\|\|0; return {name:$("#sotp_"+i+"_name")?.value\|\|p.name, value: value!==0? value: mult*metric, mult, metric}; });` |
-| `2428d04674e1d5df` | generic OR zero | 7386 | `sotpRender` | calculation-sensitive numeric fallback | `const parts=sotp.parts.map((p,i)=>{ const value=Number($("#sotp_"+i+"_value")?.value)\|\|0; const mult=Number($("#sotp_"+i+"_mult")?.value)\|\|1; const metric=Number($("#sotp_"+i+"_metric")?.value)\|\|0; return {name:$("#sotp_"+i+"_name")?.value\|\|p.name, value: value!==0? value: mult*metric, mult, metric}; });` |
-| `d7d30a43520f5779` | generic OR zero | 7389 | `sotpRender` | calculation-sensitive numeric fallback | `const equityValue=totalEV-(sd.netDebt\|\|0);` |
-| `8cf8054b0e37f9f6` | generic OR zero | 7393 | `sotpRender` | calculation-sensitive numeric fallback | `<div class="tablewrap"><table class="data"><thead><tr><th>Part</th><th class="num">Value</th></tr></thead><tbody>${parts.map(p=>\`<tr><td>${esc(p.name)}</td><td class="num">${fmt.money(p.value)}</td></tr>\`).join("")}<tr><td><b>Total EV</b></td><td class="num"><b>${fmt.money(totalEV)}</b></td></tr><tr><td>Net debt</td><td class="num">${fmt.money(sd.netDebt\|\|0)}</td></tr><tr><td><b>Equity value</b></td><td class="num"><b>${fmt.money(equityValue)}</b></td></tr><tr><td><b>Per share</b></td><td class="num"><b>${fmt.money(perShare)}</b></td></tr></tbody></table></div>` |
+| `237941a0a9115869` | truthy-value checks | 7347 | `segmentForecastRender` | DOM/object presence guard | `if(!segCalc){ $("#segOut").innerHTML=\`<div class="banner warn">Segment forecast requires finite non-negative revenue/shares and finite growth/margin assumptions for every year.</div>\`; return; }` |
+| `61285879537bfa9a` | generic OR zero | 7367 | `sotpRender` | calculation-sensitive numeric fallback | `if(!sotp.parts.length) sotp.parts=[{name:"Core Business",value:sd.marketCap\|\|0,multiple:10,metric:sd.netIncome\|\|0},{name:"Cash / Investments",value:sd.cash\|\|0,multiple:1,metric:sd.cash\|\|0}];` |
+| `61285879537bfa9a` | generic OR zero | 7367 | `sotpRender` | calculation-sensitive numeric fallback | `if(!sotp.parts.length) sotp.parts=[{name:"Core Business",value:sd.marketCap\|\|0,multiple:10,metric:sd.netIncome\|\|0},{name:"Cash / Investments",value:sd.cash\|\|0,multiple:1,metric:sd.cash\|\|0}];` |
+| `61285879537bfa9a` | generic OR zero | 7367 | `sotpRender` | calculation-sensitive numeric fallback | `if(!sotp.parts.length) sotp.parts=[{name:"Core Business",value:sd.marketCap\|\|0,multiple:10,metric:sd.netIncome\|\|0},{name:"Cash / Investments",value:sd.cash\|\|0,multiple:1,metric:sd.cash\|\|0}];` |
+| `61285879537bfa9a` | generic OR zero | 7367 | `sotpRender` | calculation-sensitive numeric fallback | `if(!sotp.parts.length) sotp.parts=[{name:"Core Business",value:sd.marketCap\|\|0,multiple:10,metric:sd.netIncome\|\|0},{name:"Cash / Investments",value:sd.cash\|\|0,multiple:1,metric:sd.cash\|\|0}];` |
+| `3d7098709f8ddc71` | NaN literals | 7384 | `sotpRender` | algorithm/parser sentinel | `const sharesRaw=$("#sotp_shares").value; const shares=String(sharesRaw).trim()===""?NaN:Number(sharesRaw);` |
+| `47a14f4bb1df9a8c` | truthy-value checks | 7388 | `sotpRender` | DOM/object presence guard | `if(!sotpCalc){ $("#sotpOut").innerHTML=\`<div class="banner warn">SOTP requires positive diluted shares and a finite explicit value or finite multiple × metric for every part.</div>\`; return; }` |
 | `1cbac39442bc3e8d` | fallback-to-zero coercions | 7424 | `earningsQualityTrend` | UI/default-state fallback | `const ps=t.periods.map((p,i)=>({period:$("#eqt_"+i+"_p")?.value\|\|("P"+(i+1)),ni:Number($("#eqt_"+i+"_ni")?.value)\|\|0,cfo:Number($("#eqt_"+i+"_cfo")?.value)\|\|0,fcf:Number($("#eqt_"+i+"_fcf")?.value)\|\|0,rev:Number($("#eqt_"+i+"_rev")?.value)\|\|0,wc:Number($("#eqt_"+i+"_wc")?.value)\|\|0}));` |
 | `f811a9321a1a0636` | generic OR zero | 7424 | `earningsQualityTrend` | UI/default-state fallback | `const ps=t.periods.map((p,i)=>({period:$("#eqt_"+i+"_p")?.value\|\|("P"+(i+1)),ni:Number($("#eqt_"+i+"_ni")?.value)\|\|0,cfo:Number($("#eqt_"+i+"_cfo")?.value)\|\|0,fcf:Number($("#eqt_"+i+"_fcf")?.value)\|\|0,rev:Number($("#eqt_"+i+"_rev")?.value)\|\|0,wc:Number($("#eqt_"+i+"_wc")?.value)\|\|0}));` |
 | `f811a9321a1a0636` | generic OR zero | 7424 | `earningsQualityTrend` | UI/default-state fallback | `const ps=t.periods.map((p,i)=>({period:$("#eqt_"+i+"_p")?.value\|\|("P"+(i+1)),ni:Number($("#eqt_"+i+"_ni")?.value)\|\|0,cfo:Number($("#eqt_"+i+"_cfo")?.value)\|\|0,fcf:Number($("#eqt_"+i+"_fcf")?.value)\|\|0,rev:Number($("#eqt_"+i+"_rev")?.value)\|\|0,wc:Number($("#eqt_"+i+"_wc")?.value)\|\|0}));` |
@@ -1918,7 +1948,7 @@ This file is generated from the deployable `dist/index.html`. Every regex lead f
 | `11488fa0536fa6ac` | generic OR zero | 8480 | `compute` | calculation-sensitive numeric fallback | `const n=items.length; const totalW=items.reduce((a,c)=>a+(c.weight\|\|0),0)\|\|1;` |
 | `a24fd34bb22dc4e8` | generic OR zero | 8481 | `compute` | calculation-sensitive numeric fallback | `const weights=items.map(b=> (b.weight\|\|0)/totalW );` |
 | `9c8e878d39a764b1` | truthy-value checks | 8497 | `html` | DOM/object presence guard | `if(!r)return "";` |
-| `5d116219ec2437a6` | Math.round usage | 8528 | `dcfRange` | presentation/UI rounding | `const conf= Math.max(0,Math.min(100,Math.round(80 - disp*20 + (suff-50)*0.3)));` |
+| `3ec17eb4f00b5c6a` | Math.round usage | 8528 | `dcfRange` | presentation/UI rounding | `const conf= disp==null?0:Math.max(0,Math.min(100,Math.round(80 - disp*20 + (suff-50)*0.3)));` |
 | `f673e5d71b050256` | truthy-value checks | 8532 | `html` | DOM/object presence guard | `if(!u)return "";` |
 | `7d470eee4826dfa1` | generic OR zero | 8682 | `compute` | general numeric/default fallback | `add("Scenario coverage", scen&&scen.out&&scen.out.length>=3?85:40, (scen&&scen.out&&scen.out.length)\|\|0+" scenarios");` |
 | `86db3ad882a5036f` | Math.round usage | 8694 | `compute` | presentation/UI rounding | `const overall=Math.round(parts.reduce((a,p)=>a+p.score,0)/parts.length);` |
@@ -1994,9 +2024,6 @@ This file is generated from the deployable `dist/index.html`. Every regex lead f
 | `ae27fae9a7ac1079` | toFixed usage | 10378 | `wsBenchmarkValidate` | presentation/UI rounding | `if(sf!=null&&bf!=null&&Math.abs(sf-bf)>1) issues.push("Portfolio and benchmark have different frequencies ("+sf.toFixed(1)+"d vs "+bf.toFixed(1)+"d).");` |
 | `ae27fae9a7ac1079` | toFixed usage | 10378 | `wsBenchmarkValidate` | presentation/UI rounding | `if(sf!=null&&bf!=null&&Math.abs(sf-bf)>1) issues.push("Portfolio and benchmark have different frequencies ("+sf.toFixed(1)+"d vs "+bf.toFixed(1)+"d).");` |
 | `c9826fbe1d5c6580` | truthy-value checks | 10388 | `computeBenchmark` | DOM/object presence guard | `const out=$("#bmOut"); if(!out)return;` |
-| `950db2e7722f5a3f` | generic OR zero | 10395 | `computeBenchmark` | calculation-sensitive numeric fallback | `const portRets=[]; for(let i=1;i<snaps.length;i++){ const start=snaps[i-1].mv\|\|0, end=snaps[i].mv\|\|0, flow=snaps[i].cashFlow\|\|0; if(start>0)portRets.push((end-flow)/start-1); }` |
-| `950db2e7722f5a3f` | generic OR zero | 10395 | `computeBenchmark` | calculation-sensitive numeric fallback | `const portRets=[]; for(let i=1;i<snaps.length;i++){ const start=snaps[i-1].mv\|\|0, end=snaps[i].mv\|\|0, flow=snaps[i].cashFlow\|\|0; if(start>0)portRets.push((end-flow)/start-1); }` |
-| `950db2e7722f5a3f` | generic OR zero | 10395 | `computeBenchmark` | calculation-sensitive numeric fallback | `const portRets=[]; for(let i=1;i<snaps.length;i++){ const start=snaps[i-1].mv\|\|0, end=snaps[i].mv\|\|0, flow=snaps[i].cashFlow\|\|0; if(start>0)portRets.push((end-flow)/start-1); }` |
 | `68c121b3682dd927` | truthy-value checks | 10401 | `computeBenchmark` | DOM/object presence guard | `if(!c){ out.innerHTML=\`<div class="banner info">Insufficient aligned data to compute capture ratios.</div>\`; return; }` |
 | `7bf1c9e69488bbcc` | truthy-value checks | 10435 | `wsNotificationsRender` | DOM/object presence guard | `const el=$("#notifOut"); if(!el)return;` |
 | `9404d0cc0a7f1ce7` | truthy-value checks | 10473 | `wsBreadcrumbs` | DOM/object presence guard | `const el=$("#breadcrumbs"); if(!el)return;` |
@@ -2030,9 +2057,6 @@ This file is generated from the deployable `dist/index.html`. Every regex lead f
 | `e389dd3e116db18d` | toFixed usage | 11795 | `wireGoldenValidation` | presentation/UI rounding | `${results.map(r=>\`<tr><td>${r.name}</td><td class="num">${typeof r.exp==="number"?r.exp.toFixed(4):"—"}</td><td class="num">${r.actual!=null?r.actual.toFixed(4):(r.err\|\|"—")}</td><td>${r.pass?pill("PASS","good"):pill("FAIL","bad")}</td></tr>\`).join("")}</tbody></table></div>\`; });` |
 | `a2578427e605503f` | generic OR zero | 11884 | `wsPerfRisk` | calculation-sensitive numeric fallback | `const sharpe= CalcEngine.sharpe(periodRets,0.02/annualFactor\|\|0.02/252);` |
 | `19400b41288f81f2` | generic OR zero | 11885 | `wsPerfRisk` | calculation-sensitive numeric fallback | `const sortino= CalcEngine.sortino(periodRets,0.02/annualFactor\|\|0.02/252);` |
-| `73f1c1d9a15607f1` | generic OR zero | 11907 | `periodReturnsArray` | calculation-sensitive numeric fallback | `function periodReturnsArray(snaps2){ const a=[]; for(let i=1;i<snaps2.length;i++){ const s=snaps2[i-1].mv\|\|0; const e=snaps2[i].mv\|\|0; const f=snaps2[i].cashFlow\|\|0; if(s>0)a.push((e-f)/s-1); } return a; }` |
-| `73f1c1d9a15607f1` | generic OR zero | 11907 | `periodReturnsArray` | calculation-sensitive numeric fallback | `function periodReturnsArray(snaps2){ const a=[]; for(let i=1;i<snaps2.length;i++){ const s=snaps2[i-1].mv\|\|0; const e=snaps2[i].mv\|\|0; const f=snaps2[i].cashFlow\|\|0; if(s>0)a.push((e-f)/s-1); } return a; }` |
-| `73f1c1d9a15607f1` | generic OR zero | 11907 | `periodReturnsArray` | calculation-sensitive numeric fallback | `function periodReturnsArray(snaps2){ const a=[]; for(let i=1;i<snaps2.length;i++){ const s=snaps2[i-1].mv\|\|0; const e=snaps2[i].mv\|\|0; const f=snaps2[i].cashFlow\|\|0; if(s>0)a.push((e-f)/s-1); } return a; }` |
 | `b1dfaa692df0c5e9` | truthy-value checks | 11947 | `periodReturnsArray` | DOM/object presence guard | `if(!rd)return "";` |
 | `12c3d4d2a08af5ac` | fallback-to-zero coercions | 11959 | `periodReturnsArray` | calculation-sensitive numeric fallback | `const b=$("#pf_snap"); if(b)b.addEventListener("click",()=>{ const mv2=Number($("#pf_mv").value)\|\|mv.mv\|\|0; const flow=Number($("#pf_flow").value)\|\|0;` |
 | `46e2cf57b7f8aae8` | generic OR zero | 11959 | `periodReturnsArray` | calculation-sensitive numeric fallback | `const b=$("#pf_snap"); if(b)b.addEventListener("click",()=>{ const mv2=Number($("#pf_mv").value)\|\|mv.mv\|\|0; const flow=Number($("#pf_flow").value)\|\|0;` |
@@ -2052,9 +2076,36 @@ This file is generated from the deployable `dist/index.html`. Every regex lead f
 | `c5fd04e381eba93b` | truthy-value checks | 12722 | `merton` | calculation-sensitive presence guard | `if(!eq)return {error:'Merton solver produced a non-finite state.',converged:false,pd:null,E,sigmaE,D,r,T};` |
 | `6f9527b623ced2cb` | truthy-value checks | 12726 | `merton` | calculation-sensitive presence guard | `if(!converged)return {error:'Merton solver did not converge to the requested tolerance.',converged:false,pd:null,V,sigmaV,d1:eq.d1,d2:eq.d2,distanceToDefault:eq.d2,E,sigmaE,D,r,T,iterations,residualEquity,residualVol};` |
 | `75de0cb65365124b` | generic OR zero | 12732 | `mertonTrace` | calculation-sensitive numeric fallback | `return {iterations:x.iterations\|\|0,converged:!!x.converged,residual:finite(x.residualEquity)?Math.abs(x.residualEquity):null,residualVol:finite(x.residualVol)?Math.abs(x.residualVol):null,distanceToDefault:finite(x.distanceToDefault)?x.distanceToDefault:null,pd:finite(x.pd)?x.pd:null,error:x.error\|\|null};` |
-| `5c0282a9fb526c69` | truthy-value checks | 12743 | `mertonTrace` | calculation-sensitive presence guard | `if(!Core){ console.error('Financial certification runtime: FinanceCore missing'); return; }` |
-| `313d8ce37164294e` | truthy-value checks | 12747 | `mertonTrace` | calculation-sensitive presence guard | `if(!ModelCore)installReport.warnings.push('FinancialModelCore missing; three-statement model is outside the expanded certification boundary.');` |
-| `088c1f9309fc6ca2` | truthy-value checks | 12748 | `mertonTrace` | calculation-sensitive presence guard | `if(!LegacyCore)installReport.warnings.push('LegacyCalculationCore missing; stress, portfolio and multi-method valuation remain outside the expanded certification boundary.');` |
-| `88517af14022c940` | truthy-value checks | 12749 | `mertonTrace` | calculation-sensitive presence guard | `if(!RiskCore)installReport.warnings.push('RiskCreditCore missing; VaR/ES, credit curves, Altman and Merton remain outside the expanded certification boundary.');` |
-| `67fa0ca520fef201` | truthy-value checks | 12753 | `mertonTrace` | calculation-sensitive presence guard | `const a=Core.abbreviate(v); if(!a) return '—';` |
-| `6782ec725bf36368` | Math.round usage | 12920 | `top-level/unknown` | presentation/UI rounding | `const lgd=1-recovery;return {pd,recovery,ead,lgd,el:Math.round(amount*100)/100};` |
+| `a6ff05064257af02` | truthy-value checks | 12810 | `preferenceScore` | calculation-sensitive presence guard | `const normalized=normalizeWeightObject(weights);if(!normalized)return null;` |
+| `f1cd594185990b1c` | Math.round usage | 12818 | `preferenceScore` | presentation/UI rounding | `return {score:Math.round(score),detail,weights:Object.assign({},weights)};` |
+| `ecc6fffc1dfd3cd9` | Math.round usage | 12831 | `dataQualityScore` | presentation/UI rounding | `const score=total>0?Math.round(earned/total*100):0;` |
+| `58ab9dcce1d3fb6e` | Math.round usage | 12845 | `peerDataCoverage` | presentation/UI rounding | `const coverage=covered/(5*peers.length);return {score:Math.round(coverage*100),coverage,n:peers.length};` |
+| `a98c4344888d1214` | Math.round usage | 12849 | `moatScore` | presentation/UI rounding | `return Math.round(values.reduce((s,v)=>s+v,0)/values.length);` |
+| `90c3f4df742f9f10` | truthy-value checks | 12853 | `factorExposure` | calculation-sensitive presence guard | `const norm=normalizeItems(items);if(!norm)return null;` |
+| `64e9433b0756f969` | Math.round usage | 12869 | `factorExposure` | presentation/UI rounding | `return Object.entries(exposures).map(([factor,exposure])=>({factor,exposure:Math.round(exposure*100)/100,risk:Math.abs(exposure)>.6?'High':Math.abs(exposure)>.3?'Medium':'Low'}));` |
+| `37f18cc5dc266dc0` | truthy-value checks | 12895 | `riskContribution` | calculation-sensitive presence guard | `const norm=normalizeItems(port.items);if(!norm)return null;` |
+| `db28f0d35ee8b9f9` | truthy-value checks | 12926 | `minimumVariance` | calculation-sensitive presence guard | `const cov=covarianceFromItems(items,corrMatrix);if(!cov)return null;` |
+| `6ebe1dae9c4d0c49` | truthy-value checks | 12940 | `maximumSharpe` | calculation-sensitive presence guard | `const cov=covarianceFromItems(items,corrMatrix);if(!cov)return null;` |
+| `b48fd9e62be33f6a` | truthy-value checks | 12941 | `maximumSharpe` | calculation-sensitive presence guard | `let w=minimumVariance(items,corrMatrix);if(!w)return null;` |
+| `5f633c2d34906b7e` | Infinity literals | 12944 | `maximumSharpe` | algorithm/parser sentinel | `return vr>EPS?(ret-riskFreeRate)/Math.sqrt(vr):-Infinity;` |
+| `9363d8354a5cf401` | truthy-value checks | 12952 | `maximumSharpe` | calculation-sensitive presence guard | `if(!improved){step*=.5;if(step<1e-7)break;}` |
+| `8fbd131fd8129e71` | truthy-value checks | 12958 | `riskParity` | calculation-sensitive presence guard | `const cov=covarianceFromItems(items,corrMatrix);if(!cov)return null;` |
+| `21da93e5cada76ee` | truthy-value checks | 12994 | `sumOfParts` | calculation-sensitive presence guard | `if(!p)return null;let value=null,source=null;` |
+| `fcafec5d6d68021e` | fallback-to-zero coercions | 13004 | `mulberry32` | calculation-sensitive numeric fallback | `function mulberry32(seed){let a=(Number(seed)\|\|0)>>>0;return function(){a\|=0;a=a+0x6D2B79F5\|0;let t=Math.imul(a^a>>>15,1\|a);t=t+Math.imul(t^t>>>7,61\|t)^t;return ((t^t>>>14)>>>0)/4294967296;};}` |
+| `5447e421fae7d39a` | generic OR zero | 13004 | `mulberry32` | calculation-sensitive numeric fallback | `function mulberry32(seed){let a=(Number(seed)\|\|0)>>>0;return function(){a\|=0;a=a+0x6D2B79F5\|0;let t=Math.imul(a^a>>>15,1\|a);t=t+Math.imul(t^t>>>7,61\|t)^t;return ((t^t>>>14)>>>0)/4294967296;};}` |
+| `46b95fc05cdf21fb` | truthy-value checks | 13041 | `timeWeightedReturnFromSnapshots` | calculation-sensitive presence guard | `const returns=periodReturnsFromSnapshots(snapshots);if(!returns)return null;` |
+| `1fbf6e8f8dbc62be` | truthy-value checks | 13169 | `calculateLedger` | calculation-sensitive presence guard | `if(!key){warnings.push({index,code:'LEDGER-DIVIDEND-INVALID',message:'Dividend security is missing.'});return;}` |
+| `039df648b08bacbf` | truthy-value checks | 13170 | `calculateLedger` | calculation-sensitive presence guard | `const da=dividendAmounts(tx);if(!da){warnings.push({index,code:'LEDGER-DIVIDEND-INVALID',message:'Invalid dividend transaction skipped.'});return;}` |
+| `21e5050c4cb0effc` | truthy-value checks | 13198 | `positionUnrealized` | calculation-sensitive presence guard | `if(!position)return null;const qty=finite(position.quantity)?position.quantity:position.qty;` |
+| `82d200ba6b2c277d` | Math.round usage | 13281 | `monteCarloRun` | presentation/UI rounding | `const totalSteps=Math.max(1,Math.round(horizonYears*stepsPerYear));` |
+| `19740cf9d63763f4` | Infinity literals | 13353 | `maximumDrawdown` | algorithm/parser sentinel | `let peak=-Infinity,mdd=0;for(const x of values){if(x>peak)peak=x;if(peak>0)mdd=Math.min(mdd,x/peak-1);}return {mdd};` |
+| `920c331c4b6ca8b7` | truthy-value checks | 13448 | `backtestRun` | calculation-sensitive presence guard | `if(!Core){ console.error('Financial certification runtime: FinanceCore missing'); return; }` |
+| `333da83e20b6efab` | truthy-value checks | 13452 | `backtestRun` | calculation-sensitive presence guard | `if(!ModelCore)installReport.warnings.push('FinancialModelCore missing; three-statement model is outside the expanded certification boundary.');` |
+| `cd5e1e5c73ce6140` | truthy-value checks | 13453 | `backtestRun` | calculation-sensitive presence guard | `if(!LegacyCore)installReport.warnings.push('LegacyCalculationCore missing; stress, portfolio and multi-method valuation remain outside the expanded certification boundary.');` |
+| `bc2115340c4afe46` | truthy-value checks | 13454 | `backtestRun` | calculation-sensitive presence guard | `if(!RiskCore)installReport.warnings.push('RiskCreditCore missing; VaR/ES, credit curves, Altman and Merton remain outside the expanded certification boundary.');` |
+| `88b07570836aec70` | truthy-value checks | 13458 | `backtestRun` | calculation-sensitive presence guard | `const a=Core.abbreviate(v); if(!a) return '—';` |
+| `6782ec725bf36368` | Math.round usage | 13625 | `top-level/unknown` | presentation/UI rounding | `const lgd=1-recovery;return {pd,recovery,ead,lgd,el:Math.round(amount*100)/100};` |
+| `6b95b77be0e9ccec` | truthy-value checks | 13688 | `top-level/unknown` | calculation-sensitive presence guard | `if(!W){console.error('Financial certification runtime: WorkstationCalculationCore missing');return;}` |
+| `fdf36342a9752fb4` | truthy-value checks | 13740 | `top-level/unknown` | calculation-sensitive presence guard | `wsPositionBaseValue=security=>{const ws=typeof wsPortfolio==='function'?wsPortfolio():null,p=ws&&ws.holdings?ws.holdings[security]:null;if(!p)return null;const pg=typeof wsGetPrice==='function'?wsGetPrice(security,ws):null;if(!pg)return null;const fx=typeof wsFxRate==='function'?wsFxRate(p.currency\|\|(typeof wsBaseCurrency==='function'?wsBaseCurrency():'EUR')):null;return L.positionBaseValue(p,pg.price,fx);};` |
+| `fdf36342a9752fb4` | truthy-value checks | 13740 | `top-level/unknown` | calculation-sensitive presence guard | `wsPositionBaseValue=security=>{const ws=typeof wsPortfolio==='function'?wsPortfolio():null,p=ws&&ws.holdings?ws.holdings[security]:null;if(!p)return null;const pg=typeof wsGetPrice==='function'?wsGetPrice(security,ws):null;if(!pg)return null;const fx=typeof wsFxRate==='function'?wsFxRate(p.currency\|\|(typeof wsBaseCurrency==='function'?wsBaseCurrency():'EUR')):null;return L.positionBaseValue(p,pg.price,fx);};` |
+| `d9fd9e504cb740d8` | truthy-value checks | 13748 | `top-level/unknown` | calculation-sensitive presence guard | `wsCashSummary=()=>{const ws=typeof wsPortfolio==='function'?wsPortfolio():null;if(!ws)return null;const mv=typeof wsMarketValue==='function'?wsMarketValue():null;return L.cashSummary(ws.cashAccounts\|\|{},ws.fxRates\|\|{},typeof wsBaseCurrency==='function'?wsBaseCurrency():'EUR',mv&&Number.isFinite(mv.mv)?mv.mv:0);};` |

@@ -1,0 +1,28 @@
+{
+  "target": "index.html",
+  "browser": "chromium",
+  "viewport": "desktop",
+  "checks": {
+    "versions": true,
+    "dataQuality": true,
+    "peerZeroCoverage": true,
+    "attribution": true,
+    "riskContribution": true,
+    "optimizer": true,
+    "withdrawal": true,
+    "dividend": true,
+    "performance": true,
+    "segment": true,
+    "sotp": true,
+    "monteCarlo": true,
+    "backtest": true,
+    "backtestCadence": true,
+    "routes": true
+  },
+  "checkCount": 15,
+  "pageErrors": [],
+  "consoleErrors": [],
+  "externalNetworkRequests": [],
+  "failures": [],
+  "status": "PASS"
+}

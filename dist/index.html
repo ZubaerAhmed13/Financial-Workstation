@@ -1590,7 +1590,7 @@ const ScenarioEngine=(()=>{
     const out=[]; for(const s of scenarios){
       const dcf=ValuationEngine.dcf({revenue0:baseDcf.revenue0, growth:s.growth, ebitdaMargin:s.margin, tax:baseDcf.tax, capexPct:s.capexPct!=null?s.capexPct:baseDcf.capexPct, wcPct:s.wcPct!=null?s.wcPct:baseDcf.wcPct, dandaPct:baseDcf.dandaPct, wacc:s.wacc, terminalGrowth:s.terminalGrowth, terminalMethod:baseDcf.terminalMethod, exitMultiple:s.exitMultiple!=null?s.exitMultiple:baseDcf.exitMultiple, netDebt, shares, horizon:baseDcf.horizon});
       const val=dcf.perShare; const mos=currentPrice>0? (val/currentPrice)-1:null;
-      out.push({name:s.name, growth:s.growth, margin:s.margin, wacc:s.wacc, tg:s.terminalGrowth, prob:s.prob||null, value:val, perShare:val, dcf, mos});
+      out.push({name:s.name, growth:s.growth, margin:s.margin, wacc:s.wacc, tg:s.terminalGrowth, prob:s.prob??null, value:val, perShare:val, dcf, mos});
     }
     // probability weighted (if probs provided)
     const probSum=out.reduce((s,o)=>s+(o.prob??0),0);
@@ -7343,11 +7343,10 @@ function segmentForecastRender(){
     });
     seg.segments=segs;
     // compute per-segment revenue path
-    const out=segs.map(s=>{ const revs=[]; let r=total*s.share; for(let y=0;y<ny;y++){ revs.push(r); r*=(1+(s.growth[y]||0)); } return {name:s.name,revs,margins:s.margin}; });
-    // total forecast
-    const totalRevs=Array(ny).fill(0); const totalEbitda=Array(ny).fill(0);
-    out.forEach(s=>{ s.revs.forEach((v,y)=>{ totalRevs[y]+=v; totalEbitda[y]+=v*(s.margins[y]||0); }); });
-    App.state.segmentForecast={segments:out,totalRevs,totalEbitda,startYear:seg.startYear};
+    const segCalc=WorkstationCalculationCore.segmentForecast(total,segs,ny);
+    if(!segCalc){ $("#segOut").innerHTML=`<div class="banner warn">Segment forecast requires finite non-negative revenue/shares and finite growth/margin assumptions for every year.</div>`; return; }
+    const out=segCalc.segments,totalRevs=segCalc.totalRevs,totalEbitda=segCalc.totalEbitda;
+    App.state.segmentForecast={segments:out,totalRevs,totalEbitda,startYear:seg.startYear,shareTotal:segCalc.shareTotal,shareReconciles:segCalc.shareReconciles};
     // render
     let h=`<div class="card"><div class="card-title">Segment Forecast</div>
     <div class="tablewrap"><table class="data"><thead><tr><th>Segment</th>${yrHeaders}<th class="num">Total</th></tr></thead><tbody>`;
@@ -7382,15 +7381,16 @@ function sotpRender(){
   wire("sotp_add","click",()=>{ sotp.parts.push({name:"New Part",value:0,multiple:1,metric:0}); sotpRender(); });
   $$("#sotpForm [data-sotp]").forEach(b=>b.addEventListener("click",()=>{ sotp.parts.splice(Number(b.dataset.sotp),1); sotpRender(); }));
   wire("sotp_run","click",()=>{
-    const shares=Number($("#sotp_shares").value)||1;
-    const parts=sotp.parts.map((p,i)=>{ const value=Number($("#sotp_"+i+"_value")?.value)||0; const mult=Number($("#sotp_"+i+"_mult")?.value)||1; const metric=Number($("#sotp_"+i+"_metric")?.value)||0; return {name:$("#sotp_"+i+"_name")?.value||p.name, value: value!==0? value: mult*metric, mult, metric}; });
+    const sharesRaw=$("#sotp_shares").value; const shares=String(sharesRaw).trim()===""?NaN:Number(sharesRaw);
+    const rawParts=sotp.parts.map((p,i)=>{ const raw=$("#sotp_"+i+"_value")?.value; const value=raw==null||String(raw).trim()===""?null:Number(raw); const mult=Number($("#sotp_"+i+"_mult")?.value); const metric=Number($("#sotp_"+i+"_metric")?.value); return {name:$("#sotp_"+i+"_name")?.value||p.name,value:Number.isFinite(value)?value:null,multiple:mult,metric}; });
+    const netDebt=Number.isFinite(sd.netDebt)?sd.netDebt:((Number.isFinite(sd.debt)?sd.debt:0)-(Number.isFinite(sd.cash)?sd.cash:0));
+    const sotpCalc=WorkstationCalculationCore.sumOfParts(rawParts,netDebt,shares);
+    if(!sotpCalc){ $("#sotpOut").innerHTML=`<div class="banner warn">SOTP requires positive diluted shares and a finite explicit value or finite multiple × metric for every part.</div>`; return; }
+    const parts=sotpCalc.parts,totalEV=sotpCalc.totalEV,equityValue=sotpCalc.equityValue,perShare=sotpCalc.perShare;
     sotp.parts=parts; sotp.shares=shares;
-    const totalEV=parts.reduce((a,b)=>a+b.value,0);
-    const equityValue=totalEV-(sd.netDebt||0);
-    const perShare= shares>0? equityValue/shares:0;
-    App.state.sotpResult={parts,totalEV,equityValue,perShare,shares};
+    App.state.sotpResult={parts,totalEV,equityValue,perShare,shares,netDebt};
     let h=`<div class="card"><div class="card-title">Sum-of-the-Parts Result</div>
-    <div class="tablewrap"><table class="data"><thead><tr><th>Part</th><th class="num">Value</th></tr></thead><tbody>${parts.map(p=>`<tr><td>${esc(p.name)}</td><td class="num">${fmt.money(p.value)}</td></tr>`).join("")}<tr><td><b>Total EV</b></td><td class="num"><b>${fmt.money(totalEV)}</b></td></tr><tr><td>Net debt</td><td class="num">${fmt.money(sd.netDebt||0)}</td></tr><tr><td><b>Equity value</b></td><td class="num"><b>${fmt.money(equityValue)}</b></td></tr><tr><td><b>Per share</b></td><td class="num"><b>${fmt.money(perShare)}</b></td></tr></tbody></table></div>
+    <div class="tablewrap"><table class="data"><thead><tr><th>Part</th><th class="num">Value</th></tr></thead><tbody>${parts.map(p=>`<tr><td>${esc(p.name)}</td><td class="num">${fmt.money(p.value)}</td></tr>`).join("")}<tr><td><b>Total EV</b></td><td class="num"><b>${fmt.money(totalEV)}</b></td></tr><tr><td>Net debt</td><td class="num">${fmt.money(netDebt)}</td></tr><tr><td><b>Equity value</b></td><td class="num"><b>${fmt.money(equityValue)}</b></td></tr><tr><td><b>Per share</b></td><td class="num"><b>${fmt.money(perShare)}</b></td></tr></tbody></table></div>
     ${sd.price?`<div class="metricline"><span class="l">vs current price</span><span class="v">${fmt.money(sd.price)} → ${perShare?fmt.pct(perShare/sd.price-1):"—"}</span></div>`:""}
     <div id="sotpChart" class="mt"></div></div>`;
     $("#sotpOut").innerHTML=h;
@@ -8514,18 +8514,18 @@ const ValuationUncertainty=(()=>{
     if(!sd||sd.price==null)return null;
     const base={revenue0:a.revenue||sd.revenue,tax:a.tax,capexPct:a.capexPct,wcPct:a.wcPct,dandaPct:a.dandaPct,wacc:a.wacc,terminalGrowth:a.terminalGrowth,terminalMethod:"growth",exitMultiple:a.exitMultiple,netDebt:a.netDebt,shares:a.shares,horizon:a.horizon,growth:a.revenueGrowth,ebitdaMargin:a.ebitdaMargin};
     function dcfRange(g,m,w,tg){
-      const lo=ValuationEngine.dcf({...base,growth:g*.9,margin:m*.9,wacc:w*1.06,terminalGrowth:tg*.85}).perShare;
-      const hi=ValuationEngine.dcf({...base,growth:g*1.1,margin:m*1.1,wacc:w*.94,terminalGrowth:tg*1.15}).perShare;
-      const mid=ValuationEngine.dcf({...base,growth:g,margin:m,wacc:w,terminalGrowth:tg}).perShare;
+      const lo=ValuationEngine.dcf({...base,growth:g*.9,ebitdaMargin:m*.9,wacc:w*1.06,terminalGrowth:tg*.85}).perShare;
+      const hi=ValuationEngine.dcf({...base,growth:g*1.1,ebitdaMargin:m*1.1,wacc:w*.94,terminalGrowth:tg*1.15}).perShare;
+      const mid=ValuationEngine.dcf({...base,growth:g,ebitdaMargin:m,wacc:w,terminalGrowth:tg}).perShare;
       return {lo,mid,hi};
     }
     const bear=dcfRange(a.revenueGrowth*.55,a.ebitdaMargin*.8,a.wacc*1.15,a.terminalGrowth*.6);
     const baseR=dcfRange(a.revenueGrowth,a.ebitdaMargin,a.wacc,a.terminalGrowth);
     const bull=dcfRange(a.revenueGrowth*1.5,a.ebitdaMargin*1.2,a.wacc*.85,a.terminalGrowth*1.4);
     const central=baseR.mid;
-    const disp=(bull.hi-bear.lo)/(Math.abs(central)||1);
+    const disp=Number.isFinite(central)&&Math.abs(central)>1e-12?(bull.hi-bear.lo)/Math.abs(central):null;
     const suff=DataSufficiency.compute().overall;
-    const conf= Math.max(0,Math.min(100,Math.round(80 - disp*20 + (suff-50)*0.3)));
+    const conf= disp==null?0:Math.max(0,Math.min(100,Math.round(80 - disp*20 + (suff-50)*0.3)));
     return {bear,baseR,bull,central,conf,dispersion:disp};
   }
   function html(u){
@@ -10392,7 +10392,7 @@ function computeBenchmark(){
   if(!bv.ok){ out.innerHTML=`<div class="banner bad"><b>BENCHMARK COMPARISON INVALID</b><div class="small">${bv.issues.map(i=>"• "+esc(i)).join("<br>")}</div></div>`; return; }
   // align by date: use snapshots' dates to derive portfolio periodic returns; benchmark returns from its levels
   // Build portfolio periodic returns from snapshot MV (TWR-style)
-  const portRets=[]; for(let i=1;i<snaps.length;i++){ const start=snaps[i-1].mv||0, end=snaps[i].mv||0, flow=snaps[i].cashFlow||0; if(start>0)portRets.push((end-flow)/start-1); }
+  const portRets=(typeof WorkstationCalculationCore!=="undefined"?WorkstationCalculationCore.periodReturnsFromSnapshots(snaps):null)||[];
   // benchmark returns: use the benchmark levels nearest each snapshot date
   const benchRets=[];
   for(let i=1;i<snaps.length;i++){ const d=snaps[i].date; const prev=nearestBench(bench,snaps[i-1].date); const cur=nearestBench(bench,d); if(prev&&cur&&prev>0)benchRets.push(cur/prev-1); }
@@ -11702,7 +11702,7 @@ function wireCreditPanels(){
         ${kpi("PD (1yr)",fmt.pct(ecl.pd,2),"model-based estimate")}
         ${kpi("LGD",fmt.pct(ecl.lgd),`recovery ${fmt.pct(ecl.recovery)}`)}
         ${kpi("EAD",fmt.money(ecl.ead),"net debt / exposure")}
-        ${kpi("Expected Loss",fmt.money(ecl.el),ecl.el!=null&&ecl.ead>0?ecl.el!=null&&ecl.ead>0?fmt.pct(ecl.el/ecl.ead,2)+" of EAD":ecl.ead===0?"0 exposure":"—":ecl.ead===0?"0 exposure":"—")}
+        ${kpi("Expected Loss",fmt.money(ecl.el),ecl.el!=null&&ecl.ead>0?ecl.el!=null&&ecl.ead>0?ecl.el!=null&&ecl.ead>0?ecl.el!=null&&ecl.ead>0?ecl.el!=null&&ecl.ead>0?ecl.el!=null&&ecl.ead>0?ecl.el!=null&&ecl.ead>0?ecl.el!=null&&ecl.ead>0?ecl.el!=null&&ecl.ead>0?ecl.el!=null&&ecl.ead>0?fmt.pct(ecl.el/ecl.ead,2)+" of EAD":ecl.ead===0?"0 exposure":"—":ecl.ead===0?"0 exposure":"—":ecl.ead===0?"0 exposure":"—":ecl.ead===0?"0 exposure":"—":ecl.ead===0?"0 exposure":"—":ecl.ead===0?"0 exposure":"—":ecl.ead===0?"0 exposure":"—":ecl.ead===0?"0 exposure":"—":ecl.ead===0?"0 exposure":"—":ecl.ead===0?"0 exposure":"—")}
       </div>
       <div class="banner info">Expected Loss = PD × (1 − Recovery) × EAD. All components are model estimates or user inputs — not guaranteed.</div>
       </div>`);
@@ -11904,7 +11904,7 @@ function wsPerformanceRenderFull(){
   const periodRets=wsPeriodReturns(snaps);
   const risk= wsPerfRisk(periodReturnsArray(snaps), wsAnnualizationFactor(snaps));
   // build an array of period returns from snapshot MV for risk stats
-  function periodReturnsArray(snaps2){ const a=[]; for(let i=1;i<snaps2.length;i++){ const s=snaps2[i-1].mv||0; const e=snaps2[i].mv||0; const f=snaps2[i].cashFlow||0; if(s>0)a.push((e-f)/s-1); } return a; }
+  function periodReturnsArray(snaps2){ return (typeof WorkstationCalculationCore!=="undefined"?WorkstationCalculationCore.periodReturnsFromSnapshots(snaps2):null)||[]; }
   let h=`<div class="card"><div class="card-title">Performance Center</div>
   <p class="small dim"><b>Official performance</b> = TWR (time-weighted, removes cash-flow timing) and MWR/XIRR (money-weighted, actual dollar experience) computed from validated period-end snapshots with external cash flows. <b>Snapshot performance</b> (multi-period 1D/1W/1M/YTD/1Y/3Y/5Y and risk stats) is an approximation from the available snapshots and is labelled as such — never presented as authoritative if cash flows make it unreliable. Not live data.</p>
   <div class="fields g3">
@@ -12734,6 +12734,711 @@ function decisionReadiness(){
 
   return Object.freeze({VERSION,finite,quantile,normalInvCDF,historicalVaR,parametricVaR,expectedShortfall,mcVaR,mcES,inferPeriodsPerYear,returnRiskSummary,altmanZ,altmanZPrime,DEFAULT_PD_TABLE,ratingPD,creditCurve,expectedLossRate,expectedLossAmount,merton,mertonTrace});
 });
+(function(root,factory){
+  let Core=null,Risk=null;
+  if(typeof module==='object'&&module.exports){
+    Core=require('./engine.js');
+    Risk=require('./risk-credit-core.js');
+  }else{
+    Core=root.FinanceCore;
+    Risk=root.RiskCreditCore;
+  }
+  const api=factory(Core,Risk);
+  if(typeof module==='object'&&module.exports)module.exports=api;
+  root.WorkstationCalculationCore=api;
+})(typeof globalThis!=='undefined'?globalThis:this,function(Core,Risk){
+  'use strict';
+  const VERSION='1.0.0';
+  const EPS=1e-12;
+  const finite=v=>typeof v==='number'&&Number.isFinite(v);
+  const clamp=(v,lo,hi)=>Math.max(lo,Math.min(hi,v));
+  const has=(o,k)=>o!=null&&Object.prototype.hasOwnProperty.call(o,k);
+  const safeDivide=(n,d)=>finite(n)&&finite(d)&&Math.abs(d)>EPS?n/d:null;
+
+  function normalizeWeightObject(weights){
+    if(!weights||typeof weights!=='object'||Array.isArray(weights))return null;
+    const entries=Object.entries(weights);
+    if(!entries.length||entries.some(([,v])=>!finite(v)||v<0))return null;
+    const total=entries.reduce((s,[,v])=>s+v,0);
+    if(!finite(total)||total<=EPS)return null;
+    return Object.fromEntries(entries.map(([k,v])=>[k,v/total]));
+  }
+  function normalizeItems(items){
+    if(!Array.isArray(items)||!items.length)return null;
+    if(items.some(x=>!x||!finite(x.weight)||x.weight<0))return null;
+    const total=items.reduce((s,x)=>s+x.weight,0);
+    if(!finite(total)||total<=EPS)return null;
+    return {total,items:items.map(x=>Object.assign({},x,{normalizedWeight:x.weight/total}))};
+  }
+
+  function standardizeCases(cases,features){
+    if(!Array.isArray(cases)||!Array.isArray(features))return null;
+    const stats={};
+    for(const f of features){
+      const vals=cases.map(c=>c&&c.features?c.features[f]:null).filter(finite);
+      const m=Core&&Core.mean?Core.mean(vals):(vals.length?vals.reduce((s,v)=>s+v,0)/vals.length:null);
+      let s=Core&&Core.stdev?Core.stdev(vals,0):null;
+      if(!finite(s)||s<=EPS)s=1;
+      stats[f]={m,s,n:vals.length};
+    }
+    return stats;
+  }
+  function similarityScore(query,candidate,stats,weights,features){
+    if(!query||!candidate||!query.features||!candidate.features||!stats||!weights)return 0;
+    const keys=Array.isArray(features)&&features.length?features:Object.keys(weights);
+    let sim=0,wsum=0;
+    for(const f of keys){
+      const w=weights[f]; if(!finite(w)||w<=0)continue;
+      const q=query.features[f],v=candidate.features[f],s=stats[f];
+      if(!finite(q)||!finite(v)||!s||!finite(s.m)||!finite(s.s)||s.s<=EPS)continue;
+      const dz=Math.abs((q-s.m)/s.s-(v-s.m)/s.s);
+      sim+=w*Math.exp(-dz);wsum+=w;
+    }
+    return wsum>EPS?sim/wsum:0;
+  }
+
+  const PREFERENCE_RANGES={
+    return:{label:'Expected return',min:-.3,max:.5,metric:'expectedReturn'},
+    safety:{label:'Safety (1 - default PD)',min:0,max:1,metric:'safety'},
+    valuation:{label:'Margin of safety',min:-.5,max:.5,metric:'marginOfSafety'},
+    liquidity:{label:'Liquidity score',min:0,max:1,metric:'liquidity'},
+    historical:{label:'Case outcome score',min:0,max:1,metric:'historical'}
+  };
+  const DEFAULT_PREFERENCE_WEIGHTS={return:30,safety:30,valuation:20,liquidity:10,historical:10};
+  function preferenceScore(metrics,weights=DEFAULT_PREFERENCE_WEIGHTS){
+    metrics=metrics||{};
+    const normalized=normalizeWeightObject(weights);if(!normalized)return null;
+    let score=0;const detail=[];
+    for(const [key,cfg] of Object.entries(PREFERENCE_RANGES)){
+      const val=metrics[cfg.metric],w=normalized[key];
+      if(!finite(w)||w<=0||!finite(val))continue;
+      const norm=cfg.max>cfg.min?(clamp(val,cfg.min,cfg.max)-cfg.min)/(cfg.max-cfg.min):.5;
+      score+=w*norm*100;detail.push({label:cfg.label,value:val,weight:weights[key],normalized:norm});
+    }
+    return {score:Math.round(score),detail,weights:Object.assign({},weights)};
+  }
+  function dataQualityScore(ctx){
+    ctx=ctx||{};let earned=0,total=0;const reasons=[];
+    const add=(weight,fraction,msg)=>{const f=clamp(finite(fraction)?fraction:(fraction?1:0),0,1);total+=weight;earned+=weight*f;if(f<1)reasons.push(msg);};
+    add(20,ctx.history&&Array.isArray(ctx.history.prices)?Math.min(1,ctx.history.prices.length/120):0,'Limited historical price series (fewer than ~120 observations).');
+    add(15,ctx.financials&&ctx.financials.assets!=null&&ctx.financials.netIncome!=null?1:0,'Financial statements incomplete.');
+    add(20,ctx.dcf&&ctx.dcf.wacc!=null&&finite(ctx.dcf.perShare)?1:0,'Valuation model(s) unavailable or incomplete.');
+    add(15,Array.isArray(ctx.peers)?Math.min(1,ctx.peers.length/3):0,'Few or no comparable companies entered.');
+    const matches=Array.isArray(ctx.caseMatches)?ctx.caseMatches.length:0;
+    add(10,matches>0?1:0,'No similar historical (synthetic) cases matched.');
+    add(10,Math.min(1,matches/10),'Small case-match sample.');
+    add(10,ctx.dataOk!==false?1:0,'Some inputs failed validation.');
+    const score=total>0?Math.round(earned/total*100):0;
+    const label=score>=80?'High':score>=60?'Moderate':score>=40?'Low':'Very Low';
+    return {score,label,reasons};
+  }
+  function peerDataCoverage(peers){
+    if(!Array.isArray(peers)||!peers.length)return null;
+    let covered=0;
+    for(const p of peers){
+      if(p&&finite(p.marketCap)&&p.marketCap>0)covered++;
+      if(p&&finite(p.growth))covered++;
+      if(p&&finite(p.margin))covered++;
+      if(p&&finite(p.roe))covered++;
+      if(p&&finite(p.multiple))covered++;
+    }
+    const coverage=covered/(5*peers.length);return {score:Math.round(coverage*100),coverage,n:peers.length};
+  }
+  function moatScore(values){
+    if(!Array.isArray(values)||!values.length||values.some(v=>!finite(v)||v<0||v>100))return null;
+    return Math.round(values.reduce((s,v)=>s+v,0)/values.length);
+  }
+
+  function factorExposure(items){
+    const norm=normalizeItems(items);if(!norm)return null;
+    const exposures={Market:1,Size:0,Value:0,Growth:0,Momentum:0,Quality:0,LowVol:0};
+    for(const b of norm.items){
+      const w=b.normalizedWeight,t=String(b.type||b.assetClass||'').toLowerCase();
+      if(t.includes('stock')||t.includes('equity')){
+        const vol=finite(b.volatility)?b.volatility:.25;
+        const ret=finite(b.expectedReturn)?b.expectedReturn:.1;
+        const mos=finite(b.marginOfSafety)?b.marginOfSafety:0;
+        exposures.Size+=w*.5;
+        exposures.Value+=w*(mos>.1?1:mos>-.1?0:-1);
+        exposures.Growth+=w*(ret>.15?1:ret>.08?0:-1);
+        exposures.Momentum+=w*(ret>.12?1:-.3);
+        exposures.Quality+=w*(mos>-.05?.5:-.5);
+        exposures.LowVol+=w*(vol<.2?1:vol>.4?-1:0);
+      }
+    }
+    return Object.entries(exposures).map(([factor,exposure])=>({factor,exposure:Math.round(exposure*100)/100,risk:Math.abs(exposure)>.6?'High':Math.abs(exposure)>.3?'Medium':'Low'}));
+  }
+  function performanceAttribution(items,benchmarkRet){
+    const norm=normalizeItems(items);if(!norm||!finite(benchmarkRet))return null;
+    if(norm.items.some(x=>!finite(x.expectedReturn)))return null;
+    let totalPortRet=0,allocationProxy=0;const rows=[];
+    for(const b of norm.items){
+      const w=b.normalizedWeight,r=b.expectedReturn,active=r-benchmarkRet;
+      const contribution=w*r,alloc=w*active;
+      totalPortRet+=contribution;allocationProxy+=alloc;
+      rows.push({name:b.name,weight:w,return:r,contribution,allocation:alloc,selection:null});
+    }
+    return {rows,allocEffect:allocationProxy,selectionEffect:null,totalPortRet,benchmark:benchmarkRet,activeReturn:totalPortRet-benchmarkRet,methodology:'single-benchmark allocation proxy; selection unavailable without benchmark constituent weights/returns'};
+  }
+
+  function validateCorrelationMatrix(corr,n){
+    if(!Array.isArray(corr)||corr.length!==n)return false;
+    for(let i=0;i<n;i++){
+      if(!Array.isArray(corr[i])||corr[i].length!==n)return false;
+      for(let j=0;j<n;j++)if(!finite(corr[i][j])||corr[i][j]<-1||corr[i][j]>1||Math.abs(corr[i][j]-corr[j]?.[i])>1e-8)return false;
+      if(Math.abs(corr[i][i]-1)>1e-8)return false;
+    }
+    return true;
+  }
+  function riskContribution(port,corrMatrix){
+    if(!port||!Array.isArray(port.items)||port.items.length<2)return null;
+    const norm=normalizeItems(port.items);if(!norm)return null;
+    const items=norm.items,n=items.length;
+    if(items.some(x=>!finite(x.volatility)||x.volatility<0))return null;
+    const corr=corrMatrix||Array.from({length:n},(_,i)=>Array.from({length:n},(_,j)=>i===j?1:.4));
+    if(!validateCorrelationMatrix(corr,n))return null;
+    const weights=items.map(x=>x.normalizedWeight),vols=items.map(x=>x.volatility);
+    let varP=0;for(let i=0;i<n;i++)for(let j=0;j<n;j++)varP+=weights[i]*weights[j]*vols[i]*vols[j]*corr[i][j];
+    if(varP<0&&varP>-EPS)varP=0;if(!finite(varP)||varP<0)return null;
+    const volP=Math.sqrt(varP);
+    const rows=items.map((b,i)=>{
+      let covarianceWithPortfolio=0;for(let j=0;j<n;j++)covarianceWithPortfolio+=weights[j]*vols[i]*vols[j]*corr[i][j];
+      const mcr=volP>EPS?covarianceWithPortfolio/volP:null;
+      const component=mcr==null?null:weights[i]*mcr;
+      const riskShare=varP>EPS?weights[i]*covarianceWithPortfolio/varP:null;
+      return {name:b.name,weight:weights[i],volatility:vols[i],mcr,component,riskShare};
+    });
+    return {rows,volP,varP};
+  }
+
+  function covarianceFromItems(items,corrMatrix){
+    if(!Array.isArray(items)||!items.length||items.some(x=>!x||!finite(x.volatility)||x.volatility<0))return null;
+    const n=items.length;
+    const corr=corrMatrix||Array.from({length:n},(_,i)=>Array.from({length:n},(_,j)=>i===j?1:.4));
+    if(!validateCorrelationMatrix(corr,n))return null;
+    return corr.map((row,i)=>row.map((rho,j)=>rho*items[i].volatility*items[j].volatility));
+  }
+  function equalWeight(items){
+    if(!Array.isArray(items)||!items.length)return null;return Array(items.length).fill(1/items.length);
+  }
+  function minimumVariance(items,corrMatrix){
+    if(!Array.isArray(items)||items.length<2)return null;
+    const cov=covarianceFromItems(items,corrMatrix);if(!cov)return null;
+    const invVol=items.map(x=>x.volatility>EPS?1/x.volatility:1/EPS);const s=invVol.reduce((a,b)=>a+b,0);
+    let w=invVol.map(v=>v/s);
+    const step=.08;
+    for(let it=0;it<2500;it++){
+      const grad=w.map((_,i)=>2*cov[i].reduce((acc,c,j)=>acc+c*w[j],0));
+      let next=w.map((x,i)=>Math.max(0,x-step*grad[i]));const z=next.reduce((a,b)=>a+b,0);
+      if(z<=EPS)return null;next=next.map(x=>x/z);
+      const diff=next.reduce((m,x,i)=>Math.max(m,Math.abs(x-w[i])),0);w=next;if(diff<1e-12)break;
+    }
+    return w;
+  }
+  function maximumSharpe(items,corrMatrix,riskFreeRate=0){
+    if(!Array.isArray(items)||items.length<2||!finite(riskFreeRate)||items.some(x=>!finite(x.expectedReturn)))return null;
+    const cov=covarianceFromItems(items,corrMatrix);if(!cov)return null;
+    let w=minimumVariance(items,corrMatrix);if(!w)return null;
+    const objective=x=>{
+      const ret=x.reduce((s,v,i)=>s+v*items[i].expectedReturn,0);let vr=0;for(let i=0;i<x.length;i++)for(let j=0;j<x.length;j++)vr+=x[i]*x[j]*cov[i][j];
+      return vr>EPS?(ret-riskFreeRate)/Math.sqrt(vr):-Infinity;
+    };
+    let best=objective(w),step=.08;
+    for(let it=0;it<3000;it++){
+      let improved=false;
+      for(let i=0;i<w.length;i++)for(let j=0;j<w.length;j++)if(i!==j&&w[j]>0){
+        const d=Math.min(step,w[j]),x=w.slice();x[i]+=d;x[j]-=d;const q=objective(x);if(q>best+1e-12){w=x;best=q;improved=true;}
+      }
+      if(!improved){step*=.5;if(step<1e-7)break;}
+    }
+    return w;
+  }
+  function riskParity(items,corrMatrix){
+    if(!Array.isArray(items)||items.length<2)return null;
+    const cov=covarianceFromItems(items,corrMatrix);if(!cov)return null;
+    let w=equalWeight(items);
+    for(let it=0;it<3000;it++){
+      const marginal=w.map((_,i)=>cov[i].reduce((s,c,j)=>s+c*w[j],0));
+      const contrib=w.map((x,i)=>x*marginal[i]);
+      const target=contrib.reduce((a,b)=>a+b,0)/w.length;
+      if(!finite(target)||target<=EPS){
+        if(items.every(x=>x.volatility<=EPS))return equalWeight(items);
+        return null;
+      }
+      const next=w.map((x,i)=>contrib[i]>EPS?x*Math.sqrt(target/contrib[i]):x);
+      const sum=next.reduce((a,b)=>a+b,0);if(sum<=EPS)return null;
+      for(let i=0;i<next.length;i++)next[i]/=sum;
+      const diff=next.reduce((m,x,i)=>Math.max(m,Math.abs(x-w[i])),0);w=next;if(diff<1e-10)break;
+    }
+    return w;
+  }
+
+  function segmentForecast(totalRevenue,segments,years){
+    if(!finite(totalRevenue)||totalRevenue<0||!Number.isInteger(years)||years<=0||!Array.isArray(segments)||!segments.length)return null;
+    const out=[];let shareTotal=0;
+    for(const s of segments){
+      if(!s||!finite(s.share)||s.share<0||!Array.isArray(s.growth)||!Array.isArray(s.margin)||s.growth.length<years||s.margin.length<years)return null;
+      if(s.growth.slice(0,years).some(v=>!finite(v)||v<=-1)||s.margin.slice(0,years).some(v=>!finite(v)))return null;
+      shareTotal+=s.share;let r=totalRevenue*s.share;const revs=[];
+      for(let y=0;y<years;y++){revs.push(r);r*=1+s.growth[y];if(!finite(r))return null;}
+      out.push({name:s.name,revs,margins:s.margin.slice(0,years)});
+    }
+    const totalRevs=Array(years).fill(0),totalEbitda=Array(years).fill(0);
+    for(const s of out)for(let y=0;y<years;y++){totalRevs[y]+=s.revs[y];totalEbitda[y]+=s.revs[y]*s.margins[y];}
+    return {segments:out,totalRevs,totalEbitda,shareTotal,shareReconciles:Math.abs(shareTotal-1)<=1e-8};
+  }
+  function sumOfParts(parts,netDebt,shares){
+    if(!Array.isArray(parts)||!parts.length||!finite(netDebt)||!finite(shares)||shares<=0)return null;
+    const valued=[];
+    for(const p of parts){
+      if(!p)return null;let value=null,source=null;
+      if(has(p,'value')&&p.value!=null){if(!finite(p.value))return null;value=p.value;source='explicit';}
+      else if(finite(p.multiple)&&finite(p.metric)){value=p.multiple*p.metric;source='multiple';}
+      else return null;
+      if(!finite(value))return null;valued.push(Object.assign({},p,{value,source}));
+    }
+    const totalEV=valued.reduce((s,p)=>s+p.value,0),equityValue=totalEV-netDebt,perShare=equityValue/shares;
+    return {parts:valued,totalEV,netDebt,equityValue,shares,perShare};
+  }
+
+  function mulberry32(seed){let a=(Number(seed)||0)>>>0;return function(){a|=0;a=a+0x6D2B79F5|0;let t=Math.imul(a^a>>>15,1|a);t=t+Math.imul(t^t>>>7,61|t)^t;return ((t^t>>>14)>>>0)/4294967296;};}
+  function normal01(rng){let u=0,v=0;while(u<=Number.EPSILON)u=rng();while(v<=Number.EPSILON)v=rng();return Math.sqrt(-2*Math.log(u))*Math.cos(2*Math.PI*v);}
+  function monteCarloGBM(cfg){
+    cfg=cfg||{};const initial=has(cfg,'initial')?cfg.initial:100,mu=has(cfg,'expectedReturn')?cfg.expectedReturn:0,sigma=has(cfg,'volatility')?cfg.volatility:0;
+    const years=has(cfg,'years')?cfg.years:1,steps=has(cfg,'steps')?cfg.steps:252,paths=has(cfg,'paths')?cfg.paths:1000,seed=has(cfg,'seed')?cfg.seed:42;
+    if(!finite(initial)||initial<=0||!finite(mu)||!finite(sigma)||sigma<0||!finite(years)||years<=0||!Number.isInteger(steps)||steps<=0||!Number.isInteger(paths)||paths<=0||paths>100000)return null;
+    const rng=mulberry32(seed),dt=years/steps,drift=(mu-.5*sigma*sigma)*dt,diff=sigma*Math.sqrt(dt),terminal=[];
+    for(let p=0;p<paths;p++){let x=initial;for(let i=0;i<steps;i++)x*=Math.exp(drift+diff*normal01(rng));terminal.push(x);}
+    terminal.sort((a,b)=>a-b);return {initial,expectedReturn:mu,volatility:sigma,years,steps,paths,seed,terminal};
+  }
+
+  function dividendAmounts(tx){
+    if(!tx||typeof tx!=='object')return null;
+    const gross=finite(tx.gross)?tx.gross:(finite(tx.amount)?tx.amount:null);
+    const withholding=has(tx,'withholdingTax')?tx.withholdingTax:(has(tx,'tax')?tx.tax:0);
+    const net=finite(tx.net)?tx.net:(gross!=null&&finite(withholding)?gross-withholding:null);
+    if(gross==null||!finite(withholding)||withholding<0||net==null)return null;
+    return {gross,withholding,net};
+  }
+  function fxConvert(amount,rate){return finite(amount)&&finite(rate)&&rate>0?amount*rate:null;}
+  function positionUnrealized(position,price){
+    if(!position||!finite(position.qty)||!finite(position.costBasis)||!finite(price)||price<0)return null;
+    const marketValue=position.qty*price,unrealizedPnl=marketValue-position.costBasis;
+    return {marketValue,unrealizedPnl,returnOnCost:safeDivide(unrealizedPnl,position.costBasis)};
+  }
+
+  function periodReturnsFromSnapshots(snapshots){
+    if(!Array.isArray(snapshots)||snapshots.length<2)return [];
+    const out=[];
+    for(let i=1;i<snapshots.length;i++){
+      const prev=snapshots[i-1],cur=snapshots[i];if(!prev||!cur||!finite(prev.mv)||prev.mv<=0||!finite(cur.mv))return null;
+      const flow=cur.cashFlow==null?0:cur.cashFlow;if(!finite(flow))return null;
+      out.push((cur.mv-flow)/prev.mv-1);
+    }
+    return out;
+  }
+  function timeWeightedReturnFromSnapshots(snapshots){
+    const returns=periodReturnsFromSnapshots(snapshots);if(!returns)return null;
+    return Core&&Core.timeWeightedReturn?Core.timeWeightedReturn(returns):returns.reduce((p,r)=>p*(1+r),1)-1;
+  }
+  function moneyWeightedReturnFromSnapshots(snapshots){
+    if(!Array.isArray(snapshots)||snapshots.length<2||!Core||typeof Core.xirr!=='function')return null;
+    const first=snapshots[0],last=snapshots[snapshots.length-1];if(!first||!last||!finite(first.mv)||!finite(last.mv)||first.mv<0||last.mv<0)return null;
+    const flows=[-first.mv],dates=[first.date];
+    for(let i=1;i<snapshots.length-1;i++){const f=snapshots[i].cashFlow==null?0:snapshots[i].cashFlow;if(!finite(f))return null;flows.push(-f);dates.push(snapshots[i].date);}
+    const lastFlow=last.cashFlow==null?0:last.cashFlow;if(!finite(lastFlow))return null;flows.push(last.mv-lastFlow);dates.push(last.date);
+    if(dates.some(d=>!Number.isFinite(new Date(d).getTime())))return null;
+    return Core.xirr(flows,dates);
+  }
+  function annualizeReturn(twr,days){
+    if(!finite(twr)||!finite(days)||days<=0||1+twr<0)return null;const years=days/365.25;if(years<=0)return null;const v=Math.pow(1+twr,1/years)-1;return finite(v)?v:null;
+  }
+  function performanceRisk(periodReturns,annualFactor,riskFreeAnnual=.02){
+    if(!Array.isArray(periodReturns)||periodReturns.length<2||periodReturns.some(v=>!finite(v)||v<=-1)||!finite(annualFactor)||annualFactor<=0||!finite(riskFreeAnnual)||riskFreeAnnual<=-1)return null;
+    const vol=Core&&Core.annualizedVolatility?Core.annualizedVolatility(periodReturns,annualFactor):null;
+    const rfPerPeriod=Math.pow(1+riskFreeAnnual,1/annualFactor)-1;
+    const sharpePeriodic=Core&&Core.sharpe?Core.sharpe(periodReturns,rfPerPeriod):null;
+    const sortinoPeriodic=Core&&Core.sortino?Core.sortino(periodReturns,rfPerPeriod):null;
+    const sharpe=sharpePeriodic==null?null:sharpePeriodic*Math.sqrt(annualFactor),sortino=sortinoPeriodic==null?null:sortinoPeriodic*Math.sqrt(annualFactor);
+    const wealth=[];let level=100;for(const r of periodReturns){level*=1+r;wealth.push(level);}
+    const dd=Core&&Core.maximumDrawdown?Core.maximumDrawdown(wealth):null,mdd=dd?dd.mdd:null;
+    const cumRet=level/100-1,years=periodReturns.length/annualFactor,cagr=years>0&&1+cumRet>=0?Math.pow(1+cumRet,1/years)-1:null;
+    const calmar=mdd!=null&&mdd<0&&cagr!=null?cagr/Math.abs(mdd):null;
+    const histVaR95=Risk&&Risk.historicalVaR?Risk.historicalVaR(periodReturns,.95):null,histVaR99=Risk&&Risk.historicalVaR?Risk.historicalVaR(periodReturns,.99):null;
+    const es95=Risk&&Risk.expectedShortfall?Risk.expectedShortfall(periodReturns,.95):null,es99=Risk&&Risk.expectedShortfall?Risk.expectedShortfall(periodReturns,.99):null;
+    return {vol,sharpe,sortino,mdd,cagr,calmar,histVaR95,histVaR99,es95,es99,cumRet,annualFactor,riskFreeAnnual,rfPerPeriod};
+  }
+  function captureRatios(portReturns,benchReturns,annualFactor){
+    if(!Array.isArray(portReturns)||!Array.isArray(benchReturns)||portReturns.length!==benchReturns.length||portReturns.length<2||portReturns.some(v=>!finite(v))||benchReturns.some(v=>!finite(v))||!finite(annualFactor)||annualFactor<=0)return null;
+    const up=[],upB=[],down=[],downB=[],active=[];for(let i=0;i<portReturns.length;i++){active.push(portReturns[i]-benchReturns[i]);if(benchReturns[i]>0){up.push(portReturns[i]);upB.push(benchReturns[i]);}else if(benchReturns[i]<0){down.push(portReturns[i]);downB.push(benchReturns[i]);}}
+    const mean=a=>Core&&Core.mean?Core.mean(a):(a.length?a.reduce((s,v)=>s+v,0)/a.length:null);
+    const upside=up.length?safeDivide(mean(up),mean(upB)):null,downside=down.length?safeDivide(mean(down),mean(downB)):null;
+    const beta=Core&&Core.beta?Core.beta(portReturns,benchReturns):null;
+    const te=Core&&Core.annualizedVolatility?Core.annualizedVolatility(active,annualFactor):null;
+    const activeMean=mean(active),ir=te!=null&&te>EPS&&activeMean!=null?(activeMean*annualFactor)/te:null;
+    const alpha=beta!=null?(mean(portReturns)-beta*mean(benchReturns))*annualFactor:null;
+    return {upside,downside,beta,te,ir,alpha,n:portReturns.length};
+  }
+
+  return {
+    VERSION,finite,safeDivide,normalizeWeightObject,normalizeItems,standardizeCases,similarityScore,
+    PREFERENCE_RANGES,DEFAULT_PREFERENCE_WEIGHTS,preferenceScore,dataQualityScore,peerDataCoverage,moatScore,
+    factorExposure,performanceAttribution,validateCorrelationMatrix,riskContribution,covarianceFromItems,equalWeight,minimumVariance,maximumSharpe,riskParity,
+    segmentForecast,sumOfParts,mulberry32,monteCarloGBM,dividendAmounts,fxConvert,positionUnrealized,
+    periodReturnsFromSnapshots,timeWeightedReturnFromSnapshots,moneyWeightedReturnFromSnapshots,annualizeReturn,performanceRisk,captureRatios
+  };
+});
+(function(root,factory){
+  const api=factory();
+  if(typeof module==='object'&&module.exports)module.exports=api;
+  root.WorkstationLedgerCore=api;
+})(typeof globalThis!=='undefined'?globalThis:this,function(){
+  'use strict';
+  const VERSION='1.0.0';
+  const EPS=1e-12;
+  const finite=v=>typeof v==='number'&&Number.isFinite(v);
+  const has=(o,k)=>o!=null&&Object.prototype.hasOwnProperty.call(o,k);
+  const numOr=(o,k,fallback)=>has(o,k)?o[k]:fallback;
+  const safeDivide=(n,d)=>finite(n)&&finite(d)&&Math.abs(d)>EPS?n/d:null;
+
+  function dividendAmounts(tx){
+    if(!tx||typeof tx!=='object')return null;
+    let gross=null;
+    if(finite(tx.grossDividend))gross=tx.grossDividend;
+    else if(finite(tx.gross))gross=tx.gross;
+    else if(finite(tx.sharesHeld)&&finite(tx.dividendPerShare))gross=tx.sharesHeld*tx.dividendPerShare;
+    else if(finite(tx.quantity)&&finite(tx.price))gross=tx.quantity*tx.price;
+    else if(finite(tx.amount))gross=tx.amount;
+    const withholding=has(tx,'withholdingTax')?tx.withholdingTax:(has(tx,'tax')?tx.tax:0);
+    if(!finite(withholding)||withholding<0)return null;
+    let net=finite(tx.net)?tx.net:(gross!=null?gross-withholding:null);
+    if(net==null&&finite(tx.amount))net=tx.amount;
+    if(!finite(net))return null;
+    if(gross==null)gross=net;
+    if(!finite(gross))return null;
+    return {gross,withholding,net};
+  }
+
+  function txSortKey(tx,index){
+    const date=tx&&tx.date!=null?String(tx.date):'';
+    const timestamp=tx&&finite(tx.timestamp)?tx.timestamp:0;
+    const id=tx&&tx.id!=null?String(tx.id):String(index);
+    return `${date}|${String(timestamp).padStart(16,'0')}|${id}`;
+  }
+  function sortTransactions(transactions){
+    if(!Array.isArray(transactions))return [];
+    return transactions.map((tx,index)=>({tx,index,key:txSortKey(tx,index)})).sort((a,b)=>a.key<b.key?-1:a.key>b.key?1:a.index-b.index).map(x=>x.tx);
+  }
+  function validCharge(v){return v==null?0:(finite(v)&&v>=0?v:null);}
+  function validFx(v){return v==null?1:(finite(v)&&v>0?v:null);}
+  function emptyPosition(key,cur,fxBasis=1,ticker=null){
+    return {security:key,ticker:ticker||key,quantity:0,avgCost:0,costBasis:0,realizedPnl:0,divIncome:0,divNet:0,fees:0,currency:cur,costBasisCurrency:cur,fxBasis};
+  }
+
+  function calculateLedger(transactions,baseCurrency='EUR'){
+    if(!Array.isArray(transactions)||typeof baseCurrency!=='string'||!baseCurrency.trim())return null;
+    const positions={},cash={},warnings=[];
+    const txs=sortTransactions(transactions);
+    const addCash=(cur,amount)=>{if(cash[cur]==null)cash[cur]=0;cash[cur]+=amount;};
+    txs.forEach((tx,index)=>{
+      if(!tx||typeof tx!=='object'){warnings.push({index,code:'LEDGER-TX-INVALID',message:'Transaction is not an object.'});return;}
+      const type=String(tx.type||'BUY').toUpperCase(),cur=String(tx.currency||baseCurrency),key=tx.security||tx.ticker||null;
+      if(cash[cur]==null)cash[cur]=0;
+      if(type==='BUY'){
+        const q=tx.quantity,p=tx.price,fees=validCharge(tx.fees),tax=validCharge(tx.tax),fx=validFx(tx.rateAtTrade);
+        if(!key||!finite(q)||q<=0||!finite(p)||p<=0||fees==null||tax==null||fx==null){warnings.push({index,code:'LEDGER-BUY-INVALID',message:'Invalid BUY transaction skipped.'});return;}
+        if(!positions[key])positions[key]=emptyPosition(key,cur,fx,tx.ticker);
+        const pos=positions[key];
+        if(pos.currency!==cur){warnings.push({index,code:'LEDGER-CURRENCY-MISMATCH',message:'Position currency mismatch; transaction skipped.'});return;}
+        const cost=q*p,newQty=pos.quantity+q,prevCost=pos.costBasis;
+        pos.avgCost=newQty>EPS?(prevCost+cost)/newQty:0;
+        pos.costBasis=prevCost+cost;pos.quantity=newQty;pos.fees+=fees;
+        pos.fxBasis=prevCost+cost>EPS?((prevCost*pos.fxBasis)+(cost*fx))/(prevCost+cost):fx;
+        addCash(cur,-(cost+fees+tax));
+      }else if(type==='SELL'){
+        const q=tx.quantity,p=tx.price,fees=validCharge(tx.fees),tax=validCharge(tx.tax);
+        if(!key||!finite(q)||q<=0||!finite(p)||p<=0||fees==null||tax==null){warnings.push({index,code:'LEDGER-SELL-INVALID',message:'Invalid SELL transaction skipped.'});return;}
+        const pos=positions[key];if(!pos||pos.quantity<=EPS){warnings.push({index,code:'LEDGER-SELL-NO-POSITION',message:'SELL has no available position; skipped.'});return;}
+        const sellable=Math.min(pos.quantity,q);
+        if(q>pos.quantity+EPS)warnings.push({index,code:'LEDGER-OVERSELL-CAPPED',message:'SELL quantity exceeded available position and was capped.'});
+        const proceeds=sellable*p,costPortion=pos.costBasis*(sellable/pos.quantity);
+        pos.realizedPnl+=proceeds-costPortion-fees-tax;pos.costBasis-=costPortion;pos.quantity-=sellable;pos.fees+=fees;
+        if(pos.quantity<=EPS){pos.quantity=0;pos.costBasis=0;pos.avgCost=0;}else pos.avgCost=pos.costBasis/pos.quantity;
+        addCash(cur,proceeds-fees-tax);
+      }else if(type==='DIVIDEND'){
+        if(!key){warnings.push({index,code:'LEDGER-DIVIDEND-INVALID',message:'Dividend security is missing.'});return;}
+        const da=dividendAmounts(tx);if(!da){warnings.push({index,code:'LEDGER-DIVIDEND-INVALID',message:'Invalid dividend transaction skipped.'});return;}
+        if(!positions[key])positions[key]=emptyPosition(key,cur,1,tx.ticker);
+        const pos=positions[key];pos.divIncome+=da.gross;pos.divNet+=da.net;addCash(cur,da.net);
+      }else if(type==='FEE'||type==='TAX'){
+        const amount=tx.amount;if(!finite(amount)||amount<0){warnings.push({index,code:'LEDGER-CHARGE-INVALID',message:`Invalid ${type} amount skipped.`});return;}
+        if(key&&positions[key])positions[key].fees+=amount;addCash(cur,-amount);
+      }else if(type==='DEPOSIT'){
+        const amount=tx.amount;if(!finite(amount)||amount<0){warnings.push({index,code:'LEDGER-DEPOSIT-INVALID',message:'Invalid DEPOSIT amount skipped.'});return;}addCash(cur,amount);
+      }else if(type==='WITHDRAWAL'){
+        const amount=tx.amount;
+        if(!finite(amount)||amount>0){warnings.push({index,code:'LEDGER-WITHDRAWAL-INVALID',message:'WITHDRAWAL amount must be zero or negative; transaction skipped.'});return;}
+        addCash(cur,amount);
+      }else if(type==='SPLIT'){
+        const pos=key?positions[key]:null;
+        const supplied=has(tx,'splitRatio')?tx.splitRatio:(has(tx,'price')?tx.price:null);
+        const ratio=supplied==null?2:supplied;
+        if(!pos||!finite(ratio)||ratio<=0){warnings.push({index,code:'LEDGER-SPLIT-INVALID',message:'Invalid SPLIT transaction skipped.'});return;}
+        pos.quantity*=ratio;pos.avgCost=pos.quantity>EPS?pos.costBasis/pos.quantity:0;
+      }else warnings.push({index,code:'LEDGER-TYPE-UNSUPPORTED',message:`Unsupported transaction type ${type}.`});
+    });
+    return {positions,cash,warnings,processed:txs.length};
+  }
+
+  function positionBaseValue(position,price,fxRate){
+    if(!position||!finite(position.quantity)||position.quantity<0||!finite(price)||price<0||!finite(fxRate)||fxRate<=0)return null;
+    const value=position.quantity*price*fxRate;return finite(value)?value:null;
+  }
+  function positionUnrealized(position,price){
+    if(!position)return null;const qty=finite(position.quantity)?position.quantity:position.qty;
+    if(!finite(qty)||qty<0||!finite(position.costBasis)||!finite(price)||price<0)return null;
+    const marketValue=qty*price,unrealizedPnl=marketValue-position.costBasis;
+    return {marketValue,unrealizedPnl,returnOnCost:safeDivide(unrealizedPnl,position.costBasis)};
+  }
+
+  function marketValueSummary(entries){
+    if(!Array.isArray(entries))return null;
+    let mv=0,cost=0,unreal=0,localUnrealized=0,fxUnrealized=0,missingFx=0,missingPrice=0;
+    for(const e of entries){
+      if(!e||!e.position){missingPrice++;continue;}
+      const p=e.position;
+      if(!finite(e.price)||e.price<0){missingPrice++;continue;}
+      if(!finite(e.fxRate)||e.fxRate<=0){missingFx++;continue;}
+      const fxBasis=p.fxBasis==null?1:p.fxBasis;
+      if(!finite(p.quantity)||p.quantity<0||!finite(p.costBasis)||!finite(fxBasis)||fxBasis<=0)return null;
+      const localMV=p.quantity*e.price,baseMV=localMV*e.fxRate,baseCost=p.costBasis*fxBasis;
+      mv+=baseMV;cost+=baseCost;unreal+=baseMV-baseCost;localUnrealized+=localMV-p.costBasis;fxUnrealized+=p.costBasis*(e.fxRate-fxBasis);
+    }
+    return {mv,cost,unreal,localUnrealized,fxUnrealized,missingFx,missingPrice,priceCount:entries.length};
+  }
+
+  function cashSummary(cashAccounts,fxRates,baseCurrency,invested=0){
+    if(!cashAccounts||typeof cashAccounts!=='object'||typeof baseCurrency!=='string'||!finite(invested))return null;
+    const localCash={},missingFxCurrencies=[];let cash=0;
+    for(const [cur,raw] of Object.entries(cashAccounts)){
+      const bal=raw&&typeof raw==='object'?raw.balance:raw;
+      if(!finite(bal))return null;localCash[cur]=bal;
+      if(cur===baseCurrency)cash+=bal;
+      else{
+        const rawRate=fxRates&&fxRates[cur];const rate=rawRate&&typeof rawRate==='object'?rawRate.rate:rawRate;
+        if(!finite(rate)||rate<=0)missingFxCurrencies.push(cur);else cash+=bal*rate;
+      }
+    }
+    return {cash,localCash,missingFxCurrencies,invested,total:cash+invested};
+  }
+
+  return {VERSION,finite,dividendAmounts,sortTransactions,calculateLedger,positionBaseValue,positionUnrealized,marketValueSummary,cashSummary};
+});
+(function(root,factory){
+  let Core=null;
+  if(typeof module==='object'&&module.exports)Core=require('./engine.js');
+  else Core=root.FinanceCore;
+  const api=factory(Core);
+  if(typeof module==='object'&&module.exports)module.exports=api;
+  root.SimulationBacktestCore=api;
+})(typeof globalThis!=='undefined'?globalThis:this,function(Core){
+  'use strict';
+  const VERSION='1.0.0';
+  const EPS=1e-12;
+  const finite=v=>typeof v==='number'&&Number.isFinite(v);
+  const has=(o,k)=>o!=null&&Object.prototype.hasOwnProperty.call(o,k);
+  const mean=a=>Core&&typeof Core.mean==='function'?Core.mean(a):(a.length?a.reduce((s,v)=>s+v,0)/a.length:null);
+  const stdev=a=>Core&&typeof Core.stdev==='function'?Core.stdev(a,0):(a.length?Math.sqrt(a.reduce((s,v)=>s+(v-mean(a))**2,0)/a.length):null);
+
+  function mulberry32(seed){
+    let a=(seed>>>0);
+    return function(){a|=0;a=a+0x6D2B79F5|0;let t=Math.imul(a^a>>>15,1|a);t=t+Math.imul(t^t>>>7,61|t)^t;return ((t^t>>>14)>>>0)/4294967296;};
+  }
+  function normal01(rng){
+    let u=0,v=0;
+    while(u<=Number.EPSILON)u=rng();
+    while(v<=Number.EPSILON)v=rng();
+    return Math.sqrt(-2*Math.log(u))*Math.cos(2*Math.PI*v);
+  }
+  function quantileSorted(sorted,p){
+    if(!Array.isArray(sorted)||!sorted.length||!finite(p)||p<0||p>1)return null;
+    if(sorted.length===1)return sorted[0];
+    const x=(sorted.length-1)*p,lo=Math.floor(x),hi=Math.ceil(x),w=x-lo;
+    return sorted[lo]*(1-w)+sorted[hi]*w;
+  }
+  function monteCarloRun(cfg){
+    cfg=cfg||{};
+    const initial=has(cfg,'initial')?cfg.initial:100;
+    const expectedReturn=has(cfg,'expectedReturn')?cfg.expectedReturn:.10;
+    const volatility=has(cfg,'volatility')?cfg.volatility:.25;
+    const horizonYears=has(cfg,'horizonYears')?cfg.horizonYears:1;
+    const simulations=has(cfg,'simulations')?cfg.simulations:10000;
+    const seed=has(cfg,'seed')?cfg.seed:1234;
+    const target=has(cfg,'target')?cfg.target:110;
+    const stepsPerYear=has(cfg,'stepsPerYear')?cfg.stepsPerYear:12;
+    if(!finite(initial)||initial<=0||!finite(expectedReturn)||!finite(volatility)||volatility<0||!finite(horizonYears)||horizonYears<=0)return null;
+    if(!Number.isInteger(simulations)||simulations<=0||simulations>100000||!Number.isInteger(seed)||!Number.isInteger(stepsPerYear)||stepsPerYear<=0||stepsPerYear>10000||!finite(target))return null;
+    const totalSteps=Math.max(1,Math.round(horizonYears*stepsPerYear));
+    const dt=horizonYears/totalSteps,drift=(expectedReturn-.5*volatility*volatility)*dt,diffusion=volatility*Math.sqrt(dt),rng=mulberry32(seed);
+    const finals=[],subsample=[],stride=Math.max(1,Math.floor(simulations/200));
+    for(let sim=0;sim<simulations;sim++){
+      let s=initial;
+      if(volatility===0)s*=Math.exp(expectedReturn*horizonYears);
+      else for(let step=0;step<totalSteps;step++)s*=Math.exp(drift+diffusion*normal01(rng));
+      if(!finite(s))return null;
+      finals.push(s);
+      if(sim%stride===0)subsample.push(s);
+    }
+    finals.sort((a,b)=>a-b);
+    const m=mean(finals),pLoss=finals.filter(v=>v<initial).length/simulations,pTarget=finals.filter(v=>v>=target).length/simulations;
+    return {
+      initial,simulations,median:quantileSorted(finals,.5),p5:quantileSorted(finals,.05),p25:quantileSorted(finals,.25),p75:quantileSorted(finals,.75),p95:quantileSorted(finals,.95),
+      min:finals[0],max:finals[finals.length-1],mean:m,pLoss,pTarget,pExceed:pTarget,target,subsample,seed,
+      expectedReturn,volatility,horizonYears,stepsPerYear,totalSteps,method:'Geometric Brownian motion (deterministic seeded simulation)'
+    };
+  }
+
+  function toTime(v){
+    if(finite(v))return v;
+    const t=new Date(v).getTime();return Number.isFinite(t)?t:null;
+  }
+  function validatePrices(prices){
+    if(!Array.isArray(prices)||prices.length<2)return null;
+    const out=[];
+    for(let i=0;i<prices.length;i++){
+      const p=prices[i],date=p?toTime(p.date):null,close=p?p.close:null;
+      if(date==null||!finite(close)||close<=0)return null;
+      if(i>0&&date<=out[i-1].date)return null;
+      out.push({date,close,originalIndex:i,raw:p});
+    }
+    return out;
+  }
+  function inferPeriodsPerYear(series){
+    if(!Array.isArray(series)||series.length<3)return {periodsPerYear:null,label:'insufficient',source:'timestamps'};
+    const diffs=[];for(let i=1;i<series.length;i++){const d=(series[i].date-series[i-1].date)/86400000;if(finite(d)&&d>0)diffs.push(d);}
+    if(!diffs.length)return {periodsPerYear:null,label:'unknown',source:'timestamps'};
+    diffs.sort((a,b)=>a-b);const mid=Math.floor(diffs.length/2),medianDays=diffs.length%2?diffs[mid]:(diffs[mid-1]+diffs[mid])/2;
+    if(medianDays<=2)return {periodsPerYear:252,label:'business-daily',source:'timestamps',medianDays};
+    if(medianDays<=10)return {periodsPerYear:52,label:'weekly',source:'timestamps',medianDays};
+    if(medianDays<=40)return {periodsPerYear:12,label:'monthly',source:'timestamps',medianDays};
+    if(medianDays<=100)return {periodsPerYear:4,label:'quarterly',source:'timestamps',medianDays};
+    return {periodsPerYear:1,label:'annual',source:'timestamps',medianDays};
+  }
+  function smaAt(series,index,window){
+    if(!Number.isInteger(index)||!Number.isInteger(window)||window<=0||index<window-1)return null;
+    let s=0;for(let i=index-window+1;i<=index;i++)s+=series[i].close;return s/window;
+  }
+  function defaultSignal(series,index){
+    if(index<50)return 0;
+    const s50=smaAt(series,index,50);if(s50==null)return 0;
+    const s200=index>=199?smaAt(series,index,200):s50;
+    return s50>s200?1:s50<s200?-1:0;
+  }
+  function positionFromSignal(sig,longThreshold,shortThreshold){
+    if(!finite(sig))return null;
+    return sig>=longThreshold?1:sig<=shortThreshold?-1:0;
+  }
+  function seriesValueAtOrBefore(series,date){
+    if(!Array.isArray(series)||!series.length)return null;
+    let lo=0,hi=series.length-1,best=-1;
+    while(lo<=hi){const m=(lo+hi)>>1;if(series[m].date<=date){best=m;lo=m+1;}else hi=m-1;}
+    return best>=0?series[best].close:null;
+  }
+  function beta(a,b){
+    if(Core&&typeof Core.beta==='function')return Core.beta(a,b);
+    if(a.length!==b.length||a.length<2)return null;const ma=mean(a),mb=mean(b);let cov=0,v=0;for(let i=0;i<a.length;i++){cov+=(a[i]-ma)*(b[i]-mb);v+=(b[i]-mb)**2;}return v>EPS?cov/v:null;
+  }
+  function maximumDrawdown(values){
+    if(Core&&typeof Core.maximumDrawdown==='function')return Core.maximumDrawdown(values);
+    let peak=-Infinity,mdd=0;for(const x of values){if(x>peak)peak=x;if(peak>0)mdd=Math.min(mdd,x/peak-1);}return {mdd};
+  }
+  function backtestRun(cfg){
+    cfg=cfg||{};
+    const all=validatePrices(cfg.prices);
+    if(!all||all.length<30)return {available:false,reason:'Backtest unavailable — insufficient or invalid historical price data.'};
+    const start=cfg.startDate==null?null:toTime(cfg.startDate),end=cfg.endDate==null?null:toTime(cfg.endDate);
+    if(cfg.startDate!=null&&start==null||cfg.endDate!=null&&end==null||start!=null&&end!=null&&start>end)return {available:false,reason:'Backtest unavailable — invalid selected date range.'};
+    const series=all.filter(p=>(start==null||p.date>=start)&&(end==null||p.date<=end));
+    if(series.length<30)return {available:false,reason:'Backtest unavailable — insufficient data in selected period.'};
+    const initialCapital=has(cfg,'initialCapital')?cfg.initialCapital:100000;
+    const transactionCost=has(cfg,'transactionCost')?cfg.transactionCost:.0010;
+    const slippage=has(cfg,'slippage')?cfg.slippage:.0005;
+    const rebalanceEvery=has(cfg,'rebalanceEvery')?cfg.rebalanceEvery:1;
+    const longThreshold=has(cfg,'longThreshold')?cfg.longThreshold:.0001;
+    const shortThreshold=has(cfg,'shortThreshold')?cfg.shortThreshold:-.0001;
+    const riskFreeAnnual=has(cfg,'riskFreeRate')?cfg.riskFreeRate:.02;
+    if(!finite(initialCapital)||initialCapital<=0)return {available:false,reason:'Backtest unavailable — initial capital must be a positive finite value.'};
+    if(!finite(transactionCost)||transactionCost<0||transactionCost>=1||!finite(slippage)||slippage<0||slippage>=1)return {available:false,reason:'Backtest unavailable — transaction cost and slippage must be finite rates between 0 and 1.'};
+    if(!Number.isInteger(rebalanceEvery)||rebalanceEvery<=0)return {available:false,reason:'Backtest unavailable — rebalance interval must be a positive integer.'};
+    if(!finite(longThreshold)||!finite(shortThreshold)||shortThreshold>longThreshold)return {available:false,reason:'Backtest unavailable — signal thresholds are invalid.'};
+    if(!finite(riskFreeAnnual)||riskFreeAnnual<=-1)return {available:false,reason:'Backtest unavailable — risk-free rate is invalid.'};
+    const userSignal=Array.isArray(cfg.signal)?cfg.signal:null;
+    const signalFor=entry=>{
+      if(userSignal&&entry.originalIndex<userSignal.length&&userSignal[entry.originalIndex]!=null)return finite(userSignal[entry.originalIndex])?userSignal[entry.originalIndex]:null;
+      return defaultSignal(all,entry.originalIndex);
+    };
+    const firstSignal=signalFor(series[0]);
+    let curPos=positionFromSignal(firstSignal,longThreshold,shortThreshold);
+    if(curPos==null)return {available:false,reason:'Backtest unavailable — signal series contains a non-finite value.'};
+    let stratVal=initialCapital,costs=0,tradeCount=0,totalTurnover=0;
+    if(curPos!==0){const turnover=Math.abs(curPos),cost=stratVal*turnover*(transactionCost+slippage);stratVal=Math.max(0,stratVal-cost);costs+=cost;totalTurnover+=turnover;tradeCount++;}
+    const equityCurve=[stratVal],positionCurve=[curPos],periodReturns=[];
+    for(let i=1;i<series.length;i++){
+      const marketReturn=series[i].close/series[i-1].close-1;
+      const before=stratVal;
+      stratVal=Math.max(0,stratVal*(1+curPos*marketReturn));
+      if(i%rebalanceEvery===0){
+        const sig=signalFor(series[i]);if(sig==null)return {available:false,reason:'Backtest unavailable — signal series contains a non-finite value.'};
+        const newPos=positionFromSignal(sig,longThreshold,shortThreshold),turnover=Math.abs(newPos-curPos);
+        if(turnover>0&&stratVal>0){const cost=stratVal*turnover*(transactionCost+slippage);stratVal=Math.max(0,stratVal-cost);costs+=cost;totalTurnover+=turnover;tradeCount++;}
+        curPos=newPos;
+      }
+      periodReturns.push(before>0?stratVal/before-1:-1);
+      equityCurve.push(stratVal);positionCurve.push(curPos);
+    }
+    const totalReturn=stratVal/initialCapital-1;
+    const days=(series[series.length-1].date-series[0].date)/86400000,years=days/365.25;
+    const cagr=years>0?(stratVal<=0?-1:Math.pow(stratVal/initialCapital,1/years)-1):null;
+    const cadence=inferPeriodsPerYear(series),annualizationFactor=cadence.periodsPerYear||252;
+    const vol=Core&&typeof Core.annualizedVolatility==='function'?Core.annualizedVolatility(periodReturns,annualizationFactor):stdev(periodReturns)*Math.sqrt(annualizationFactor);
+    const rfPerPeriod=Math.pow(1+riskFreeAnnual,1/annualizationFactor)-1;
+    const sharpePeriodic=Core&&typeof Core.sharpe==='function'?Core.sharpe(periodReturns,rfPerPeriod):null;
+    const sortinoPeriodic=Core&&typeof Core.sortino==='function'?Core.sortino(periodReturns,rfPerPeriod):null;
+    const sharpe=sharpePeriodic==null?null:sharpePeriodic*Math.sqrt(annualizationFactor),sortino=sortinoPeriodic==null?null:sortinoPeriodic*Math.sqrt(annualizationFactor);
+    const dd=maximumDrawdown(equityCurve),mdd=dd&&finite(dd.mdd)?dd.mdd:null,calmar=mdd!=null&&mdd<0&&cagr!=null?cagr/Math.abs(mdd):null;
+    let activeRet=null,benchmarkCagr=null,benchBeta=null,alpha=null,te=null,ir=null,alignedPeriods=0;
+    const bench=validatePrices(cfg.benchmarkPrices||[]);
+    if(bench&&bench.length>=2){
+      const stratAligned=[],benchAligned=[];
+      for(let i=1;i<series.length;i++){
+        const bp=seriesValueAtOrBefore(bench,series[i-1].date),bc=seriesValueAtOrBefore(bench,series[i].date);
+        if(bp!=null&&bc!=null&&bp>0){stratAligned.push(periodReturns[i-1]);benchAligned.push(bc/bp-1);}
+      }
+      alignedPeriods=stratAligned.length;
+      const b0=seriesValueAtOrBefore(bench,series[0].date),b1=seriesValueAtOrBefore(bench,series[series.length-1].date);
+      if(b0!=null&&b1!=null&&b0>0&&years>0){benchmarkCagr=Math.pow(b1/b0,1/years)-1;activeRet=cagr==null?null:cagr-benchmarkCagr;}
+      if(alignedPeriods>=2){
+        benchBeta=beta(stratAligned,benchAligned);
+        const ms=mean(stratAligned),mb=mean(benchAligned);
+        alpha=benchBeta==null?null:((ms-rfPerPeriod)-benchBeta*(mb-rfPerPeriod))*annualizationFactor;
+        const diffs=stratAligned.map((r,i)=>r-benchAligned[i]),sd=stdev(diffs);
+        te=sd==null?null:sd*Math.sqrt(annualizationFactor);
+        ir=sd!=null&&sd>EPS?mean(diffs)/sd*Math.sqrt(annualizationFactor):null;
+      }
+    }
+    const hitRate=periodReturns.length?periodReturns.filter(r=>r>0).length/periodReturns.length:null;
+    const grossWin=periodReturns.filter(r=>r>0).reduce((s,r)=>s+r,0),grossLoss=Math.abs(periodReturns.filter(r=>r<0).reduce((s,r)=>s+r,0));
+    const profitFactor=grossLoss>EPS?grossWin/grossLoss:null;
+    return {
+      available:true,totalReturn,cagr,vol,mdd,sharpe,sortino,calmar,activeRet,beta:benchBeta,alpha,te,ir,hitRate,profitFactor,
+      trades:tradeCount,costs,totalTurnover,period:[series[0].date,series[series.length-1].date],n:series.length,
+      annualizationFactor,periodLabel:cadence.label,frequencySource:cadence.source,benchmarkCagr,alignedPeriods,equityCurve,positionCurve,
+      methodology:'close-to-close positions; signals observed at a close apply from the next period; transaction costs/slippage deducted at each turnover event'
+    };
+  }
+
+  return {VERSION,finite,mulberry32,normal01,quantileSorted,monteCarloRun,validatePrices,inferPeriodsPerYear,defaultSignal,positionFromSignal,backtestRun};
+});
 (function(){
   'use strict';
   const Core = typeof FinanceCore !== 'undefined' ? FinanceCore : null;
@@ -12974,6 +13679,102 @@ function decisionReadiness(){
   }
 
   globalThis.__FINANCIAL_CERTIFICATION__=Object.freeze(installReport);
+})();
+(function(){
+  'use strict';
+  const W=typeof WorkstationCalculationCore!=='undefined'?WorkstationCalculationCore:null;
+  const L=typeof WorkstationLedgerCore!=='undefined'?WorkstationLedgerCore:null;
+  const S=typeof SimulationBacktestCore!=='undefined'?SimulationBacktestCore:null;
+  if(!W){console.error('Financial certification runtime: WorkstationCalculationCore missing');return;}
+  const installed=[];
+  const mark=name=>installed.push(name);
+
+  if(typeof SimilarityEngine!=='undefined'&&SimilarityEngine){
+    SimilarityEngine.standardize=cases=>W.standardizeCases(cases,SimilarityEngine.FEATURES);
+    SimilarityEngine.simScore=(query,candidate,stats,weights)=>W.similarityScore(query,candidate,stats,weights,SimilarityEngine.FEATURES);
+    SimilarityEngine.normalizeWeights=weights=>W.normalizeWeightObject(weights);
+    SimilarityEngine.match=(query,cases,weights,mode,k)=>{
+      const useWeights=weights||SimilarityEngine.defaultWeights;
+      const limit=Number.isInteger(k)&&k>0?k:10;
+      const pool=mode==='strict'?(cases||[]).filter(c=>c&&query&&c.type===query.type):(cases||[]);
+      const stats=W.standardizeCases(pool,SimilarityEngine.FEATURES);
+      const scored=pool.map(c=>({case:c,sim:W.similarityScore(query,c,stats,useWeights,SimilarityEngine.FEATURES)})).sort((a,b)=>b.sim-a.sim);
+      return {matches:scored.slice(0,limit),total:pool.length,stats,weights:useWeights};
+    };
+    SimilarityEngine.matchReference=(query,refCases,weights,k)=>{
+      const useWeights=weights||SimilarityEngine.defaultWeights,limit=Number.isInteger(k)&&k>0?k:3,pool=refCases||[];
+      const stats=W.standardizeCases(pool,SimilarityEngine.FEATURES);
+      return pool.map(c=>({case:c,sim:W.similarityScore(query,c,stats,useWeights,SimilarityEngine.FEATURES)})).sort((a,b)=>b.sim-a.sim).slice(0,limit);
+    };
+    mark('SimilarityEngine');
+  }
+  if(typeof DataQualityEngine!=='undefined'&&DataQualityEngine){DataQualityEngine.score=ctx=>W.dataQualityScore(ctx);mark('DataQualityEngine.score');}
+  if(typeof ScoringEngine!=='undefined'&&ScoringEngine){ScoringEngine.score=(metrics,weights)=>W.preferenceScore(metrics,weights||ScoringEngine.DEFAULT_W||W.DEFAULT_PREFERENCE_WEIGHTS);mark('ScoringEngine.score');}
+  if(typeof PeerSimilarity!=='undefined'&&PeerSimilarity){PeerSimilarity.score=peers=>W.peerDataCoverage(peers);mark('PeerSimilarity.score');}
+
+  if(typeof factorExposure==='function'){factorExposure=items=>W.factorExposure(items);mark('factorExposure');}
+  if(typeof performanceAttribution==='function'){performanceAttribution=(items,benchmarkRet)=>W.performanceAttribution(items,benchmarkRet);mark('performanceAttribution');}
+  if(typeof RiskContribution!=='undefined'&&RiskContribution){RiskContribution.compute=(port,corr)=>W.riskContribution(port,corr);mark('RiskContribution.compute');}
+  if(typeof PortfolioOptimizers!=='undefined'&&PortfolioOptimizers){
+    PortfolioOptimizers.equalWeight=items=>W.equalWeight(items);
+    PortfolioOptimizers.minimumVariance=(items,corr)=>W.minimumVariance(items,corr);
+    PortfolioOptimizers.maximumSharpe=(items,corr,rf)=>W.maximumSharpe(items,corr,rf==null?0:rf);
+    PortfolioOptimizers.riskParity=(items,corr)=>W.riskParity(items,corr);
+    mark('PortfolioOptimizers');
+  }
+
+  if(S&&typeof MonteCarlo!=='undefined'&&MonteCarlo){MonteCarlo.run=cfg=>S.monteCarloRun(cfg);mark('MonteCarlo.run');}
+  if(S&&typeof BacktestEngine!=='undefined'&&BacktestEngine){BacktestEngine.run=cfg=>S.backtestRun(cfg);mark('BacktestEngine.run');}
+
+  if(L){
+    if(typeof wsDividendAmounts==='function'){wsDividendAmounts=tx=>L.dividendAmounts(tx);mark('wsDividendAmounts');}
+    if(typeof wsCalculateFromLedger==='function'){
+      wsCalculateFromLedger=(ws,_opts)=>L.calculateLedger(ws&&Array.isArray(ws.transactions)?ws.transactions:[],typeof wsBaseCurrency==='function'?wsBaseCurrency():'EUR');
+      mark('wsCalculateFromLedger');
+    }
+    if(typeof wsFxConvert==='function'){
+      wsFxConvert=(amount,currency)=>{const meta=typeof wsFxRateMeta==='function'?wsFxRateMeta(currency):null;return meta?W.fxConvert(amount,meta.rate):null;};
+      mark('wsFxConvert');
+    }
+    if(typeof wsPositionBaseValue==='function'){
+      wsPositionBaseValue=security=>{const ws=typeof wsPortfolio==='function'?wsPortfolio():null,p=ws&&ws.holdings?ws.holdings[security]:null;if(!p)return null;const pg=typeof wsGetPrice==='function'?wsGetPrice(security,ws):null;if(!pg)return null;const fx=typeof wsFxRate==='function'?wsFxRate(p.currency||(typeof wsBaseCurrency==='function'?wsBaseCurrency():'EUR')):null;return L.positionBaseValue(p,pg.price,fx);};
+      mark('wsPositionBaseValue');
+    }
+    if(typeof wsMarketValue==='function'){
+      wsMarketValue=()=>{const ws=typeof wsPortfolio==='function'?wsPortfolio():null,pos=ws&&ws.holdings?ws.holdings:{};const entries=Object.keys(pos).map(k=>{const p=pos[k],pg=typeof wsGetPrice==='function'?wsGetPrice(k,ws):null,meta=typeof wsFxRateMeta==='function'?wsFxRateMeta(p.currency||(typeof wsBaseCurrency==='function'?wsBaseCurrency():'EUR')):null;return {position:p,price:pg?pg.price:null,fxRate:meta?meta.rate:null};});return L.marketValueSummary(entries);};
+      mark('wsMarketValue');
+    }
+    if(typeof wsCashSummary==='function'){
+      wsCashSummary=()=>{const ws=typeof wsPortfolio==='function'?wsPortfolio():null;if(!ws)return null;const mv=typeof wsMarketValue==='function'?wsMarketValue():null;return L.cashSummary(ws.cashAccounts||{},ws.fxRates||{},typeof wsBaseCurrency==='function'?wsBaseCurrency():'EUR',mv&&Number.isFinite(mv.mv)?mv.mv:0);};
+      mark('wsCashSummary');
+    }
+    if(typeof wsUnrealized==='function'){
+      wsUnrealized=(security,price)=>{const ws=typeof wsPortfolio==='function'?wsPortfolio():null,p=ws&&ws.holdings?ws.holdings[security]:null;const r=L.positionUnrealized(p,price);return r?r.unrealizedPnl:null;};
+      mark('wsUnrealized');
+    }
+  }
+
+  if(typeof wsTWR==='function'){wsTWR=snapshots=>W.timeWeightedReturnFromSnapshots(snapshots);mark('wsTWR');}
+  if(typeof wsMWR==='function'){wsMWR=snapshots=>W.moneyWeightedReturnFromSnapshots(snapshots);mark('wsMWR');}
+  if(typeof wsAnnualized==='function'){wsAnnualized=(twr,days)=>W.annualizeReturn(twr,days);mark('wsAnnualized');}
+  if(typeof wsCaptureRatios==='function'){wsCaptureRatios=(p,b,a)=>{const r=W.captureRatios(p,b,a);return r?{upside:r.upside,downside:r.downside,beta:r.beta,te:r.te,ir:r.ir,alpha:r.alpha,periods:r.n}:null;};mark('wsCaptureRatios');}
+  if(typeof wsPerfRisk==='function'){wsPerfRisk=(returns,annualFactor)=>W.performanceRisk(returns,annualFactor,.02);mark('wsPerfRisk');}
+  if(typeof wsPeriodReturns==='function'){wsPeriodReturns=snapshots=>W.periodReturnsFromSnapshots(snapshots);mark('wsPeriodReturns');}
+
+  if(typeof App!=='undefined'&&App&&App.meta){
+    App.meta.workstationCalculationCoreVersion=W.VERSION;
+    if(L)App.meta.workstationLedgerCoreVersion=L.VERSION;
+    if(S)App.meta.simulationBacktestCoreVersion=S.VERSION;
+  }
+  const prior=globalThis.__FINANCIAL_CERTIFICATION__||{};
+  const priorInstalled=Array.isArray(prior.installed)?prior.installed:[];
+  globalThis.__FINANCIAL_CERTIFICATION__=Object.freeze(Object.assign({},prior,{
+    workstationVersion:W.VERSION,
+    workstationLedgerVersion:L?L.VERSION:null,
+    simulationBacktestVersion:S?S.VERSION:null,
+    installed:priorInstalled.concat(installed),
+    workstationInstalled:Object.freeze(installed.slice())
+  }));
 })();
 /* FINANCIAL_CERTIFICATION_RUNTIME_END */
 window.addEventListener("DOMContentLoaded",init);
