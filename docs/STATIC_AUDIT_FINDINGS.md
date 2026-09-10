@@ -3,36 +3,36 @@
 This file is generated from the deployable `dist/index.html`. Every regex lead from `scripts/static-audit.js` is enumerated with a source line, owner hint, stable fingerprint and contextual disposition. These are review leads, not automatic defects.
 
 - Target: `index.html`
-- Total pattern hits: **435**
-- Calculation-sensitive / algorithmic-review hits: **226**
+- Total pattern hits: **447**
+- Calculation-sensitive / algorithmic-review hits: **232**
 - Unclassified hits: **0**
 
 ## Counts by pattern
 
 | Pattern | Count |
 |---|---:|
-| truthy-value checks | 142 |
-| Math.round usage | 53 |
-| Infinity literals | 13 |
-| generic OR zero | 173 |
+| truthy-value checks | 152 |
+| Math.round usage | 58 |
+| Infinity literals | 14 |
+| generic OR zero | 168 |
 | toFixed usage | 24 |
 | parseInt usage | 3 |
-| fallback-to-zero coercions | 24 |
+| fallback-to-zero coercions | 25 |
 | NaN literals | 3 |
 
 ## Counts by contextual disposition
 
 | Disposition | Count |
 |---|---:|
-| algorithm/parser sentinel | 16 |
+| algorithm/parser sentinel | 17 |
 | algorithmic rounding | 2 |
-| calculation-sensitive numeric fallback | 176 |
-| calculation-sensitive presence guard | 48 |
+| calculation-sensitive numeric fallback | 172 |
+| calculation-sensitive presence guard | 58 |
 | DOM/object presence guard | 94 |
 | general numeric/default fallback | 4 |
 | input/parser boundary | 3 |
 | parser/default fallback | 3 |
-| presentation/UI rounding | 75 |
+| presentation/UI rounding | 80 |
 | UI/default-state fallback | 14 |
 
 ## Calculation-sensitive / algorithmic-review leads
@@ -1381,27 +1381,6 @@ This file is generated from the deployable `dist/index.html`. Every regex lead f
 - Match: `||0`
 - Source: `const b=$("#perf_snap"); if(b)b.addEventListener("click",()=>{ const mv=Number($("#perf_mv").value)||wsMarketValue().mv||0; const flow=Number($("#perf_flow").value)||0;`
 
-### 950db2e7722f5a3f — generic OR zero — line 10395
-
-- Owner hint: `computeBenchmark`
-- Disposition: **calculation-sensitive numeric fallback**
-- Match: `||0`
-- Source: `const portRets=[]; for(let i=1;i<snaps.length;i++){ const start=snaps[i-1].mv||0, end=snaps[i].mv||0, flow=snaps[i].cashFlow||0; if(start>0)portRets.push((end-flow)/start-1); }`
-
-### 950db2e7722f5a3f — generic OR zero — line 10395
-
-- Owner hint: `computeBenchmark`
-- Disposition: **calculation-sensitive numeric fallback**
-- Match: `||0`
-- Source: `const portRets=[]; for(let i=1;i<snaps.length;i++){ const start=snaps[i-1].mv||0, end=snaps[i].mv||0, flow=snaps[i].cashFlow||0; if(start>0)portRets.push((end-flow)/start-1); }`
-
-### 950db2e7722f5a3f — generic OR zero — line 10395
-
-- Owner hint: `computeBenchmark`
-- Disposition: **calculation-sensitive numeric fallback**
-- Match: `||0`
-- Source: `const portRets=[]; for(let i=1;i<snaps.length;i++){ const start=snaps[i-1].mv||0, end=snaps[i].mv||0, flow=snaps[i].cashFlow||0; if(start>0)portRets.push((end-flow)/start-1); }`
-
 ### ae766e4fc15b7c10 — truthy-value checks — line 10710
 
 - Owner hint: `wsFreshness`
@@ -1471,27 +1450,6 @@ This file is generated from the deployable `dist/index.html`. Every regex lead f
 - Disposition: **calculation-sensitive numeric fallback**
 - Match: `||0`
 - Source: `const sortino= CalcEngine.sortino(periodRets,0.02/annualFactor||0.02/252);`
-
-### 73f1c1d9a15607f1 — generic OR zero — line 11907
-
-- Owner hint: `periodReturnsArray`
-- Disposition: **calculation-sensitive numeric fallback**
-- Match: `||0`
-- Source: `function periodReturnsArray(snaps2){ const a=[]; for(let i=1;i<snaps2.length;i++){ const s=snaps2[i-1].mv||0; const e=snaps2[i].mv||0; const f=snaps2[i].cashFlow||0; if(s>0)a.push((e-f)/s-1); } return a; }`
-
-### 73f1c1d9a15607f1 — generic OR zero — line 11907
-
-- Owner hint: `periodReturnsArray`
-- Disposition: **calculation-sensitive numeric fallback**
-- Match: `||0`
-- Source: `function periodReturnsArray(snaps2){ const a=[]; for(let i=1;i<snaps2.length;i++){ const s=snaps2[i-1].mv||0; const e=snaps2[i].mv||0; const f=snaps2[i].cashFlow||0; if(s>0)a.push((e-f)/s-1); } return a; }`
-
-### 73f1c1d9a15607f1 — generic OR zero — line 11907
-
-- Owner hint: `periodReturnsArray`
-- Disposition: **calculation-sensitive numeric fallback**
-- Match: `||0`
-- Source: `function periodReturnsArray(snaps2){ const a=[]; for(let i=1;i<snaps2.length;i++){ const s=snaps2[i-1].mv||0; const e=snaps2[i].mv||0; const f=snaps2[i].cashFlow||0; if(s>0)a.push((e-f)/s-1); } return a; }`
 
 ### 12c3d4d2a08af5ac — fallback-to-zero coercions — line 11959
 
@@ -1584,37 +1542,121 @@ This file is generated from the deployable `dist/index.html`. Every regex lead f
 - Match: `||0`
 - Source: `return {iterations:x.iterations||0,converged:!!x.converged,residual:finite(x.residualEquity)?Math.abs(x.residualEquity):null,residualVol:finite(x.residualVol)?Math.abs(x.residualVol):null,distanceToDefault:finite(x.distanceToDefault)?x.distanceToDefault:null,pd:finite(x.pd)?x.pd:null,error:x.error||null};`
 
-### 5c0282a9fb526c69 — truthy-value checks — line 12743
+### a6ff05064257af02 — truthy-value checks — line 12810
 
-- Owner hint: `mertonTrace`
+- Owner hint: `preferenceScore`
+- Disposition: **calculation-sensitive presence guard**
+- Match: `if(!normalized)`
+- Source: `const normalized=normalizeWeightObject(weights);if(!normalized)return null;`
+
+### 90c3f4df742f9f10 — truthy-value checks — line 12853
+
+- Owner hint: `factorExposure`
+- Disposition: **calculation-sensitive presence guard**
+- Match: `if(!norm)`
+- Source: `const norm=normalizeItems(items);if(!norm)return null;`
+
+### 37f18cc5dc266dc0 — truthy-value checks — line 12895
+
+- Owner hint: `riskContribution`
+- Disposition: **calculation-sensitive presence guard**
+- Match: `if(!norm)`
+- Source: `const norm=normalizeItems(port.items);if(!norm)return null;`
+
+### db28f0d35ee8b9f9 — truthy-value checks — line 12926
+
+- Owner hint: `minimumVariance`
+- Disposition: **calculation-sensitive presence guard**
+- Match: `if(!cov)`
+- Source: `const cov=covarianceFromItems(items,corrMatrix);if(!cov)return null;`
+
+### 6ebe1dae9c4d0c49 — truthy-value checks — line 12940
+
+- Owner hint: `maximumSharpe`
+- Disposition: **calculation-sensitive presence guard**
+- Match: `if(!cov)`
+- Source: `const cov=covarianceFromItems(items,corrMatrix);if(!cov)return null;`
+
+### b48fd9e62be33f6a — truthy-value checks — line 12941
+
+- Owner hint: `maximumSharpe`
+- Disposition: **calculation-sensitive presence guard**
+- Match: `if(!w)`
+- Source: `let w=minimumVariance(items,corrMatrix);if(!w)return null;`
+
+### 9363d8354a5cf401 — truthy-value checks — line 12952
+
+- Owner hint: `maximumSharpe`
+- Disposition: **calculation-sensitive presence guard**
+- Match: `if(!improved)`
+- Source: `if(!improved){step*=.5;if(step<1e-7)break;}`
+
+### 8fbd131fd8129e71 — truthy-value checks — line 12958
+
+- Owner hint: `riskParity`
+- Disposition: **calculation-sensitive presence guard**
+- Match: `if(!cov)`
+- Source: `const cov=covarianceFromItems(items,corrMatrix);if(!cov)return null;`
+
+### 21da93e5cada76ee — truthy-value checks — line 12994
+
+- Owner hint: `sumOfParts`
+- Disposition: **calculation-sensitive presence guard**
+- Match: `if(!p)`
+- Source: `if(!p)return null;let value=null,source=null;`
+
+### fcafec5d6d68021e — fallback-to-zero coercions — line 13004
+
+- Owner hint: `mulberry32`
+- Disposition: **calculation-sensitive numeric fallback**
+- Match: `Number(seed)||0`
+- Source: `function mulberry32(seed){let a=(Number(seed)||0)>>>0;return function(){a|=0;a=a+0x6D2B79F5|0;let t=Math.imul(a^a>>>15,1|a);t=t+Math.imul(t^t>>>7,61|t)^t;return ((t^t>>>14)>>>0)/4294967296;};}`
+
+### 5447e421fae7d39a — generic OR zero — line 13004
+
+- Owner hint: `mulberry32`
+- Disposition: **calculation-sensitive numeric fallback**
+- Match: `||0`
+- Source: `function mulberry32(seed){let a=(Number(seed)||0)>>>0;return function(){a|=0;a=a+0x6D2B79F5|0;let t=Math.imul(a^a>>>15,1|a);t=t+Math.imul(t^t>>>7,61|t)^t;return ((t^t>>>14)>>>0)/4294967296;};}`
+
+### 46b95fc05cdf21fb — truthy-value checks — line 13041
+
+- Owner hint: `timeWeightedReturnFromSnapshots`
+- Disposition: **calculation-sensitive presence guard**
+- Match: `if(!returns)`
+- Source: `const returns=periodReturnsFromSnapshots(snapshots);if(!returns)return null;`
+
+### a011805890de3a86 — truthy-value checks — line 13097
+
+- Owner hint: `captureRatios`
 - Disposition: **calculation-sensitive presence guard**
 - Match: `if(!Core)`
 - Source: `if(!Core){ console.error('Financial certification runtime: FinanceCore missing'); return; }`
 
-### 313d8ce37164294e — truthy-value checks — line 12747
+### d49734261a3fbd80 — truthy-value checks — line 13101
 
-- Owner hint: `mertonTrace`
+- Owner hint: `captureRatios`
 - Disposition: **calculation-sensitive presence guard**
 - Match: `if(!ModelCore)`
 - Source: `if(!ModelCore)installReport.warnings.push('FinancialModelCore missing; three-statement model is outside the expanded certification boundary.');`
 
-### 088c1f9309fc6ca2 — truthy-value checks — line 12748
+### a6fe3d30fea14e64 — truthy-value checks — line 13102
 
-- Owner hint: `mertonTrace`
+- Owner hint: `captureRatios`
 - Disposition: **calculation-sensitive presence guard**
 - Match: `if(!LegacyCore)`
 - Source: `if(!LegacyCore)installReport.warnings.push('LegacyCalculationCore missing; stress, portfolio and multi-method valuation remain outside the expanded certification boundary.');`
 
-### 88517af14022c940 — truthy-value checks — line 12749
+### 86426789ea176b77 — truthy-value checks — line 13103
 
-- Owner hint: `mertonTrace`
+- Owner hint: `captureRatios`
 - Disposition: **calculation-sensitive presence guard**
 - Match: `if(!RiskCore)`
 - Source: `if(!RiskCore)installReport.warnings.push('RiskCreditCore missing; VaR/ES, credit curves, Altman and Merton remain outside the expanded certification boundary.');`
 
-### 67fa0ca520fef201 — truthy-value checks — line 12753
+### bfa04507a04ed455 — truthy-value checks — line 13107
 
-- Owner hint: `mertonTrace`
+- Owner hint: `captureRatios`
 - Disposition: **calculation-sensitive presence guard**
 - Match: `if(!a)`
 - Source: `const a=Core.abbreviate(v); if(!a) return '—';`
@@ -1994,9 +2036,6 @@ This file is generated from the deployable `dist/index.html`. Every regex lead f
 | `ae27fae9a7ac1079` | toFixed usage | 10378 | `wsBenchmarkValidate` | presentation/UI rounding | `if(sf!=null&&bf!=null&&Math.abs(sf-bf)>1) issues.push("Portfolio and benchmark have different frequencies ("+sf.toFixed(1)+"d vs "+bf.toFixed(1)+"d).");` |
 | `ae27fae9a7ac1079` | toFixed usage | 10378 | `wsBenchmarkValidate` | presentation/UI rounding | `if(sf!=null&&bf!=null&&Math.abs(sf-bf)>1) issues.push("Portfolio and benchmark have different frequencies ("+sf.toFixed(1)+"d vs "+bf.toFixed(1)+"d).");` |
 | `c9826fbe1d5c6580` | truthy-value checks | 10388 | `computeBenchmark` | DOM/object presence guard | `const out=$("#bmOut"); if(!out)return;` |
-| `950db2e7722f5a3f` | generic OR zero | 10395 | `computeBenchmark` | calculation-sensitive numeric fallback | `const portRets=[]; for(let i=1;i<snaps.length;i++){ const start=snaps[i-1].mv\|\|0, end=snaps[i].mv\|\|0, flow=snaps[i].cashFlow\|\|0; if(start>0)portRets.push((end-flow)/start-1); }` |
-| `950db2e7722f5a3f` | generic OR zero | 10395 | `computeBenchmark` | calculation-sensitive numeric fallback | `const portRets=[]; for(let i=1;i<snaps.length;i++){ const start=snaps[i-1].mv\|\|0, end=snaps[i].mv\|\|0, flow=snaps[i].cashFlow\|\|0; if(start>0)portRets.push((end-flow)/start-1); }` |
-| `950db2e7722f5a3f` | generic OR zero | 10395 | `computeBenchmark` | calculation-sensitive numeric fallback | `const portRets=[]; for(let i=1;i<snaps.length;i++){ const start=snaps[i-1].mv\|\|0, end=snaps[i].mv\|\|0, flow=snaps[i].cashFlow\|\|0; if(start>0)portRets.push((end-flow)/start-1); }` |
 | `68c121b3682dd927` | truthy-value checks | 10401 | `computeBenchmark` | DOM/object presence guard | `if(!c){ out.innerHTML=\`<div class="banner info">Insufficient aligned data to compute capture ratios.</div>\`; return; }` |
 | `7bf1c9e69488bbcc` | truthy-value checks | 10435 | `wsNotificationsRender` | DOM/object presence guard | `const el=$("#notifOut"); if(!el)return;` |
 | `9404d0cc0a7f1ce7` | truthy-value checks | 10473 | `wsBreadcrumbs` | DOM/object presence guard | `const el=$("#breadcrumbs"); if(!el)return;` |
@@ -2030,9 +2069,6 @@ This file is generated from the deployable `dist/index.html`. Every regex lead f
 | `e389dd3e116db18d` | toFixed usage | 11795 | `wireGoldenValidation` | presentation/UI rounding | `${results.map(r=>\`<tr><td>${r.name}</td><td class="num">${typeof r.exp==="number"?r.exp.toFixed(4):"—"}</td><td class="num">${r.actual!=null?r.actual.toFixed(4):(r.err\|\|"—")}</td><td>${r.pass?pill("PASS","good"):pill("FAIL","bad")}</td></tr>\`).join("")}</tbody></table></div>\`; });` |
 | `a2578427e605503f` | generic OR zero | 11884 | `wsPerfRisk` | calculation-sensitive numeric fallback | `const sharpe= CalcEngine.sharpe(periodRets,0.02/annualFactor\|\|0.02/252);` |
 | `19400b41288f81f2` | generic OR zero | 11885 | `wsPerfRisk` | calculation-sensitive numeric fallback | `const sortino= CalcEngine.sortino(periodRets,0.02/annualFactor\|\|0.02/252);` |
-| `73f1c1d9a15607f1` | generic OR zero | 11907 | `periodReturnsArray` | calculation-sensitive numeric fallback | `function periodReturnsArray(snaps2){ const a=[]; for(let i=1;i<snaps2.length;i++){ const s=snaps2[i-1].mv\|\|0; const e=snaps2[i].mv\|\|0; const f=snaps2[i].cashFlow\|\|0; if(s>0)a.push((e-f)/s-1); } return a; }` |
-| `73f1c1d9a15607f1` | generic OR zero | 11907 | `periodReturnsArray` | calculation-sensitive numeric fallback | `function periodReturnsArray(snaps2){ const a=[]; for(let i=1;i<snaps2.length;i++){ const s=snaps2[i-1].mv\|\|0; const e=snaps2[i].mv\|\|0; const f=snaps2[i].cashFlow\|\|0; if(s>0)a.push((e-f)/s-1); } return a; }` |
-| `73f1c1d9a15607f1` | generic OR zero | 11907 | `periodReturnsArray` | calculation-sensitive numeric fallback | `function periodReturnsArray(snaps2){ const a=[]; for(let i=1;i<snaps2.length;i++){ const s=snaps2[i-1].mv\|\|0; const e=snaps2[i].mv\|\|0; const f=snaps2[i].cashFlow\|\|0; if(s>0)a.push((e-f)/s-1); } return a; }` |
 | `b1dfaa692df0c5e9` | truthy-value checks | 11947 | `periodReturnsArray` | DOM/object presence guard | `if(!rd)return "";` |
 | `12c3d4d2a08af5ac` | fallback-to-zero coercions | 11959 | `periodReturnsArray` | calculation-sensitive numeric fallback | `const b=$("#pf_snap"); if(b)b.addEventListener("click",()=>{ const mv2=Number($("#pf_mv").value)\|\|mv.mv\|\|0; const flow=Number($("#pf_flow").value)\|\|0;` |
 | `46e2cf57b7f8aae8` | generic OR zero | 11959 | `periodReturnsArray` | calculation-sensitive numeric fallback | `const b=$("#pf_snap"); if(b)b.addEventListener("click",()=>{ const mv2=Number($("#pf_mv").value)\|\|mv.mv\|\|0; const flow=Number($("#pf_flow").value)\|\|0;` |
@@ -2052,9 +2088,27 @@ This file is generated from the deployable `dist/index.html`. Every regex lead f
 | `c5fd04e381eba93b` | truthy-value checks | 12722 | `merton` | calculation-sensitive presence guard | `if(!eq)return {error:'Merton solver produced a non-finite state.',converged:false,pd:null,E,sigmaE,D,r,T};` |
 | `6f9527b623ced2cb` | truthy-value checks | 12726 | `merton` | calculation-sensitive presence guard | `if(!converged)return {error:'Merton solver did not converge to the requested tolerance.',converged:false,pd:null,V,sigmaV,d1:eq.d1,d2:eq.d2,distanceToDefault:eq.d2,E,sigmaE,D,r,T,iterations,residualEquity,residualVol};` |
 | `75de0cb65365124b` | generic OR zero | 12732 | `mertonTrace` | calculation-sensitive numeric fallback | `return {iterations:x.iterations\|\|0,converged:!!x.converged,residual:finite(x.residualEquity)?Math.abs(x.residualEquity):null,residualVol:finite(x.residualVol)?Math.abs(x.residualVol):null,distanceToDefault:finite(x.distanceToDefault)?x.distanceToDefault:null,pd:finite(x.pd)?x.pd:null,error:x.error\|\|null};` |
-| `5c0282a9fb526c69` | truthy-value checks | 12743 | `mertonTrace` | calculation-sensitive presence guard | `if(!Core){ console.error('Financial certification runtime: FinanceCore missing'); return; }` |
-| `313d8ce37164294e` | truthy-value checks | 12747 | `mertonTrace` | calculation-sensitive presence guard | `if(!ModelCore)installReport.warnings.push('FinancialModelCore missing; three-statement model is outside the expanded certification boundary.');` |
-| `088c1f9309fc6ca2` | truthy-value checks | 12748 | `mertonTrace` | calculation-sensitive presence guard | `if(!LegacyCore)installReport.warnings.push('LegacyCalculationCore missing; stress, portfolio and multi-method valuation remain outside the expanded certification boundary.');` |
-| `88517af14022c940` | truthy-value checks | 12749 | `mertonTrace` | calculation-sensitive presence guard | `if(!RiskCore)installReport.warnings.push('RiskCreditCore missing; VaR/ES, credit curves, Altman and Merton remain outside the expanded certification boundary.');` |
-| `67fa0ca520fef201` | truthy-value checks | 12753 | `mertonTrace` | calculation-sensitive presence guard | `const a=Core.abbreviate(v); if(!a) return '—';` |
-| `6782ec725bf36368` | Math.round usage | 12920 | `top-level/unknown` | presentation/UI rounding | `const lgd=1-recovery;return {pd,recovery,ead,lgd,el:Math.round(amount*100)/100};` |
+| `a6ff05064257af02` | truthy-value checks | 12810 | `preferenceScore` | calculation-sensitive presence guard | `const normalized=normalizeWeightObject(weights);if(!normalized)return null;` |
+| `f1cd594185990b1c` | Math.round usage | 12818 | `preferenceScore` | presentation/UI rounding | `return {score:Math.round(score),detail,weights:Object.assign({},weights)};` |
+| `ecc6fffc1dfd3cd9` | Math.round usage | 12831 | `dataQualityScore` | presentation/UI rounding | `const score=total>0?Math.round(earned/total*100):0;` |
+| `58ab9dcce1d3fb6e` | Math.round usage | 12845 | `peerDataCoverage` | presentation/UI rounding | `const coverage=covered/(5*peers.length);return {score:Math.round(coverage*100),coverage,n:peers.length};` |
+| `a98c4344888d1214` | Math.round usage | 12849 | `moatScore` | presentation/UI rounding | `return Math.round(values.reduce((s,v)=>s+v,0)/values.length);` |
+| `90c3f4df742f9f10` | truthy-value checks | 12853 | `factorExposure` | calculation-sensitive presence guard | `const norm=normalizeItems(items);if(!norm)return null;` |
+| `64e9433b0756f969` | Math.round usage | 12869 | `factorExposure` | presentation/UI rounding | `return Object.entries(exposures).map(([factor,exposure])=>({factor,exposure:Math.round(exposure*100)/100,risk:Math.abs(exposure)>.6?'High':Math.abs(exposure)>.3?'Medium':'Low'}));` |
+| `37f18cc5dc266dc0` | truthy-value checks | 12895 | `riskContribution` | calculation-sensitive presence guard | `const norm=normalizeItems(port.items);if(!norm)return null;` |
+| `db28f0d35ee8b9f9` | truthy-value checks | 12926 | `minimumVariance` | calculation-sensitive presence guard | `const cov=covarianceFromItems(items,corrMatrix);if(!cov)return null;` |
+| `6ebe1dae9c4d0c49` | truthy-value checks | 12940 | `maximumSharpe` | calculation-sensitive presence guard | `const cov=covarianceFromItems(items,corrMatrix);if(!cov)return null;` |
+| `b48fd9e62be33f6a` | truthy-value checks | 12941 | `maximumSharpe` | calculation-sensitive presence guard | `let w=minimumVariance(items,corrMatrix);if(!w)return null;` |
+| `5f633c2d34906b7e` | Infinity literals | 12944 | `maximumSharpe` | algorithm/parser sentinel | `return vr>EPS?(ret-riskFreeRate)/Math.sqrt(vr):-Infinity;` |
+| `9363d8354a5cf401` | truthy-value checks | 12952 | `maximumSharpe` | calculation-sensitive presence guard | `if(!improved){step*=.5;if(step<1e-7)break;}` |
+| `8fbd131fd8129e71` | truthy-value checks | 12958 | `riskParity` | calculation-sensitive presence guard | `const cov=covarianceFromItems(items,corrMatrix);if(!cov)return null;` |
+| `21da93e5cada76ee` | truthy-value checks | 12994 | `sumOfParts` | calculation-sensitive presence guard | `if(!p)return null;let value=null,source=null;` |
+| `fcafec5d6d68021e` | fallback-to-zero coercions | 13004 | `mulberry32` | calculation-sensitive numeric fallback | `function mulberry32(seed){let a=(Number(seed)\|\|0)>>>0;return function(){a\|=0;a=a+0x6D2B79F5\|0;let t=Math.imul(a^a>>>15,1\|a);t=t+Math.imul(t^t>>>7,61\|t)^t;return ((t^t>>>14)>>>0)/4294967296;};}` |
+| `5447e421fae7d39a` | generic OR zero | 13004 | `mulberry32` | calculation-sensitive numeric fallback | `function mulberry32(seed){let a=(Number(seed)\|\|0)>>>0;return function(){a\|=0;a=a+0x6D2B79F5\|0;let t=Math.imul(a^a>>>15,1\|a);t=t+Math.imul(t^t>>>7,61\|t)^t;return ((t^t>>>14)>>>0)/4294967296;};}` |
+| `46b95fc05cdf21fb` | truthy-value checks | 13041 | `timeWeightedReturnFromSnapshots` | calculation-sensitive presence guard | `const returns=periodReturnsFromSnapshots(snapshots);if(!returns)return null;` |
+| `a011805890de3a86` | truthy-value checks | 13097 | `captureRatios` | calculation-sensitive presence guard | `if(!Core){ console.error('Financial certification runtime: FinanceCore missing'); return; }` |
+| `d49734261a3fbd80` | truthy-value checks | 13101 | `captureRatios` | calculation-sensitive presence guard | `if(!ModelCore)installReport.warnings.push('FinancialModelCore missing; three-statement model is outside the expanded certification boundary.');` |
+| `a6fe3d30fea14e64` | truthy-value checks | 13102 | `captureRatios` | calculation-sensitive presence guard | `if(!LegacyCore)installReport.warnings.push('LegacyCalculationCore missing; stress, portfolio and multi-method valuation remain outside the expanded certification boundary.');` |
+| `86426789ea176b77` | truthy-value checks | 13103 | `captureRatios` | calculation-sensitive presence guard | `if(!RiskCore)installReport.warnings.push('RiskCreditCore missing; VaR/ES, credit curves, Altman and Merton remain outside the expanded certification boundary.');` |
+| `bfa04507a04ed455` | truthy-value checks | 13107 | `captureRatios` | calculation-sensitive presence guard | `const a=Core.abbreviate(v); if(!a) return '—';` |
+| `6782ec725bf36368` | Math.round usage | 13274 | `top-level/unknown` | presentation/UI rounding | `const lgd=1-recovery;return {pd,recovery,ead,lgd,el:Math.round(amount*100)/100};` |
