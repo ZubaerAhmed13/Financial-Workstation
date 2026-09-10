@@ -33,6 +33,7 @@ jobs:
           node -c src/finance/risk-credit-core.js
           node -c src/finance/workstation-core.js
           node -c src/finance/workstation-ledger-core.js
+          node -c src/finance/simulation-backtest-core.js
           node -c src/runtime/install.js
           node -c src/runtime/install-workstation.js
           node -c scripts/build.js
@@ -51,6 +52,7 @@ jobs:
           node -c tests/risk-credit-core.test.js
           node -c tests/workstation-core.test.js
           node -c tests/workstation-ledger-core.test.js
+          node -c tests/simulation-backtest-core.test.js
           node -c tests/workstation-runtime.test.js
           node -c tests/runtime-integration.test.js
 
