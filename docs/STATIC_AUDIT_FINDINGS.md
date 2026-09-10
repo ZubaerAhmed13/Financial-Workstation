@@ -3,31 +3,31 @@
 This file is generated from the deployable `dist/index.html`. Every regex lead from `scripts/static-audit.js` is enumerated with a source line, owner hint, stable fingerprint and contextual disposition. These are review leads, not automatic defects.
 
 - Target: `index.html`
-- Total pattern hits: **425**
-- Calculation-sensitive / algorithmic-review hits: **220**
+- Total pattern hits: **428**
+- Calculation-sensitive / algorithmic-review hits: **221**
 - Unclassified hits: **0**
 
 ## Counts by pattern
 
 | Pattern | Count |
 |---|---:|
-| truthy-value checks | 135 |
+| truthy-value checks | 138 |
 | Math.round usage | 53 |
 | Infinity literals | 13 |
-| generic OR zero | 173 |
+| generic OR zero | 172 |
 | toFixed usage | 22 |
 | parseInt usage | 3 |
-| fallback-to-zero coercions | 25 |
-| NaN literals | 1 |
+| fallback-to-zero coercions | 24 |
+| NaN literals | 3 |
 
 ## Counts by contextual disposition
 
 | Disposition | Count |
 |---|---:|
-| algorithm/parser sentinel | 14 |
+| algorithm/parser sentinel | 16 |
 | algorithmic rounding | 2 |
-| calculation-sensitive numeric fallback | 177 |
-| calculation-sensitive presence guard | 41 |
+| calculation-sensitive numeric fallback | 175 |
+| calculation-sensitive presence guard | 44 |
 | DOM/object presence guard | 94 |
 | general numeric/default fallback | 4 |
 | input/parser boundary | 3 |
@@ -554,27 +554,6 @@ This file is generated from the deployable `dist/index.html`. Every regex lead f
 - Disposition: **calculation-sensitive numeric fallback**
 - Match: `||0`
 - Source: `<div class="metricline"><span class="l">EAD (net debt)</span><span class="v">${sd&&sd.debt!=null?fmt.money((sd.debt||0)-(sd.cash||0)):"—"}</span></div></div>`
-
-### d962e1c1b4c6befa — fallback-to-zero coercions — line 4911
-
-- Owner hint: `portfolioRender`
-- Disposition: **calculation-sensitive numeric fallback**
-- Match: `Number($("#pw_"+i).value)||0`
-- Source: `if(saved.length){ wire("pf_build","click",()=>{ const items=saved.map((inv,i)=>{ const w=(Number($("#pw_"+i).value)||0)/100; return {name:inv.name,type:inv.type,assetClass:inv.type,weight:w,expectedReturn:inv.metrics.expectedReturn||0,volatility:inv.metrics.volatility||.2,sector:inv.type,country:"—",currency:App.state.settings.currency}; }); App.state.portfolio.weights=items.map(i=>i.weight); const port=PortfolioEngine.build(items); App.state.portfolio.result=port; renderPortfolio(port); StorageManager.save(); });`
-
-### f674417dc8e5853d — generic OR zero — line 4911
-
-- Owner hint: `portfolioRender`
-- Disposition: **calculation-sensitive numeric fallback**
-- Match: `||0`
-- Source: `if(saved.length){ wire("pf_build","click",()=>{ const items=saved.map((inv,i)=>{ const w=(Number($("#pw_"+i).value)||0)/100; return {name:inv.name,type:inv.type,assetClass:inv.type,weight:w,expectedReturn:inv.metrics.expectedReturn||0,volatility:inv.metrics.volatility||.2,sector:inv.type,country:"—",currency:App.state.settings.currency}; }); App.state.portfolio.weights=items.map(i=>i.weight); const port=PortfolioEngine.build(items); App.state.portfolio.result=port; renderPortfolio(port); StorageManager.save(); });`
-
-### f674417dc8e5853d — generic OR zero — line 4911
-
-- Owner hint: `portfolioRender`
-- Disposition: **calculation-sensitive numeric fallback**
-- Match: `||0`
-- Source: `if(saved.length){ wire("pf_build","click",()=>{ const items=saved.map((inv,i)=>{ const w=(Number($("#pw_"+i).value)||0)/100; return {name:inv.name,type:inv.type,assetClass:inv.type,weight:w,expectedReturn:inv.metrics.expectedReturn||0,volatility:inv.metrics.volatility||.2,sector:inv.type,country:"—",currency:App.state.settings.currency}; }); App.state.portfolio.weights=items.map(i=>i.weight); const port=PortfolioEngine.build(items); App.state.portfolio.result=port; renderPortfolio(port); StorageManager.save(); });`
 
 ### e2058aca023e9bdc — generic OR zero — line 5027
 
@@ -1556,23 +1535,51 @@ This file is generated from the deployable `dist/index.html`. Every regex lead f
 - Match: `.toFixed(`
 - Source: `if(marginVariance!=null&&Math.abs(marginVariance)>.005)warnings.push({severity:'CAUTION',code:'FM-MARGIN-001',year:y,message:\`Detailed cost assumptions imply EBITDA margin ${(mar*100).toFixed(2)}%, versus target ${(marginTarget*100).toFixed(2)}%.\`});`
 
-### d860d0ca31f4070c — truthy-value checks — line 12321
+### 6d003cf0dceb9b06 — truthy-value checks — line 12359
 
-- Owner hint: `computeCovenants`
+- Owner hint: `stressRun`
+- Disposition: **calculation-sensitive presence guard**
+- Match: `if(!base)`
+- Source: `if(!base)return null;`
+
+### 6708eebe7019f627 — generic OR zero — line 12412
+
+- Owner hint: `portfolioBuild`
+- Disposition: **calculation-sensitive numeric fallback**
+- Match: `||0`
+- Source: `const add=(obj,key,w)=>obj[key]=(obj[key]||0)+w;`
+
+### c36b68003c41e63d — truthy-value checks — line 12494
+
+- Owner hint: `valuationDrivers`
+- Disposition: **calculation-sensitive presence guard**
+- Match: `if(!base)`
+- Source: `if(!base)return null;`
+
+### 7bda6a74b7ca8f86 — truthy-value checks — line 12522
+
+- Owner hint: `valuationDrivers`
 - Disposition: **calculation-sensitive presence guard**
 - Match: `if(!Core)`
 - Source: `if(!Core){ console.error('Financial certification runtime: FinanceCore missing'); return; }`
 
-### 523a7d212da8943d — truthy-value checks — line 12325
+### ff1560b2e65c53ed — truthy-value checks — line 12526
 
-- Owner hint: `computeCovenants`
+- Owner hint: `valuationDrivers`
 - Disposition: **calculation-sensitive presence guard**
 - Match: `if(!ModelCore)`
 - Source: `if(!ModelCore)installReport.warnings.push('FinancialModelCore missing; three-statement model is outside the expanded certification boundary.');`
 
-### af4a9a6842780775 — truthy-value checks — line 12329
+### ad847014dfbf5511 — truthy-value checks — line 12527
 
-- Owner hint: `computeCovenants`
+- Owner hint: `valuationDrivers`
+- Disposition: **calculation-sensitive presence guard**
+- Match: `if(!LegacyCore)`
+- Source: `if(!LegacyCore)installReport.warnings.push('LegacyCalculationCore missing; stress, portfolio and multi-method valuation remain outside the expanded certification boundary.');`
+
+### c6247588dc5a370e — truthy-value checks — line 12531
+
+- Owner hint: `valuationDrivers`
 - Disposition: **calculation-sensitive presence guard**
 - Match: `if(!a)`
 - Source: `const a=Core.abbreviate(v); if(!a) return '—';`
@@ -1728,10 +1735,8 @@ This file is generated from the deployable `dist/index.html`. Every regex lead f
 | `e45caab7a86c53c6` | generic OR zero | 4793 | `whatWouldChange` | calculation-sensitive numeric fallback | `const base={revenue0:sd.revenue0\|\|sd.revenue, tax:sd.tax\|\|.21, capexPct:sd.capexPct\|\|.06, wcPct:sd.wcPct\|\|.02, dandaPct:sd.dandaPct\|\|.05, wacc:sd.wacc\|\|.09, terminalGrowth:sd.terminalGrowth\|\|.025, netDebt:sd.netDebt!=null?sd.netDebt:((sd.debt\|\|0)-(sd.cash\|\|0)), shares:sd.shares\|\|1, horizon:sd.horizon\|\|5, growth:sd.growth\|\|.1, ebitdaMargin:sd.ebitdaMargin\|\|.2};` |
 | `6d48855bf75399e4` | generic OR zero | 4831 | `riskDashboardHTML` | calculation-sensitive numeric fallback | `<div class="metricline"><span class="l">EAD (net debt)</span><span class="v">${sd&&sd.debt!=null?fmt.money((sd.debt\|\|0)-(sd.cash\|\|0)):"—"}</span></div></div>` |
 | `6d48855bf75399e4` | generic OR zero | 4831 | `riskDashboardHTML` | calculation-sensitive numeric fallback | `<div class="metricline"><span class="l">EAD (net debt)</span><span class="v">${sd&&sd.debt!=null?fmt.money((sd.debt\|\|0)-(sd.cash\|\|0)):"—"}</span></div></div>` |
-| `d962e1c1b4c6befa` | fallback-to-zero coercions | 4911 | `portfolioRender` | calculation-sensitive numeric fallback | `if(saved.length){ wire("pf_build","click",()=>{ const items=saved.map((inv,i)=>{ const w=(Number($("#pw_"+i).value)\|\|0)/100; return {name:inv.name,type:inv.type,assetClass:inv.type,weight:w,expectedReturn:inv.metrics.expectedReturn\|\|0,volatility:inv.metrics.volatility\|\|.2,sector:inv.type,country:"—",currency:App.state.settings.currency}; }); App.state.portfolio.weights=items.map(i=>i.weight); const port=PortfolioEngine.build(items); App.state.portfolio.result=port; renderPortfolio(port); StorageManager.save(); });` |
-| `f674417dc8e5853d` | generic OR zero | 4911 | `portfolioRender` | calculation-sensitive numeric fallback | `if(saved.length){ wire("pf_build","click",()=>{ const items=saved.map((inv,i)=>{ const w=(Number($("#pw_"+i).value)\|\|0)/100; return {name:inv.name,type:inv.type,assetClass:inv.type,weight:w,expectedReturn:inv.metrics.expectedReturn\|\|0,volatility:inv.metrics.volatility\|\|.2,sector:inv.type,country:"—",currency:App.state.settings.currency}; }); App.state.portfolio.weights=items.map(i=>i.weight); const port=PortfolioEngine.build(items); App.state.portfolio.result=port; renderPortfolio(port); StorageManager.save(); });` |
-| `f674417dc8e5853d` | generic OR zero | 4911 | `portfolioRender` | calculation-sensitive numeric fallback | `if(saved.length){ wire("pf_build","click",()=>{ const items=saved.map((inv,i)=>{ const w=(Number($("#pw_"+i).value)\|\|0)/100; return {name:inv.name,type:inv.type,assetClass:inv.type,weight:w,expectedReturn:inv.metrics.expectedReturn\|\|0,volatility:inv.metrics.volatility\|\|.2,sector:inv.type,country:"—",currency:App.state.settings.currency}; }); App.state.portfolio.weights=items.map(i=>i.weight); const port=PortfolioEngine.build(items); App.state.portfolio.result=port; renderPortfolio(port); StorageManager.save(); });` |
-| `a3cad65d3172a3b3` | truthy-value checks | 4914 | `renderPortfolio` | DOM/object presence guard | `function renderPortfolio(port){ if(!port)return;` |
+| `e1d6d7e71d0c741a` | NaN literals | 4911 | `portfolioRender` | algorithm/parser sentinel | `if(saved.length){ wire("pf_build","click",()=>{ const items=saved.map((inv,i)=>{ const rawW=Number($("#pw_"+i).value); const w=Number.isFinite(rawW)?rawW/100:NaN; return {name:inv.name,type:inv.type,assetClass:inv.type,weight:w,expectedReturn:inv.metrics.expectedReturn!=null?inv.metrics.expectedReturn:null,volatility:inv.metrics.volatility!=null?inv.metrics.volatility:null,sector:inv.type,country:"—",currency:App.state.settings.currency}; }); App.state.portfolio.weights=items.map(i=>i.weight); const port=PortfolioEngine.build(items); App.state.portfolio.result=port; renderPortfolio(port); StorageManager.save(); });` |
+| `7955e3fac137232d` | truthy-value checks | 4914 | `renderPortfolio` | DOM/object presence guard | `function renderPortfolio(port){ if(!port){ const o=$("#pfOut"); if(o)o.innerHTML=\`<div class="banner warn">Portfolio calculation requires positive total weight and finite expected-return/volatility inputs for every included asset.</div>\`; return; }` |
 | `e2058aca023e9bdc` | generic OR zero | 5027 | `assumptions` | calculation-sensitive numeric fallback | `netDebt:A("netDebt", sd.netDebt!=null?sd.netDebt:((sd.debt\|\|0)-(sd.cash\|\|0))),` |
 | `e2058aca023e9bdc` | generic OR zero | 5027 | `assumptions` | calculation-sensitive numeric fallback | `netDebt:A("netDebt", sd.netDebt!=null?sd.netDebt:((sd.debt\|\|0)-(sd.cash\|\|0))),` |
 | `cce24c73902c4ce3` | generic OR zero | 5033 | `assumptions` | calculation-sensitive numeric fallback | `debt:A("debt", sd.debt\|\|0),` |
@@ -2002,7 +2007,12 @@ This file is generated from the deployable `dist/index.html`. Every regex lead f
 | `fb8496ab76cfe239` | Math.round usage | 12126 | `bondPeriods` | presentation/UI rounding | `function bondPeriods(years,frequency){ asFinite(years,'years'); if(!validPeriod(frequency)\|\|years<=0)throw new RangeError('positive years and integer frequency required'); const n=years*frequency; if(Math.abs(n-Math.round(n))>1e-9)throw new RangeError('years × frequency must be an integer number of periods'); return Math.round(n); }` |
 | `281850d60ebd0b14` | toFixed usage | 12282 | `build` | algorithmic rounding | `if(marginVariance!=null&&Math.abs(marginVariance)>.005)warnings.push({severity:'CAUTION',code:'FM-MARGIN-001',year:y,message:\`Detailed cost assumptions imply EBITDA margin ${(mar*100).toFixed(2)}%, versus target ${(marginTarget*100).toFixed(2)}%.\`});` |
 | `281850d60ebd0b14` | toFixed usage | 12282 | `build` | algorithmic rounding | `if(marginVariance!=null&&Math.abs(marginVariance)>.005)warnings.push({severity:'CAUTION',code:'FM-MARGIN-001',year:y,message:\`Detailed cost assumptions imply EBITDA margin ${(mar*100).toFixed(2)}%, versus target ${(marginTarget*100).toFixed(2)}%.\`});` |
-| `d860d0ca31f4070c` | truthy-value checks | 12321 | `computeCovenants` | calculation-sensitive presence guard | `if(!Core){ console.error('Financial certification runtime: FinanceCore missing'); return; }` |
-| `523a7d212da8943d` | truthy-value checks | 12325 | `computeCovenants` | calculation-sensitive presence guard | `if(!ModelCore)installReport.warnings.push('FinancialModelCore missing; three-statement model is outside the expanded certification boundary.');` |
-| `af4a9a6842780775` | truthy-value checks | 12329 | `computeCovenants` | calculation-sensitive presence guard | `const a=Core.abbreviate(v); if(!a) return '—';` |
-| `653edf9ba4ee51b8` | Math.round usage | 12443 | `top-level/unknown` | presentation/UI rounding | `const lgd=1-recovery;return {pd,recovery,ead,lgd,el:Math.round(pd*lgd*ead*100)/100};` |
+| `6d003cf0dceb9b06` | truthy-value checks | 12359 | `stressRun` | calculation-sensitive presence guard | `if(!base)return null;` |
+| `6708eebe7019f627` | generic OR zero | 12412 | `portfolioBuild` | calculation-sensitive numeric fallback | `const add=(obj,key,w)=>obj[key]=(obj[key]\|\|0)+w;` |
+| `b8b57f05a3a70d60` | NaN literals | 12425 | `portfolioStress` | algorithm/parser sentinel | `const totalWeight=port.items.reduce((s,x)=>s+(finite(x.weight)?x.weight:NaN),0);` |
+| `c36b68003c41e63d` | truthy-value checks | 12494 | `valuationDrivers` | calculation-sensitive presence guard | `if(!base)return null;` |
+| `7bda6a74b7ca8f86` | truthy-value checks | 12522 | `valuationDrivers` | calculation-sensitive presence guard | `if(!Core){ console.error('Financial certification runtime: FinanceCore missing'); return; }` |
+| `ff1560b2e65c53ed` | truthy-value checks | 12526 | `valuationDrivers` | calculation-sensitive presence guard | `if(!ModelCore)installReport.warnings.push('FinancialModelCore missing; three-statement model is outside the expanded certification boundary.');` |
+| `ad847014dfbf5511` | truthy-value checks | 12527 | `valuationDrivers` | calculation-sensitive presence guard | `if(!LegacyCore)installReport.warnings.push('LegacyCalculationCore missing; stress, portfolio and multi-method valuation remain outside the expanded certification boundary.');` |
+| `c6247588dc5a370e` | truthy-value checks | 12531 | `valuationDrivers` | calculation-sensitive presence guard | `const a=Core.abbreviate(v); if(!a) return '—';` |
+| `653edf9ba4ee51b8` | Math.round usage | 12645 | `top-level/unknown` | presentation/UI rounding | `const lgd=1-recovery;return {pd,recovery,ead,lgd,el:Math.round(pd*lgd*ead*100)/100};` |
