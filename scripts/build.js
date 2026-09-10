@@ -11,13 +11,14 @@ const legacyEngine=fs.readFileSync(path.join(root,'src/finance/legacy-hardening.
 const riskCreditEngine=fs.readFileSync(path.join(root,'src/finance/risk-credit-core.js'),'utf8').trim();
 const workstationEngine=fs.readFileSync(path.join(root,'src/finance/workstation-core.js'),'utf8').trim();
 const workstationLedgerEngine=fs.readFileSync(path.join(root,'src/finance/workstation-ledger-core.js'),'utf8').trim();
+const simulationBacktestEngine=fs.readFileSync(path.join(root,'src/finance/simulation-backtest-core.js'),'utf8').trim();
 const installer=fs.readFileSync(path.join(root,'src/runtime/install.js'),'utf8').trim();
 const workstationInstaller=fs.readFileSync(path.join(root,'src/runtime/install-workstation.js'),'utf8').trim();
 let html=fs.readFileSync(indexPath,'utf8');
 
 const START='/* FINANCIAL_CERTIFICATION_RUNTIME_START */';
 const END='/* FINANCIAL_CERTIFICATION_RUNTIME_END */';
-const block=`${START}\n${engine}\n${modelEngine}\n${legacyEngine}\n${riskCreditEngine}\n${workstationEngine}\n${workstationLedgerEngine}\n${installer}\n${workstationInstaller}\n${END}\n`;
+const block=`${START}\n${engine}\n${modelEngine}\n${legacyEngine}\n${riskCreditEngine}\n${workstationEngine}\n${workstationLedgerEngine}\n${simulationBacktestEngine}\n${installer}\n${workstationInstaller}\n${END}\n`;
 const existing=new RegExp(escapeRegExp(START)+'[\\s\\S]*?'+escapeRegExp(END)+'\\n?','g');
 html=html.replace(existing,'');
 
@@ -143,6 +144,6 @@ if(durationPatches<1 && !html.includes('BondEngine.modifiedDuration(mac,ytm,freq
 fs.mkdirSync(distDir,{recursive:true});
 fs.writeFileSync(distPath,html);
 if(process.argv.includes('--write-root')) fs.writeFileSync(indexPath,html);
-console.log(JSON.stringify({output:path.relative(root,distPath),bytes:Buffer.byteLength(html),durationPatches,svgFactoryPatches,mixColorPatches,debtRatePatches,covenantPatches,portfolioInputPatches,portfolioRenderPatches,riskFrequencyPatches,eclBoundaryPatches,mertonWaterfallPatches,scenarioProbabilityPatches,valuationUncertaintyPatches,periodReturnPatches,benchmarkReturnPatches,segmentCalcPatches,sotpCalcPatches,rootUpdated:process.argv.includes('--write-root')},null,2));
+console.log(JSON.stringify({output:path.relative(root,distPath),bytes:Buffer.byteLength(html),durationPatches,svgFactoryPatches,mixColorPatches,debtRatePatches,covenantPatches,portfolioInputPatches,portfolioRenderPatches,riskFrequencyPatches,eclBoundaryPatches,mertonWaterfallPatches,scenarioProbabilityPatches,valuationUncertaintyPatches,periodReturnPatches,benchmarkReturnPatches,segmentCalcPatches,sotpCalcPatches,simulationBacktestEmbedded:true,rootUpdated:process.argv.includes('--write-root')},null,2));
 
 function escapeRegExp(s){return s.replace(/[.*+?^${}()|[\]\\]/g,'\\$&');}
