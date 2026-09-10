@@ -11702,7 +11702,7 @@ function wireCreditPanels(){
         ${kpi("PD (1yr)",fmt.pct(ecl.pd,2),"model-based estimate")}
         ${kpi("LGD",fmt.pct(ecl.lgd),`recovery ${fmt.pct(ecl.recovery)}`)}
         ${kpi("EAD",fmt.money(ecl.ead),"net debt / exposure")}
-        ${kpi("Expected Loss",fmt.money(ecl.el),ecl.el!=null&&ecl.ead>0?ecl.el!=null&&ecl.ead>0?ecl.el!=null&&ecl.ead>0?fmt.pct(ecl.el/ecl.ead,2)+" of EAD":ecl.ead===0?"0 exposure":"—":ecl.ead===0?"0 exposure":"—":ecl.ead===0?"0 exposure":"—")}
+        ${kpi("Expected Loss",fmt.money(ecl.el),ecl.el!=null&&ecl.ead>0?ecl.el!=null&&ecl.ead>0?ecl.el!=null&&ecl.ead>0?ecl.el!=null&&ecl.ead>0?fmt.pct(ecl.el/ecl.ead,2)+" of EAD":ecl.ead===0?"0 exposure":"—":ecl.ead===0?"0 exposure":"—":ecl.ead===0?"0 exposure":"—":ecl.ead===0?"0 exposure":"—")}
       </div>
       <div class="banner info">Expected Loss = PD × (1 − Recovery) × EAD. All components are model estimates or user inputs — not guaranteed.</div>
       </div>`);
