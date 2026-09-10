@@ -94,7 +94,7 @@ Not located.
  8540 |       ${kpi("Valuation confidence",u.conf+"/100","dispersion "+fmt.pct(u.dispersion,1))}
 ```
 
-## function factorExposure — 1 hit(s)
+## function factorExposure — 2 hit(s)
 
 ### line 6973
 
@@ -178,7 +178,89 @@ Not located.
  7037 |   <div class="small dim">Allocation and selection effects are simplified estimates. Attribution is only meaningful when actual asset returns and weights are accurate; do not fabricate attribution when data is insufficient.</div>
 ```
 
-## function performanceAttribution — 1 hit(s)
+### line 12852
+
+```js
+12840 |       if(p&&finite(p.growth))covered++;
+12841 |       if(p&&finite(p.margin))covered++;
+12842 |       if(p&&finite(p.roe))covered++;
+12843 |       if(p&&finite(p.multiple))covered++;
+12844 |     }
+12845 |     const coverage=covered/(5*peers.length);return {score:Math.round(coverage*100),coverage,n:peers.length};
+12846 |   }
+12847 |   function moatScore(values){
+12848 |     if(!Array.isArray(values)||!values.length||values.some(v=>!finite(v)||v<0||v>100))return null;
+12849 |     return Math.round(values.reduce((s,v)=>s+v,0)/values.length);
+12850 |   }
+12851 | 
+12852 |   function factorExposure(items){
+12853 |     const norm=normalizeItems(items);if(!norm)return null;
+12854 |     const exposures={Market:1,Size:0,Value:0,Growth:0,Momentum:0,Quality:0,LowVol:0};
+12855 |     for(const b of norm.items){
+12856 |       const w=b.normalizedWeight,t=String(b.type||b.assetClass||'').toLowerCase();
+12857 |       if(t.includes('stock')||t.includes('equity')){
+12858 |         const vol=finite(b.volatility)?b.volatility:.25;
+12859 |         const ret=finite(b.expectedReturn)?b.expectedReturn:.1;
+12860 |         const mos=finite(b.marginOfSafety)?b.marginOfSafety:0;
+12861 |         exposures.Size+=w*.5;
+12862 |         exposures.Value+=w*(mos>.1?1:mos>-.1?0:-1);
+12863 |         exposures.Growth+=w*(ret>.15?1:ret>.08?0:-1);
+12864 |         exposures.Momentum+=w*(ret>.12?1:-.3);
+12865 |         exposures.Quality+=w*(mos>-.05?.5:-.5);
+12866 |         exposures.LowVol+=w*(vol<.2?1:vol>.4?-1:0);
+12867 |       }
+12868 |     }
+12869 |     return Object.entries(exposures).map(([factor,exposure])=>({factor,exposure:Math.round(exposure*100)/100,risk:Math.abs(exposure)>.6?'High':Math.abs(exposure)>.3?'Medium':'Low'}));
+12870 |   }
+12871 |   function performanceAttribution(items,benchmarkRet){
+12872 |     const norm=normalizeItems(items);if(!norm||!finite(benchmarkRet))return null;
+12873 |     if(norm.items.some(x=>!finite(x.expectedReturn)))return null;
+12874 |     let totalPortRet=0,allocationProxy=0;const rows=[];
+12875 |     for(const b of norm.items){
+12876 |       const w=b.normalizedWeight,r=b.expectedReturn,active=r-benchmarkRet;
+12877 |       const contribution=w*r,alloc=w*active;
+12878 |       totalPortRet+=contribution;allocationProxy+=alloc;
+12879 |       rows.push({name:b.name,weight:w,return:r,contribution,allocation:alloc,selection:null});
+12880 |     }
+12881 |     return {rows,allocEffect:allocationProxy,selectionEffect:null,totalPortRet,benchmark:benchmarkRet,activeReturn:totalPortRet-benchmarkRet,methodology:'single-benchmark allocation proxy; selection unavailable without benchmark constituent weights/returns'};
+12882 |   }
+12883 | 
+12884 |   function validateCorrelationMatrix(corr,n){
+12885 |     if(!Array.isArray(corr)||corr.length!==n)return false;
+12886 |     for(let i=0;i<n;i++){
+12887 |       if(!Array.isArray(corr[i])||corr[i].length!==n)return false;
+12888 |       for(let j=0;j<n;j++)if(!finite(corr[i][j])||corr[i][j]<-1||corr[i][j]>1||Math.abs(corr[i][j]-corr[j]?.[i])>1e-8)return false;
+12889 |       if(Math.abs(corr[i][i]-1)>1e-8)return false;
+12890 |     }
+12891 |     return true;
+12892 |   }
+12893 |   function riskContribution(port,corrMatrix){
+12894 |     if(!port||!Array.isArray(port.items)||port.items.length<2)return null;
+12895 |     const norm=normalizeItems(port.items);if(!norm)return null;
+12896 |     const items=norm.items,n=items.length;
+12897 |     if(items.some(x=>!finite(x.volatility)||x.volatility<0))return null;
+12898 |     const corr=corrMatrix||Array.from({length:n},(_,i)=>Array.from({length:n},(_,j)=>i===j?1:.4));
+12899 |     if(!validateCorrelationMatrix(corr,n))return null;
+12900 |     const weights=items.map(x=>x.normalizedWeight),vols=items.map(x=>x.volatility);
+12901 |     let varP=0;for(let i=0;i<n;i++)for(let j=0;j<n;j++)varP+=weights[i]*weights[j]*vols[i]*vols[j]*corr[i][j];
+12902 |     if(varP<0&&varP>-EPS)varP=0;if(!finite(varP)||varP<0)return null;
+12903 |     const volP=Math.sqrt(varP);
+12904 |     const rows=items.map((b,i)=>{
+12905 |       let covarianceWithPortfolio=0;for(let j=0;j<n;j++)covarianceWithPortfolio+=weights[j]*vols[i]*vols[j]*corr[i][j];
+12906 |       const mcr=volP>EPS?covarianceWithPortfolio/volP:null;
+12907 |       const component=mcr==null?null:weights[i]*mcr;
+12908 |       const riskShare=varP>EPS?weights[i]*covarianceWithPortfolio/varP:null;
+12909 |       return {name:b.name,weight:weights[i],volatility:vols[i],mcr,component,riskShare};
+12910 |     });
+12911 |     return {rows,volP,varP};
+12912 |   }
+12913 | 
+12914 |   function covarianceFromItems(items,corrMatrix){
+12915 |     if(!Array.isArray(items)||!items.length||items.some(x=>!x||!finite(x.volatility)||x.volatility<0))return null;
+12916 |     const n=items.length;
+```
+
+## function performanceAttribution — 2 hit(s)
 
 ### line 7020
 
@@ -262,7 +344,89 @@ Not located.
  7084 |     orig.call(this,port);
 ```
 
-## function minimumVariance — 1 hit(s)
+### line 12871
+
+```js
+12859 |         const ret=finite(b.expectedReturn)?b.expectedReturn:.1;
+12860 |         const mos=finite(b.marginOfSafety)?b.marginOfSafety:0;
+12861 |         exposures.Size+=w*.5;
+12862 |         exposures.Value+=w*(mos>.1?1:mos>-.1?0:-1);
+12863 |         exposures.Growth+=w*(ret>.15?1:ret>.08?0:-1);
+12864 |         exposures.Momentum+=w*(ret>.12?1:-.3);
+12865 |         exposures.Quality+=w*(mos>-.05?.5:-.5);
+12866 |         exposures.LowVol+=w*(vol<.2?1:vol>.4?-1:0);
+12867 |       }
+12868 |     }
+12869 |     return Object.entries(exposures).map(([factor,exposure])=>({factor,exposure:Math.round(exposure*100)/100,risk:Math.abs(exposure)>.6?'High':Math.abs(exposure)>.3?'Medium':'Low'}));
+12870 |   }
+12871 |   function performanceAttribution(items,benchmarkRet){
+12872 |     const norm=normalizeItems(items);if(!norm||!finite(benchmarkRet))return null;
+12873 |     if(norm.items.some(x=>!finite(x.expectedReturn)))return null;
+12874 |     let totalPortRet=0,allocationProxy=0;const rows=[];
+12875 |     for(const b of norm.items){
+12876 |       const w=b.normalizedWeight,r=b.expectedReturn,active=r-benchmarkRet;
+12877 |       const contribution=w*r,alloc=w*active;
+12878 |       totalPortRet+=contribution;allocationProxy+=alloc;
+12879 |       rows.push({name:b.name,weight:w,return:r,contribution,allocation:alloc,selection:null});
+12880 |     }
+12881 |     return {rows,allocEffect:allocationProxy,selectionEffect:null,totalPortRet,benchmark:benchmarkRet,activeReturn:totalPortRet-benchmarkRet,methodology:'single-benchmark allocation proxy; selection unavailable without benchmark constituent weights/returns'};
+12882 |   }
+12883 | 
+12884 |   function validateCorrelationMatrix(corr,n){
+12885 |     if(!Array.isArray(corr)||corr.length!==n)return false;
+12886 |     for(let i=0;i<n;i++){
+12887 |       if(!Array.isArray(corr[i])||corr[i].length!==n)return false;
+12888 |       for(let j=0;j<n;j++)if(!finite(corr[i][j])||corr[i][j]<-1||corr[i][j]>1||Math.abs(corr[i][j]-corr[j]?.[i])>1e-8)return false;
+12889 |       if(Math.abs(corr[i][i]-1)>1e-8)return false;
+12890 |     }
+12891 |     return true;
+12892 |   }
+12893 |   function riskContribution(port,corrMatrix){
+12894 |     if(!port||!Array.isArray(port.items)||port.items.length<2)return null;
+12895 |     const norm=normalizeItems(port.items);if(!norm)return null;
+12896 |     const items=norm.items,n=items.length;
+12897 |     if(items.some(x=>!finite(x.volatility)||x.volatility<0))return null;
+12898 |     const corr=corrMatrix||Array.from({length:n},(_,i)=>Array.from({length:n},(_,j)=>i===j?1:.4));
+12899 |     if(!validateCorrelationMatrix(corr,n))return null;
+12900 |     const weights=items.map(x=>x.normalizedWeight),vols=items.map(x=>x.volatility);
+12901 |     let varP=0;for(let i=0;i<n;i++)for(let j=0;j<n;j++)varP+=weights[i]*weights[j]*vols[i]*vols[j]*corr[i][j];
+12902 |     if(varP<0&&varP>-EPS)varP=0;if(!finite(varP)||varP<0)return null;
+12903 |     const volP=Math.sqrt(varP);
+12904 |     const rows=items.map((b,i)=>{
+12905 |       let covarianceWithPortfolio=0;for(let j=0;j<n;j++)covarianceWithPortfolio+=weights[j]*vols[i]*vols[j]*corr[i][j];
+12906 |       const mcr=volP>EPS?covarianceWithPortfolio/volP:null;
+12907 |       const component=mcr==null?null:weights[i]*mcr;
+12908 |       const riskShare=varP>EPS?weights[i]*covarianceWithPortfolio/varP:null;
+12909 |       return {name:b.name,weight:weights[i],volatility:vols[i],mcr,component,riskShare};
+12910 |     });
+12911 |     return {rows,volP,varP};
+12912 |   }
+12913 | 
+12914 |   function covarianceFromItems(items,corrMatrix){
+12915 |     if(!Array.isArray(items)||!items.length||items.some(x=>!x||!finite(x.volatility)||x.volatility<0))return null;
+12916 |     const n=items.length;
+12917 |     const corr=corrMatrix||Array.from({length:n},(_,i)=>Array.from({length:n},(_,j)=>i===j?1:.4));
+12918 |     if(!validateCorrelationMatrix(corr,n))return null;
+12919 |     return corr.map((row,i)=>row.map((rho,j)=>rho*items[i].volatility*items[j].volatility));
+12920 |   }
+12921 |   function equalWeight(items){
+12922 |     if(!Array.isArray(items)||!items.length)return null;return Array(items.length).fill(1/items.length);
+12923 |   }
+12924 |   function minimumVariance(items,corrMatrix){
+12925 |     if(!Array.isArray(items)||items.length<2)return null;
+12926 |     const cov=covarianceFromItems(items,corrMatrix);if(!cov)return null;
+12927 |     const invVol=items.map(x=>x.volatility>EPS?1/x.volatility:1/EPS);const s=invVol.reduce((a,b)=>a+b,0);
+12928 |     let w=invVol.map(v=>v/s);
+12929 |     const step=.08;
+12930 |     for(let it=0;it<2500;it++){
+12931 |       const grad=w.map((_,i)=>2*cov[i].reduce((acc,c,j)=>acc+c*w[j],0));
+12932 |       let next=w.map((x,i)=>Math.max(0,x-step*grad[i]));const z=next.reduce((a,b)=>a+b,0);
+12933 |       if(z<=EPS)return null;next=next.map(x=>x/z);
+12934 |       const diff=next.reduce((m,x,i)=>Math.max(m,Math.abs(x-w[i])),0);w=next;if(diff<1e-12)break;
+12935 |     }
+```
+
+## function minimumVariance — 2 hit(s)
 
 ### line 9122
 
@@ -346,7 +510,89 @@ Not located.
  9186 | 
 ```
 
-## function maximumSharpe — 1 hit(s)
+### line 12924
+
+```js
+12912 |   }
+12913 | 
+12914 |   function covarianceFromItems(items,corrMatrix){
+12915 |     if(!Array.isArray(items)||!items.length||items.some(x=>!x||!finite(x.volatility)||x.volatility<0))return null;
+12916 |     const n=items.length;
+12917 |     const corr=corrMatrix||Array.from({length:n},(_,i)=>Array.from({length:n},(_,j)=>i===j?1:.4));
+12918 |     if(!validateCorrelationMatrix(corr,n))return null;
+12919 |     return corr.map((row,i)=>row.map((rho,j)=>rho*items[i].volatility*items[j].volatility));
+12920 |   }
+12921 |   function equalWeight(items){
+12922 |     if(!Array.isArray(items)||!items.length)return null;return Array(items.length).fill(1/items.length);
+12923 |   }
+12924 |   function minimumVariance(items,corrMatrix){
+12925 |     if(!Array.isArray(items)||items.length<2)return null;
+12926 |     const cov=covarianceFromItems(items,corrMatrix);if(!cov)return null;
+12927 |     const invVol=items.map(x=>x.volatility>EPS?1/x.volatility:1/EPS);const s=invVol.reduce((a,b)=>a+b,0);
+12928 |     let w=invVol.map(v=>v/s);
+12929 |     const step=.08;
+12930 |     for(let it=0;it<2500;it++){
+12931 |       const grad=w.map((_,i)=>2*cov[i].reduce((acc,c,j)=>acc+c*w[j],0));
+12932 |       let next=w.map((x,i)=>Math.max(0,x-step*grad[i]));const z=next.reduce((a,b)=>a+b,0);
+12933 |       if(z<=EPS)return null;next=next.map(x=>x/z);
+12934 |       const diff=next.reduce((m,x,i)=>Math.max(m,Math.abs(x-w[i])),0);w=next;if(diff<1e-12)break;
+12935 |     }
+12936 |     return w;
+12937 |   }
+12938 |   function maximumSharpe(items,corrMatrix,riskFreeRate=0){
+12939 |     if(!Array.isArray(items)||items.length<2||!finite(riskFreeRate)||items.some(x=>!finite(x.expectedReturn)))return null;
+12940 |     const cov=covarianceFromItems(items,corrMatrix);if(!cov)return null;
+12941 |     let w=minimumVariance(items,corrMatrix);if(!w)return null;
+12942 |     const objective=x=>{
+12943 |       const ret=x.reduce((s,v,i)=>s+v*items[i].expectedReturn,0);let vr=0;for(let i=0;i<x.length;i++)for(let j=0;j<x.length;j++)vr+=x[i]*x[j]*cov[i][j];
+12944 |       return vr>EPS?(ret-riskFreeRate)/Math.sqrt(vr):-Infinity;
+12945 |     };
+12946 |     let best=objective(w),step=.08;
+12947 |     for(let it=0;it<3000;it++){
+12948 |       let improved=false;
+12949 |       for(let i=0;i<w.length;i++)for(let j=0;j<w.length;j++)if(i!==j&&w[j]>0){
+12950 |         const d=Math.min(step,w[j]),x=w.slice();x[i]+=d;x[j]-=d;const q=objective(x);if(q>best+1e-12){w=x;best=q;improved=true;}
+12951 |       }
+12952 |       if(!improved){step*=.5;if(step<1e-7)break;}
+12953 |     }
+12954 |     return w;
+12955 |   }
+12956 |   function riskParity(items,corrMatrix){
+12957 |     if(!Array.isArray(items)||items.length<2)return null;
+12958 |     const cov=covarianceFromItems(items,corrMatrix);if(!cov)return null;
+12959 |     let w=equalWeight(items);
+12960 |     for(let it=0;it<3000;it++){
+12961 |       const marginal=w.map((_,i)=>cov[i].reduce((s,c,j)=>s+c*w[j],0));
+12962 |       const contrib=w.map((x,i)=>x*marginal[i]);
+12963 |       const target=contrib.reduce((a,b)=>a+b,0)/w.length;
+12964 |       if(!finite(target)||target<=EPS){
+12965 |         if(items.every(x=>x.volatility<=EPS))return equalWeight(items);
+12966 |         return null;
+12967 |       }
+12968 |       const next=w.map((x,i)=>contrib[i]>EPS?x*Math.sqrt(target/contrib[i]):x);
+12969 |       const sum=next.reduce((a,b)=>a+b,0);if(sum<=EPS)return null;
+12970 |       for(let i=0;i<next.length;i++)next[i]/=sum;
+12971 |       const diff=next.reduce((m,x,i)=>Math.max(m,Math.abs(x-w[i])),0);w=next;if(diff<1e-10)break;
+12972 |     }
+12973 |     return w;
+12974 |   }
+12975 | 
+12976 |   function segmentForecast(totalRevenue,segments,years){
+12977 |     if(!finite(totalRevenue)||totalRevenue<0||!Number.isInteger(years)||years<=0||!Array.isArray(segments)||!segments.length)return null;
+12978 |     const out=[];let shareTotal=0;
+12979 |     for(const s of segments){
+12980 |       if(!s||!finite(s.share)||s.share<0||!Array.isArray(s.growth)||!Array.isArray(s.margin)||s.growth.length<years||s.margin.length<years)return null;
+12981 |       if(s.growth.slice(0,years).some(v=>!finite(v)||v<=-1)||s.margin.slice(0,years).some(v=>!finite(v)))return null;
+12982 |       shareTotal+=s.share;let r=totalRevenue*s.share;const revs=[];
+12983 |       for(let y=0;y<years;y++){revs.push(r);r*=1+s.growth[y];if(!finite(r))return null;}
+12984 |       out.push({name:s.name,revs,margins:s.margin.slice(0,years)});
+12985 |     }
+12986 |     const totalRevs=Array(years).fill(0),totalEbitda=Array(years).fill(0);
+12987 |     for(const s of out)for(let y=0;y<years;y++){totalRevs[y]+=s.revs[y];totalEbitda[y]+=s.revs[y]*s.margins[y];}
+12988 |     return {segments:out,totalRevs,totalEbitda,shareTotal,shareReconciles:Math.abs(shareTotal-1)<=1e-8};
+```
+
+## function maximumSharpe — 2 hit(s)
 
 ### line 9142
 
@@ -430,7 +676,89 @@ Not located.
  9206 |         if(active|| k==="revenueRecognition"||k==="goodwill"||k==="inventory"){
 ```
 
-## function riskParity — 1 hit(s)
+### line 12938
+
+```js
+12926 |     const cov=covarianceFromItems(items,corrMatrix);if(!cov)return null;
+12927 |     const invVol=items.map(x=>x.volatility>EPS?1/x.volatility:1/EPS);const s=invVol.reduce((a,b)=>a+b,0);
+12928 |     let w=invVol.map(v=>v/s);
+12929 |     const step=.08;
+12930 |     for(let it=0;it<2500;it++){
+12931 |       const grad=w.map((_,i)=>2*cov[i].reduce((acc,c,j)=>acc+c*w[j],0));
+12932 |       let next=w.map((x,i)=>Math.max(0,x-step*grad[i]));const z=next.reduce((a,b)=>a+b,0);
+12933 |       if(z<=EPS)return null;next=next.map(x=>x/z);
+12934 |       const diff=next.reduce((m,x,i)=>Math.max(m,Math.abs(x-w[i])),0);w=next;if(diff<1e-12)break;
+12935 |     }
+12936 |     return w;
+12937 |   }
+12938 |   function maximumSharpe(items,corrMatrix,riskFreeRate=0){
+12939 |     if(!Array.isArray(items)||items.length<2||!finite(riskFreeRate)||items.some(x=>!finite(x.expectedReturn)))return null;
+12940 |     const cov=covarianceFromItems(items,corrMatrix);if(!cov)return null;
+12941 |     let w=minimumVariance(items,corrMatrix);if(!w)return null;
+12942 |     const objective=x=>{
+12943 |       const ret=x.reduce((s,v,i)=>s+v*items[i].expectedReturn,0);let vr=0;for(let i=0;i<x.length;i++)for(let j=0;j<x.length;j++)vr+=x[i]*x[j]*cov[i][j];
+12944 |       return vr>EPS?(ret-riskFreeRate)/Math.sqrt(vr):-Infinity;
+12945 |     };
+12946 |     let best=objective(w),step=.08;
+12947 |     for(let it=0;it<3000;it++){
+12948 |       let improved=false;
+12949 |       for(let i=0;i<w.length;i++)for(let j=0;j<w.length;j++)if(i!==j&&w[j]>0){
+12950 |         const d=Math.min(step,w[j]),x=w.slice();x[i]+=d;x[j]-=d;const q=objective(x);if(q>best+1e-12){w=x;best=q;improved=true;}
+12951 |       }
+12952 |       if(!improved){step*=.5;if(step<1e-7)break;}
+12953 |     }
+12954 |     return w;
+12955 |   }
+12956 |   function riskParity(items,corrMatrix){
+12957 |     if(!Array.isArray(items)||items.length<2)return null;
+12958 |     const cov=covarianceFromItems(items,corrMatrix);if(!cov)return null;
+12959 |     let w=equalWeight(items);
+12960 |     for(let it=0;it<3000;it++){
+12961 |       const marginal=w.map((_,i)=>cov[i].reduce((s,c,j)=>s+c*w[j],0));
+12962 |       const contrib=w.map((x,i)=>x*marginal[i]);
+12963 |       const target=contrib.reduce((a,b)=>a+b,0)/w.length;
+12964 |       if(!finite(target)||target<=EPS){
+12965 |         if(items.every(x=>x.volatility<=EPS))return equalWeight(items);
+12966 |         return null;
+12967 |       }
+12968 |       const next=w.map((x,i)=>contrib[i]>EPS?x*Math.sqrt(target/contrib[i]):x);
+12969 |       const sum=next.reduce((a,b)=>a+b,0);if(sum<=EPS)return null;
+12970 |       for(let i=0;i<next.length;i++)next[i]/=sum;
+12971 |       const diff=next.reduce((m,x,i)=>Math.max(m,Math.abs(x-w[i])),0);w=next;if(diff<1e-10)break;
+12972 |     }
+12973 |     return w;
+12974 |   }
+12975 | 
+12976 |   function segmentForecast(totalRevenue,segments,years){
+12977 |     if(!finite(totalRevenue)||totalRevenue<0||!Number.isInteger(years)||years<=0||!Array.isArray(segments)||!segments.length)return null;
+12978 |     const out=[];let shareTotal=0;
+12979 |     for(const s of segments){
+12980 |       if(!s||!finite(s.share)||s.share<0||!Array.isArray(s.growth)||!Array.isArray(s.margin)||s.growth.length<years||s.margin.length<years)return null;
+12981 |       if(s.growth.slice(0,years).some(v=>!finite(v)||v<=-1)||s.margin.slice(0,years).some(v=>!finite(v)))return null;
+12982 |       shareTotal+=s.share;let r=totalRevenue*s.share;const revs=[];
+12983 |       for(let y=0;y<years;y++){revs.push(r);r*=1+s.growth[y];if(!finite(r))return null;}
+12984 |       out.push({name:s.name,revs,margins:s.margin.slice(0,years)});
+12985 |     }
+12986 |     const totalRevs=Array(years).fill(0),totalEbitda=Array(years).fill(0);
+12987 |     for(const s of out)for(let y=0;y<years;y++){totalRevs[y]+=s.revs[y];totalEbitda[y]+=s.revs[y]*s.margins[y];}
+12988 |     return {segments:out,totalRevs,totalEbitda,shareTotal,shareReconciles:Math.abs(shareTotal-1)<=1e-8};
+12989 |   }
+12990 |   function sumOfParts(parts,netDebt,shares){
+12991 |     if(!Array.isArray(parts)||!parts.length||!finite(netDebt)||!finite(shares)||shares<=0)return null;
+12992 |     const valued=[];
+12993 |     for(const p of parts){
+12994 |       if(!p)return null;let value=null,source=null;
+12995 |       if(has(p,'value')&&p.value!=null){if(!finite(p.value))return null;value=p.value;source='explicit';}
+12996 |       else if(finite(p.multiple)&&finite(p.metric)){value=p.multiple*p.metric;source='multiple';}
+12997 |       else return null;
+12998 |       if(!finite(value))return null;valued.push(Object.assign({},p,{value,source}));
+12999 |     }
+13000 |     const totalEV=valued.reduce((s,p)=>s+p.value,0),equityValue=totalEV-netDebt,perShare=equityValue/shares;
+13001 |     return {parts:valued,totalEV,netDebt,equityValue,shares,perShare};
+13002 |   }
+```
+
+## function riskParity — 2 hit(s)
 
 ### line 9168
 
@@ -514,7 +842,89 @@ Not located.
  9232 |     let h=`<div class="card"><div class="card-title">Review Workflow</div>
 ```
 
-## function equalWeight — 1 hit(s)
+### line 12956
+
+```js
+12944 |       return vr>EPS?(ret-riskFreeRate)/Math.sqrt(vr):-Infinity;
+12945 |     };
+12946 |     let best=objective(w),step=.08;
+12947 |     for(let it=0;it<3000;it++){
+12948 |       let improved=false;
+12949 |       for(let i=0;i<w.length;i++)for(let j=0;j<w.length;j++)if(i!==j&&w[j]>0){
+12950 |         const d=Math.min(step,w[j]),x=w.slice();x[i]+=d;x[j]-=d;const q=objective(x);if(q>best+1e-12){w=x;best=q;improved=true;}
+12951 |       }
+12952 |       if(!improved){step*=.5;if(step<1e-7)break;}
+12953 |     }
+12954 |     return w;
+12955 |   }
+12956 |   function riskParity(items,corrMatrix){
+12957 |     if(!Array.isArray(items)||items.length<2)return null;
+12958 |     const cov=covarianceFromItems(items,corrMatrix);if(!cov)return null;
+12959 |     let w=equalWeight(items);
+12960 |     for(let it=0;it<3000;it++){
+12961 |       const marginal=w.map((_,i)=>cov[i].reduce((s,c,j)=>s+c*w[j],0));
+12962 |       const contrib=w.map((x,i)=>x*marginal[i]);
+12963 |       const target=contrib.reduce((a,b)=>a+b,0)/w.length;
+12964 |       if(!finite(target)||target<=EPS){
+12965 |         if(items.every(x=>x.volatility<=EPS))return equalWeight(items);
+12966 |         return null;
+12967 |       }
+12968 |       const next=w.map((x,i)=>contrib[i]>EPS?x*Math.sqrt(target/contrib[i]):x);
+12969 |       const sum=next.reduce((a,b)=>a+b,0);if(sum<=EPS)return null;
+12970 |       for(let i=0;i<next.length;i++)next[i]/=sum;
+12971 |       const diff=next.reduce((m,x,i)=>Math.max(m,Math.abs(x-w[i])),0);w=next;if(diff<1e-10)break;
+12972 |     }
+12973 |     return w;
+12974 |   }
+12975 | 
+12976 |   function segmentForecast(totalRevenue,segments,years){
+12977 |     if(!finite(totalRevenue)||totalRevenue<0||!Number.isInteger(years)||years<=0||!Array.isArray(segments)||!segments.length)return null;
+12978 |     const out=[];let shareTotal=0;
+12979 |     for(const s of segments){
+12980 |       if(!s||!finite(s.share)||s.share<0||!Array.isArray(s.growth)||!Array.isArray(s.margin)||s.growth.length<years||s.margin.length<years)return null;
+12981 |       if(s.growth.slice(0,years).some(v=>!finite(v)||v<=-1)||s.margin.slice(0,years).some(v=>!finite(v)))return null;
+12982 |       shareTotal+=s.share;let r=totalRevenue*s.share;const revs=[];
+12983 |       for(let y=0;y<years;y++){revs.push(r);r*=1+s.growth[y];if(!finite(r))return null;}
+12984 |       out.push({name:s.name,revs,margins:s.margin.slice(0,years)});
+12985 |     }
+12986 |     const totalRevs=Array(years).fill(0),totalEbitda=Array(years).fill(0);
+12987 |     for(const s of out)for(let y=0;y<years;y++){totalRevs[y]+=s.revs[y];totalEbitda[y]+=s.revs[y]*s.margins[y];}
+12988 |     return {segments:out,totalRevs,totalEbitda,shareTotal,shareReconciles:Math.abs(shareTotal-1)<=1e-8};
+12989 |   }
+12990 |   function sumOfParts(parts,netDebt,shares){
+12991 |     if(!Array.isArray(parts)||!parts.length||!finite(netDebt)||!finite(shares)||shares<=0)return null;
+12992 |     const valued=[];
+12993 |     for(const p of parts){
+12994 |       if(!p)return null;let value=null,source=null;
+12995 |       if(has(p,'value')&&p.value!=null){if(!finite(p.value))return null;value=p.value;source='explicit';}
+12996 |       else if(finite(p.multiple)&&finite(p.metric)){value=p.multiple*p.metric;source='multiple';}
+12997 |       else return null;
+12998 |       if(!finite(value))return null;valued.push(Object.assign({},p,{value,source}));
+12999 |     }
+13000 |     const totalEV=valued.reduce((s,p)=>s+p.value,0),equityValue=totalEV-netDebt,perShare=equityValue/shares;
+13001 |     return {parts:valued,totalEV,netDebt,equityValue,shares,perShare};
+13002 |   }
+13003 | 
+13004 |   function mulberry32(seed){let a=(Number(seed)||0)>>>0;return function(){a|=0;a=a+0x6D2B79F5|0;let t=Math.imul(a^a>>>15,1|a);t=t+Math.imul(t^t>>>7,61|t)^t;return ((t^t>>>14)>>>0)/4294967296;};}
+13005 |   function normal01(rng){let u=0,v=0;while(u<=Number.EPSILON)u=rng();while(v<=Number.EPSILON)v=rng();return Math.sqrt(-2*Math.log(u))*Math.cos(2*Math.PI*v);}
+13006 |   function monteCarloGBM(cfg){
+13007 |     cfg=cfg||{};const initial=has(cfg,'initial')?cfg.initial:100,mu=has(cfg,'expectedReturn')?cfg.expectedReturn:0,sigma=has(cfg,'volatility')?cfg.volatility:0;
+13008 |     const years=has(cfg,'years')?cfg.years:1,steps=has(cfg,'steps')?cfg.steps:252,paths=has(cfg,'paths')?cfg.paths:1000,seed=has(cfg,'seed')?cfg.seed:42;
+13009 |     if(!finite(initial)||initial<=0||!finite(mu)||!finite(sigma)||sigma<0||!finite(years)||years<=0||!Number.isInteger(steps)||steps<=0||!Number.isInteger(paths)||paths<=0||paths>100000)return null;
+13010 |     const rng=mulberry32(seed),dt=years/steps,drift=(mu-.5*sigma*sigma)*dt,diff=sigma*Math.sqrt(dt),terminal=[];
+13011 |     for(let p=0;p<paths;p++){let x=initial;for(let i=0;i<steps;i++)x*=Math.exp(drift+diff*normal01(rng));terminal.push(x);}
+13012 |     terminal.sort((a,b)=>a-b);return {initial,expectedReturn:mu,volatility:sigma,years,steps,paths,seed,terminal};
+13013 |   }
+13014 | 
+13015 |   function dividendAmounts(tx){
+13016 |     if(!tx||typeof tx!=='object')return null;
+13017 |     const gross=finite(tx.gross)?tx.gross:(finite(tx.amount)?tx.amount:null);
+13018 |     const withholding=has(tx,'withholdingTax')?tx.withholdingTax:(has(tx,'tax')?tx.tax:0);
+13019 |     const net=finite(tx.net)?tx.net:(gross!=null&&finite(withholding)?gross-withholding:null);
+13020 |     if(gross==null||!finite(withholding)||withholding<0||net==null)return null;
+```
+
+## function equalWeight — 2 hit(s)
 
 ### line 9121
 
@@ -596,6 +1006,88 @@ Not located.
  9183 |   }
  9184 |   return {equalWeight,minimumVariance,maximumSharpe,riskParity,htmlOptimizer};
  9185 | })();
+```
+
+### line 12921
+
+```js
+12909 |       return {name:b.name,weight:weights[i],volatility:vols[i],mcr,component,riskShare};
+12910 |     });
+12911 |     return {rows,volP,varP};
+12912 |   }
+12913 | 
+12914 |   function covarianceFromItems(items,corrMatrix){
+12915 |     if(!Array.isArray(items)||!items.length||items.some(x=>!x||!finite(x.volatility)||x.volatility<0))return null;
+12916 |     const n=items.length;
+12917 |     const corr=corrMatrix||Array.from({length:n},(_,i)=>Array.from({length:n},(_,j)=>i===j?1:.4));
+12918 |     if(!validateCorrelationMatrix(corr,n))return null;
+12919 |     return corr.map((row,i)=>row.map((rho,j)=>rho*items[i].volatility*items[j].volatility));
+12920 |   }
+12921 |   function equalWeight(items){
+12922 |     if(!Array.isArray(items)||!items.length)return null;return Array(items.length).fill(1/items.length);
+12923 |   }
+12924 |   function minimumVariance(items,corrMatrix){
+12925 |     if(!Array.isArray(items)||items.length<2)return null;
+12926 |     const cov=covarianceFromItems(items,corrMatrix);if(!cov)return null;
+12927 |     const invVol=items.map(x=>x.volatility>EPS?1/x.volatility:1/EPS);const s=invVol.reduce((a,b)=>a+b,0);
+12928 |     let w=invVol.map(v=>v/s);
+12929 |     const step=.08;
+12930 |     for(let it=0;it<2500;it++){
+12931 |       const grad=w.map((_,i)=>2*cov[i].reduce((acc,c,j)=>acc+c*w[j],0));
+12932 |       let next=w.map((x,i)=>Math.max(0,x-step*grad[i]));const z=next.reduce((a,b)=>a+b,0);
+12933 |       if(z<=EPS)return null;next=next.map(x=>x/z);
+12934 |       const diff=next.reduce((m,x,i)=>Math.max(m,Math.abs(x-w[i])),0);w=next;if(diff<1e-12)break;
+12935 |     }
+12936 |     return w;
+12937 |   }
+12938 |   function maximumSharpe(items,corrMatrix,riskFreeRate=0){
+12939 |     if(!Array.isArray(items)||items.length<2||!finite(riskFreeRate)||items.some(x=>!finite(x.expectedReturn)))return null;
+12940 |     const cov=covarianceFromItems(items,corrMatrix);if(!cov)return null;
+12941 |     let w=minimumVariance(items,corrMatrix);if(!w)return null;
+12942 |     const objective=x=>{
+12943 |       const ret=x.reduce((s,v,i)=>s+v*items[i].expectedReturn,0);let vr=0;for(let i=0;i<x.length;i++)for(let j=0;j<x.length;j++)vr+=x[i]*x[j]*cov[i][j];
+12944 |       return vr>EPS?(ret-riskFreeRate)/Math.sqrt(vr):-Infinity;
+12945 |     };
+12946 |     let best=objective(w),step=.08;
+12947 |     for(let it=0;it<3000;it++){
+12948 |       let improved=false;
+12949 |       for(let i=0;i<w.length;i++)for(let j=0;j<w.length;j++)if(i!==j&&w[j]>0){
+12950 |         const d=Math.min(step,w[j]),x=w.slice();x[i]+=d;x[j]-=d;const q=objective(x);if(q>best+1e-12){w=x;best=q;improved=true;}
+12951 |       }
+12952 |       if(!improved){step*=.5;if(step<1e-7)break;}
+12953 |     }
+12954 |     return w;
+12955 |   }
+12956 |   function riskParity(items,corrMatrix){
+12957 |     if(!Array.isArray(items)||items.length<2)return null;
+12958 |     const cov=covarianceFromItems(items,corrMatrix);if(!cov)return null;
+12959 |     let w=equalWeight(items);
+12960 |     for(let it=0;it<3000;it++){
+12961 |       const marginal=w.map((_,i)=>cov[i].reduce((s,c,j)=>s+c*w[j],0));
+12962 |       const contrib=w.map((x,i)=>x*marginal[i]);
+12963 |       const target=contrib.reduce((a,b)=>a+b,0)/w.length;
+12964 |       if(!finite(target)||target<=EPS){
+12965 |         if(items.every(x=>x.volatility<=EPS))return equalWeight(items);
+12966 |         return null;
+12967 |       }
+12968 |       const next=w.map((x,i)=>contrib[i]>EPS?x*Math.sqrt(target/contrib[i]):x);
+12969 |       const sum=next.reduce((a,b)=>a+b,0);if(sum<=EPS)return null;
+12970 |       for(let i=0;i<next.length;i++)next[i]/=sum;
+12971 |       const diff=next.reduce((m,x,i)=>Math.max(m,Math.abs(x-w[i])),0);w=next;if(diff<1e-10)break;
+12972 |     }
+12973 |     return w;
+12974 |   }
+12975 | 
+12976 |   function segmentForecast(totalRevenue,segments,years){
+12977 |     if(!finite(totalRevenue)||totalRevenue<0||!Number.isInteger(years)||years<=0||!Array.isArray(segments)||!segments.length)return null;
+12978 |     const out=[];let shareTotal=0;
+12979 |     for(const s of segments){
+12980 |       if(!s||!finite(s.share)||s.share<0||!Array.isArray(s.growth)||!Array.isArray(s.margin)||s.growth.length<years||s.margin.length<years)return null;
+12981 |       if(s.growth.slice(0,years).some(v=>!finite(v)||v<=-1)||s.margin.slice(0,years).some(v=>!finite(v)))return null;
+12982 |       shareTotal+=s.share;let r=totalRevenue*s.share;const revs=[];
+12983 |       for(let y=0;y<years;y++){revs.push(r);r*=1+s.growth[y];if(!finite(r))return null;}
+12984 |       out.push({name:s.name,revs,margins:s.margin.slice(0,years)});
+12985 |     }
 ```
 
 ## trackingError — 4 hit(s)

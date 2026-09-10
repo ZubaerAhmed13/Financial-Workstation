@@ -1204,7 +1204,7 @@ Generated from index.html. Engineering evidence only; not a certification claim.
 10392 |   if(!bv.ok){ out.innerHTML=`<div class="banner bad"><b>BENCHMARK COMPARISON INVALID</b><div class="small">${bv.issues.map(i=>"• "+esc(i)).join("<br>")}</div></div>`; return; }
 10393 |   // align by date: use snapshots' dates to derive portfolio periodic returns; benchmark returns from its levels
 10394 |   // Build portfolio periodic returns from snapshot MV (TWR-style)
-10395 |   const portRets=[]; for(let i=1;i<snaps.length;i++){ const start=snaps[i-1].mv||0, end=snaps[i].mv||0, flow=snaps[i].cashFlow||0; if(start>0)portRets.push((end-flow)/start-1); }
+10395 |   const portRets=(typeof WorkstationCalculationCore!=="undefined"?WorkstationCalculationCore.periodReturnsFromSnapshots(snaps):null)||[];
 10396 |   // benchmark returns: use the benchmark levels nearest each snapshot date
 10397 |   const benchRets=[];
 10398 |   for(let i=1;i<snaps.length;i++){ const d=snaps[i].date; const prev=nearestBench(bench,snaps[i-1].date); const cur=nearestBench(bench,d); if(prev&&cur&&prev>0)benchRets.push(cur/prev-1); }
@@ -1306,7 +1306,7 @@ Generated from index.html. Engineering evidence only; not a certification claim.
 11904 |   const periodRets=wsPeriodReturns(snaps);
 11905 |   const risk= wsPerfRisk(periodReturnsArray(snaps), wsAnnualizationFactor(snaps));
 11906 |   // build an array of period returns from snapshot MV for risk stats
-11907 |   function periodReturnsArray(snaps2){ const a=[]; for(let i=1;i<snaps2.length;i++){ const s=snaps2[i-1].mv||0; const e=snaps2[i].mv||0; const f=snaps2[i].cashFlow||0; if(s>0)a.push((e-f)/s-1); } return a; }
+11907 |   function periodReturnsArray(snaps2){ return (typeof WorkstationCalculationCore!=="undefined"?WorkstationCalculationCore.periodReturnsFromSnapshots(snaps2):null)||[]; }
 11908 |   let h=`<div class="card"><div class="card-title">Performance Center</div>
 11909 |   <p class="small dim"><b>Official performance</b> = TWR (time-weighted, removes cash-flow timing) and MWR/XIRR (money-weighted, actual dollar experience) computed from validated period-end snapshots with external cash flows. <b>Snapshot performance</b> (multi-period 1D/1W/1M/YTD/1Y/3Y/5Y and risk stats) is an approximation from the available snapshots and is labelled as such — never presented as authoritative if cash flows make it unreliable. Not live data.</p>
 11910 |   <div class="fields g3">

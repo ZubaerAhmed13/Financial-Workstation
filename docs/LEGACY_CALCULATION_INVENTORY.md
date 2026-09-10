@@ -4,7 +4,7 @@ Generated mechanically from the production source to support the final modulariz
 
 - Source: `index.html`
 - Target names: **36**
-- Located occurrences: **69**
+- Located occurrences: **73**
 
 ## simScore — line 1556 — owner `stats`
 
@@ -662,45 +662,45 @@ Generated mechanically from the production source to support the final modulariz
  9049 |     return {available:true,windows,degradation,stability,warning,meanOos,meanIn};
 ```
 
-## run — line 12927 — owner `out`
+## run — line 13281 — owner `out`
 
 ```js
-12919 |       if(amount==null)return {pd,recovery,ead,lgd:null,el:null,error:'ECL requires finite PD/recovery in [0,1] and non-negative EAD.'};
-12920 |       const lgd=1-recovery;return {pd,recovery,ead,lgd,el:Math.round(amount*100)/100};
-12921 |     };
-12922 |     ECLV2.eadDefault=(face,_exposureType)=>Core.isFiniteNumber(face)&&face>=0?face:null;
-12923 |     mark('ECLV2');
-12924 |   }
-12925 | 
-12926 |   if(LegacyCore && typeof StressTestEngine!=='undefined' && StressTestEngine){
-12927 |     StressTestEngine.run=(sd,scenarios)=>{
-12928 |       const currentPD=(typeof App!=='undefined'&&App&&App.state&&App.state.results&&App.state.results.stock&&App.state.results.stock.defaultPD!=null)?App.state.results.stock.defaultPD:.05;
-12929 |       const useScenarios=scenarios==null?StressTestEngine.PREDEFINED:scenarios;
-12930 |       return LegacyCore.stressRun(sd,useScenarios,{defaultPD:currentPD});
-12931 |     };
-12932 |     mark('StressTestEngine.run');
-12933 |   }
-12934 | 
-12935 |   if(LegacyCore && typeof PortfolioEngine!=='undefined' && PortfolioEngine){
-12936 |     PortfolioEngine.build=(items)=>{
-12937 |       const rf=(typeof App!=='undefined'&&App&&App.state&&App.state.stockData&&App.state.stockData.rf!=null)?App.state.stockData.rf:.03;
-12938 |       return LegacyCore.portfolioBuild(items,{riskFreeRate:rf,correlation:.4});
-12939 |     };
-12940 |     PortfolioEngine.stress=(port,scenario)=>LegacyCore.portfolioStress(port,scenario||{});
-12941 |     mark('PortfolioEngine.build/stress');
-12942 |   }
-12943 | 
-12944 |   if(LegacyCore && typeof ValuationMatrixV2!=='undefined' && ValuationMatrixV2){
-12945 |     ValuationMatrixV2.build=(sd)=>{
-12946 |       const result=(typeof App!=='undefined'&&App&&App.state&&App.state.results&&App.state.results.stock)?App.state.results.stock:{};
-12947 |       return LegacyCore.valuationMatrix(sd,result);
-12948 |     };
-12949 |     ValuationMatrixV2.driversHTML=(_mx,sd)=>{
-12950 |       const rows=LegacyCore.valuationDrivers(sd);
-12951 |       if(!rows||!rows.length)return '';
-12952 |       return `<h4 class="mt">TOP VALUE DRIVERS</h4><div class="gridlist">${rows.map((r,i)=>`<div class="metricline"><span class="l">${i+1}. ${r.label}</span><span class="v">${fmt.pct(r.impact,1)} of base value</span></div>`).join('')}</div>`;
-12953 |     };
-12954 |     mark('ValuationMatrixV2.build/driversHTML');
+13273 |       if(amount==null)return {pd,recovery,ead,lgd:null,el:null,error:'ECL requires finite PD/recovery in [0,1] and non-negative EAD.'};
+13274 |       const lgd=1-recovery;return {pd,recovery,ead,lgd,el:Math.round(amount*100)/100};
+13275 |     };
+13276 |     ECLV2.eadDefault=(face,_exposureType)=>Core.isFiniteNumber(face)&&face>=0?face:null;
+13277 |     mark('ECLV2');
+13278 |   }
+13279 | 
+13280 |   if(LegacyCore && typeof StressTestEngine!=='undefined' && StressTestEngine){
+13281 |     StressTestEngine.run=(sd,scenarios)=>{
+13282 |       const currentPD=(typeof App!=='undefined'&&App&&App.state&&App.state.results&&App.state.results.stock&&App.state.results.stock.defaultPD!=null)?App.state.results.stock.defaultPD:.05;
+13283 |       const useScenarios=scenarios==null?StressTestEngine.PREDEFINED:scenarios;
+13284 |       return LegacyCore.stressRun(sd,useScenarios,{defaultPD:currentPD});
+13285 |     };
+13286 |     mark('StressTestEngine.run');
+13287 |   }
+13288 | 
+13289 |   if(LegacyCore && typeof PortfolioEngine!=='undefined' && PortfolioEngine){
+13290 |     PortfolioEngine.build=(items)=>{
+13291 |       const rf=(typeof App!=='undefined'&&App&&App.state&&App.state.stockData&&App.state.stockData.rf!=null)?App.state.stockData.rf:.03;
+13292 |       return LegacyCore.portfolioBuild(items,{riskFreeRate:rf,correlation:.4});
+13293 |     };
+13294 |     PortfolioEngine.stress=(port,scenario)=>LegacyCore.portfolioStress(port,scenario||{});
+13295 |     mark('PortfolioEngine.build/stress');
+13296 |   }
+13297 | 
+13298 |   if(LegacyCore && typeof ValuationMatrixV2!=='undefined' && ValuationMatrixV2){
+13299 |     ValuationMatrixV2.build=(sd)=>{
+13300 |       const result=(typeof App!=='undefined'&&App&&App.state&&App.state.results&&App.state.results.stock)?App.state.results.stock:{};
+13301 |       return LegacyCore.valuationMatrix(sd,result);
+13302 |     };
+13303 |     ValuationMatrixV2.driversHTML=(_mx,sd)=>{
+13304 |       const rows=LegacyCore.valuationDrivers(sd);
+13305 |       if(!rows||!rows.length)return '';
+13306 |       return `<h4 class="mt">TOP VALUE DRIVERS</h4><div class="gridlist">${rows.map((r,i)=>`<div class="metricline"><span class="l">${i+1}. ${r.label}</span><span class="v">${fmt.pct(r.impact,1)} of base value</span></div>`).join('')}</div>`;
+13307 |     };
+13308 |     mark('ValuationMatrixV2.build/driversHTML');
 ```
 
 ## monitor — line 5315 — owner `ThesisConsistencyV3`
@@ -1031,6 +1031,47 @@ Generated mechanically from the production source to support the final modulariz
  7000 |   let h=`<div class="card"><div class="card-title">Equity Factor Exposure <span class="small dim">(model-derived estimates)</span></div>
 ```
 
+## factorExposure — line 12852 — owner `DEFAULT_PREFERENCE_WEIGHTS`
+
+```js
+12844 |     }
+12845 |     const coverage=covered/(5*peers.length);return {score:Math.round(coverage*100),coverage,n:peers.length};
+12846 |   }
+12847 |   function moatScore(values){
+12848 |     if(!Array.isArray(values)||!values.length||values.some(v=>!finite(v)||v<0||v>100))return null;
+12849 |     return Math.round(values.reduce((s,v)=>s+v,0)/values.length);
+12850 |   }
+12851 | 
+12852 |   function factorExposure(items){
+12853 |     const norm=normalizeItems(items);if(!norm)return null;
+12854 |     const exposures={Market:1,Size:0,Value:0,Growth:0,Momentum:0,Quality:0,LowVol:0};
+12855 |     for(const b of norm.items){
+12856 |       const w=b.normalizedWeight,t=String(b.type||b.assetClass||'').toLowerCase();
+12857 |       if(t.includes('stock')||t.includes('equity')){
+12858 |         const vol=finite(b.volatility)?b.volatility:.25;
+12859 |         const ret=finite(b.expectedReturn)?b.expectedReturn:.1;
+12860 |         const mos=finite(b.marginOfSafety)?b.marginOfSafety:0;
+12861 |         exposures.Size+=w*.5;
+12862 |         exposures.Value+=w*(mos>.1?1:mos>-.1?0:-1);
+12863 |         exposures.Growth+=w*(ret>.15?1:ret>.08?0:-1);
+12864 |         exposures.Momentum+=w*(ret>.12?1:-.3);
+12865 |         exposures.Quality+=w*(mos>-.05?.5:-.5);
+12866 |         exposures.LowVol+=w*(vol<.2?1:vol>.4?-1:0);
+12867 |       }
+12868 |     }
+12869 |     return Object.entries(exposures).map(([factor,exposure])=>({factor,exposure:Math.round(exposure*100)/100,risk:Math.abs(exposure)>.6?'High':Math.abs(exposure)>.3?'Medium':'Low'}));
+12870 |   }
+12871 |   function performanceAttribution(items,benchmarkRet){
+12872 |     const norm=normalizeItems(items);if(!norm||!finite(benchmarkRet))return null;
+12873 |     if(norm.items.some(x=>!finite(x.expectedReturn)))return null;
+12874 |     let totalPortRet=0,allocationProxy=0;const rows=[];
+12875 |     for(const b of norm.items){
+12876 |       const w=b.normalizedWeight,r=b.expectedReturn,active=r-benchmarkRet;
+12877 |       const contribution=w*r,alloc=w*active;
+12878 |       totalPortRet+=contribution;allocationProxy+=alloc;
+12879 |       rows.push({name:b.name,weight:w,return:r,contribution,allocation:alloc,selection:null});
+```
+
 ## performanceAttribution — line 7020 — owner `exposures`
 
 ```js
@@ -1070,6 +1111,47 @@ Generated mechanically from the production source to support the final modulariz
  7045 | /* ---- Tracking error ---- */
  7046 | function trackingError(assetReturns, benchReturns){
  7047 |   // assetReturns and benchReturns aligned arrays of periodic returns
+```
+
+## performanceAttribution — line 12871 — owner `exposures`
+
+```js
+12863 |         exposures.Growth+=w*(ret>.15?1:ret>.08?0:-1);
+12864 |         exposures.Momentum+=w*(ret>.12?1:-.3);
+12865 |         exposures.Quality+=w*(mos>-.05?.5:-.5);
+12866 |         exposures.LowVol+=w*(vol<.2?1:vol>.4?-1:0);
+12867 |       }
+12868 |     }
+12869 |     return Object.entries(exposures).map(([factor,exposure])=>({factor,exposure:Math.round(exposure*100)/100,risk:Math.abs(exposure)>.6?'High':Math.abs(exposure)>.3?'Medium':'Low'}));
+12870 |   }
+12871 |   function performanceAttribution(items,benchmarkRet){
+12872 |     const norm=normalizeItems(items);if(!norm||!finite(benchmarkRet))return null;
+12873 |     if(norm.items.some(x=>!finite(x.expectedReturn)))return null;
+12874 |     let totalPortRet=0,allocationProxy=0;const rows=[];
+12875 |     for(const b of norm.items){
+12876 |       const w=b.normalizedWeight,r=b.expectedReturn,active=r-benchmarkRet;
+12877 |       const contribution=w*r,alloc=w*active;
+12878 |       totalPortRet+=contribution;allocationProxy+=alloc;
+12879 |       rows.push({name:b.name,weight:w,return:r,contribution,allocation:alloc,selection:null});
+12880 |     }
+12881 |     return {rows,allocEffect:allocationProxy,selectionEffect:null,totalPortRet,benchmark:benchmarkRet,activeReturn:totalPortRet-benchmarkRet,methodology:'single-benchmark allocation proxy; selection unavailable without benchmark constituent weights/returns'};
+12882 |   }
+12883 | 
+12884 |   function validateCorrelationMatrix(corr,n){
+12885 |     if(!Array.isArray(corr)||corr.length!==n)return false;
+12886 |     for(let i=0;i<n;i++){
+12887 |       if(!Array.isArray(corr[i])||corr[i].length!==n)return false;
+12888 |       for(let j=0;j<n;j++)if(!finite(corr[i][j])||corr[i][j]<-1||corr[i][j]>1||Math.abs(corr[i][j]-corr[j]?.[i])>1e-8)return false;
+12889 |       if(Math.abs(corr[i][i]-1)>1e-8)return false;
+12890 |     }
+12891 |     return true;
+12892 |   }
+12893 |   function riskContribution(port,corrMatrix){
+12894 |     if(!port||!Array.isArray(port.items)||port.items.length<2)return null;
+12895 |     const norm=normalizeItems(port.items);if(!norm)return null;
+12896 |     const items=norm.items,n=items.length;
+12897 |     if(items.some(x=>!finite(x.volatility)||x.volatility<0))return null;
+12898 |     const corr=corrMatrix||Array.from({length:n},(_,i)=>Array.from({length:n},(_,j)=>i===j?1:.4));
 ```
 
 ## creditRatios — line 7193 — owner `BootstrapMC`
@@ -2056,86 +2138,86 @@ Generated mechanically from the production source to support the final modulariz
  8686 |     // documentation
 ```
 
-## compute — line 12838 — owner `installReport`
+## compute — line 13192 — owner `installReport`
 
 ```js
-12830 |       if(r.error)return {error:r.error,value:null,rows:[]};
-12831 |       return {value:r.value,bookValue0,pvRI:r.pvRI,tvRI:r.continuingValue,pvTV:r.pvContinuing,rows:r.rows.map(x=>({t:x.t,income:x.netIncome,charge:x.equityCharge,ri:x.residualIncome,pvRI:x.pvRI,bv:x.endingBV}))};
-12832 |     };
-12833 |     ValuationEngine.comparables=(companyMultiple,peers)=>Core.comparables(companyMultiple,peers);
-12834 |     mark('ValuationEngine');
-12835 |   }
-12836 | 
-12837 |   if(typeof FinancialRatios!=='undefined' && FinancialRatios){
-12838 |     FinancialRatios.compute=(f)=>Core.financialRatios(f||{});
-12839 |     FinancialRatios.dupont=(r)=>({netMargin:r.netMargin,assetTurnover:r.assetTurnover,equityMultiplier:r.equityMultiplier,roe:r.netMargin!=null&&r.assetTurnover!=null&&r.equityMultiplier!=null?r.netMargin*r.assetTurnover*r.equityMultiplier:null});
-12840 |     mark('FinancialRatios');
-12841 |   }
-12842 | 
-12843 |   if(ModelCore && typeof FinancialModelEngine!=='undefined' && FinancialModelEngine){
-12844 |     FinancialModelEngine.defaults=()=>{
-12845 |       const currency=(typeof App!=='undefined'&&App&&App.state&&App.state.settings&&App.state.settings.currency)||'EUR';
-12846 |       return ModelCore.defaults(currency);
-12847 |     };
-12848 |     FinancialModelEngine.fillDefaults=(m,sd)=>ModelCore.fillDefaults(m,sd||{});
-12849 |     FinancialModelEngine.build=(m,sd)=>{
-12850 |       const out=ModelCore.build(m,sd||{});
-12851 |       if(Array.isArray(out.covenants) && typeof fmt!=='undefined')out.covenants=out.covenants.map(c=>({...c,fmt:c.format==='ratio'?fmt.x:fmt.money}));
-12852 |       return out;
-12853 |     };
-12854 |     mark('FinancialModelEngine.build/fillDefaults/defaults');
-12855 |   }
-12856 | 
-12857 |   if(typeof XIRR!=='undefined' && XIRR){
-12858 |     XIRR.xnpv=(rate,cashflows,dates)=>Core.xnpv(rate,cashflows,dates);
-12859 |     XIRR.xirr=(cashflows,dates,_guess=.1)=>Core.xirr(cashflows,dates);
-12860 |     XIRR.xirrHTML=(cashflows,dates)=>{
-12861 |       const r=Core.xirr(cashflows,dates);
-12862 |       if(r==null)return '<div class="banner warn">XIRR could not be determined — the irregular cash-flow pattern may have no unique root.</div>';
-12863 |       return `<div class="card"><div class="card-title">XIRR (irregular-period IRR)</div><div class="grid g2">${kpi('XIRR',fmt.pct(r,2),'annualized, irregular dates')}</div><div class="formula">Solve Σ CF_i/(1+XIRR)^((date_i−date_0)/365) = 0</div><div class="banner info">XIRR handles cash flows that arrive at irregular dates by discounting each to its actual year-fraction. It annualizes the return correctly for non-annual periods.</div></div>`;
-12864 |     };
-12865 |     mark('XIRR');
+13184 |       if(r.error)return {error:r.error,value:null,rows:[]};
+13185 |       return {value:r.value,bookValue0,pvRI:r.pvRI,tvRI:r.continuingValue,pvTV:r.pvContinuing,rows:r.rows.map(x=>({t:x.t,income:x.netIncome,charge:x.equityCharge,ri:x.residualIncome,pvRI:x.pvRI,bv:x.endingBV}))};
+13186 |     };
+13187 |     ValuationEngine.comparables=(companyMultiple,peers)=>Core.comparables(companyMultiple,peers);
+13188 |     mark('ValuationEngine');
+13189 |   }
+13190 | 
+13191 |   if(typeof FinancialRatios!=='undefined' && FinancialRatios){
+13192 |     FinancialRatios.compute=(f)=>Core.financialRatios(f||{});
+13193 |     FinancialRatios.dupont=(r)=>({netMargin:r.netMargin,assetTurnover:r.assetTurnover,equityMultiplier:r.equityMultiplier,roe:r.netMargin!=null&&r.assetTurnover!=null&&r.equityMultiplier!=null?r.netMargin*r.assetTurnover*r.equityMultiplier:null});
+13194 |     mark('FinancialRatios');
+13195 |   }
+13196 | 
+13197 |   if(ModelCore && typeof FinancialModelEngine!=='undefined' && FinancialModelEngine){
+13198 |     FinancialModelEngine.defaults=()=>{
+13199 |       const currency=(typeof App!=='undefined'&&App&&App.state&&App.state.settings&&App.state.settings.currency)||'EUR';
+13200 |       return ModelCore.defaults(currency);
+13201 |     };
+13202 |     FinancialModelEngine.fillDefaults=(m,sd)=>ModelCore.fillDefaults(m,sd||{});
+13203 |     FinancialModelEngine.build=(m,sd)=>{
+13204 |       const out=ModelCore.build(m,sd||{});
+13205 |       if(Array.isArray(out.covenants) && typeof fmt!=='undefined')out.covenants=out.covenants.map(c=>({...c,fmt:c.format==='ratio'?fmt.x:fmt.money}));
+13206 |       return out;
+13207 |     };
+13208 |     mark('FinancialModelEngine.build/fillDefaults/defaults');
+13209 |   }
+13210 | 
+13211 |   if(typeof XIRR!=='undefined' && XIRR){
+13212 |     XIRR.xnpv=(rate,cashflows,dates)=>Core.xnpv(rate,cashflows,dates);
+13213 |     XIRR.xirr=(cashflows,dates,_guess=.1)=>Core.xirr(cashflows,dates);
+13214 |     XIRR.xirrHTML=(cashflows,dates)=>{
+13215 |       const r=Core.xirr(cashflows,dates);
+13216 |       if(r==null)return '<div class="banner warn">XIRR could not be determined — the irregular cash-flow pattern may have no unique root.</div>';
+13217 |       return `<div class="card"><div class="card-title">XIRR (irregular-period IRR)</div><div class="grid g2">${kpi('XIRR',fmt.pct(r,2),'annualized, irregular dates')}</div><div class="formula">Solve Σ CF_i/(1+XIRR)^((date_i−date_0)/365) = 0</div><div class="banner info">XIRR handles cash flows that arrive at irregular dates by discounting each to its actual year-fraction. It annualizes the return correctly for non-annual periods.</div></div>`;
+13218 |     };
+13219 |     mark('XIRR');
 ```
 
-## compute — line 12917 — owner `out`
+## compute — line 13271 — owner `out`
 
 ```js
-12909 |   }
-12910 | 
-12911 |   if(RiskCore && typeof MertonDiag!=='undefined' && MertonDiag){
-12912 |     MertonDiag.trace=(E,sigmaE,D,r,T)=>RiskCore.mertonTrace(E,sigmaE,D,r,T);
-12913 |     mark('MertonDiag.trace');
-12914 |   }
-12915 | 
-12916 |   if(typeof ECLV2!=='undefined' && ECLV2){
-12917 |     ECLV2.compute=(pd,recovery,ead)=>{
-12918 |       const amount=RiskCore?RiskCore.expectedLossAmount(pd,recovery,ead):(Core.isFiniteNumber(pd)&&Core.isFiniteNumber(recovery)&&Core.isFiniteNumber(ead)&&pd>=0&&pd<=1&&recovery>=0&&recovery<=1&&ead>=0?pd*(1-recovery)*ead:null);
-12919 |       if(amount==null)return {pd,recovery,ead,lgd:null,el:null,error:'ECL requires finite PD/recovery in [0,1] and non-negative EAD.'};
-12920 |       const lgd=1-recovery;return {pd,recovery,ead,lgd,el:Math.round(amount*100)/100};
-12921 |     };
-12922 |     ECLV2.eadDefault=(face,_exposureType)=>Core.isFiniteNumber(face)&&face>=0?face:null;
-12923 |     mark('ECLV2');
-12924 |   }
-12925 | 
-12926 |   if(LegacyCore && typeof StressTestEngine!=='undefined' && StressTestEngine){
-12927 |     StressTestEngine.run=(sd,scenarios)=>{
-12928 |       const currentPD=(typeof App!=='undefined'&&App&&App.state&&App.state.results&&App.state.results.stock&&App.state.results.stock.defaultPD!=null)?App.state.results.stock.defaultPD:.05;
-12929 |       const useScenarios=scenarios==null?StressTestEngine.PREDEFINED:scenarios;
-12930 |       return LegacyCore.stressRun(sd,useScenarios,{defaultPD:currentPD});
-12931 |     };
-12932 |     mark('StressTestEngine.run');
-12933 |   }
-12934 | 
-12935 |   if(LegacyCore && typeof PortfolioEngine!=='undefined' && PortfolioEngine){
-12936 |     PortfolioEngine.build=(items)=>{
-12937 |       const rf=(typeof App!=='undefined'&&App&&App.state&&App.state.stockData&&App.state.stockData.rf!=null)?App.state.stockData.rf:.03;
-12938 |       return LegacyCore.portfolioBuild(items,{riskFreeRate:rf,correlation:.4});
-12939 |     };
-12940 |     PortfolioEngine.stress=(port,scenario)=>LegacyCore.portfolioStress(port,scenario||{});
-12941 |     mark('PortfolioEngine.build/stress');
-12942 |   }
-12943 | 
-12944 |   if(LegacyCore && typeof ValuationMatrixV2!=='undefined' && ValuationMatrixV2){
+13263 |   }
+13264 | 
+13265 |   if(RiskCore && typeof MertonDiag!=='undefined' && MertonDiag){
+13266 |     MertonDiag.trace=(E,sigmaE,D,r,T)=>RiskCore.mertonTrace(E,sigmaE,D,r,T);
+13267 |     mark('MertonDiag.trace');
+13268 |   }
+13269 | 
+13270 |   if(typeof ECLV2!=='undefined' && ECLV2){
+13271 |     ECLV2.compute=(pd,recovery,ead)=>{
+13272 |       const amount=RiskCore?RiskCore.expectedLossAmount(pd,recovery,ead):(Core.isFiniteNumber(pd)&&Core.isFiniteNumber(recovery)&&Core.isFiniteNumber(ead)&&pd>=0&&pd<=1&&recovery>=0&&recovery<=1&&ead>=0?pd*(1-recovery)*ead:null);
+13273 |       if(amount==null)return {pd,recovery,ead,lgd:null,el:null,error:'ECL requires finite PD/recovery in [0,1] and non-negative EAD.'};
+13274 |       const lgd=1-recovery;return {pd,recovery,ead,lgd,el:Math.round(amount*100)/100};
+13275 |     };
+13276 |     ECLV2.eadDefault=(face,_exposureType)=>Core.isFiniteNumber(face)&&face>=0?face:null;
+13277 |     mark('ECLV2');
+13278 |   }
+13279 | 
+13280 |   if(LegacyCore && typeof StressTestEngine!=='undefined' && StressTestEngine){
+13281 |     StressTestEngine.run=(sd,scenarios)=>{
+13282 |       const currentPD=(typeof App!=='undefined'&&App&&App.state&&App.state.results&&App.state.results.stock&&App.state.results.stock.defaultPD!=null)?App.state.results.stock.defaultPD:.05;
+13283 |       const useScenarios=scenarios==null?StressTestEngine.PREDEFINED:scenarios;
+13284 |       return LegacyCore.stressRun(sd,useScenarios,{defaultPD:currentPD});
+13285 |     };
+13286 |     mark('StressTestEngine.run');
+13287 |   }
+13288 | 
+13289 |   if(LegacyCore && typeof PortfolioEngine!=='undefined' && PortfolioEngine){
+13290 |     PortfolioEngine.build=(items)=>{
+13291 |       const rf=(typeof App!=='undefined'&&App&&App.state&&App.state.stockData&&App.state.stockData.rf!=null)?App.state.stockData.rf:.03;
+13292 |       return LegacyCore.portfolioBuild(items,{riskFreeRate:rf,correlation:.4});
+13293 |     };
+13294 |     PortfolioEngine.stress=(port,scenario)=>LegacyCore.portfolioStress(port,scenario||{});
+13295 |     mark('PortfolioEngine.build/stress');
+13296 |   }
+13297 | 
+13298 |   if(LegacyCore && typeof ValuationMatrixV2!=='undefined' && ValuationMatrixV2){
 ```
 
 ## minimumVariance — line 9122 — owner `PortfolioOptimizers`
@@ -2179,6 +2261,47 @@ Generated mechanically from the production source to support the final modulariz
  9149 |     const c=corr||Array.from({length:n},(_,i)=>Array.from({length:n},(_,j)=>i===j?1:.4));
 ```
 
+## minimumVariance — line 12924 — owner `exposures`
+
+```js
+12916 |     const n=items.length;
+12917 |     const corr=corrMatrix||Array.from({length:n},(_,i)=>Array.from({length:n},(_,j)=>i===j?1:.4));
+12918 |     if(!validateCorrelationMatrix(corr,n))return null;
+12919 |     return corr.map((row,i)=>row.map((rho,j)=>rho*items[i].volatility*items[j].volatility));
+12920 |   }
+12921 |   function equalWeight(items){
+12922 |     if(!Array.isArray(items)||!items.length)return null;return Array(items.length).fill(1/items.length);
+12923 |   }
+12924 |   function minimumVariance(items,corrMatrix){
+12925 |     if(!Array.isArray(items)||items.length<2)return null;
+12926 |     const cov=covarianceFromItems(items,corrMatrix);if(!cov)return null;
+12927 |     const invVol=items.map(x=>x.volatility>EPS?1/x.volatility:1/EPS);const s=invVol.reduce((a,b)=>a+b,0);
+12928 |     let w=invVol.map(v=>v/s);
+12929 |     const step=.08;
+12930 |     for(let it=0;it<2500;it++){
+12931 |       const grad=w.map((_,i)=>2*cov[i].reduce((acc,c,j)=>acc+c*w[j],0));
+12932 |       let next=w.map((x,i)=>Math.max(0,x-step*grad[i]));const z=next.reduce((a,b)=>a+b,0);
+12933 |       if(z<=EPS)return null;next=next.map(x=>x/z);
+12934 |       const diff=next.reduce((m,x,i)=>Math.max(m,Math.abs(x-w[i])),0);w=next;if(diff<1e-12)break;
+12935 |     }
+12936 |     return w;
+12937 |   }
+12938 |   function maximumSharpe(items,corrMatrix,riskFreeRate=0){
+12939 |     if(!Array.isArray(items)||items.length<2||!finite(riskFreeRate)||items.some(x=>!finite(x.expectedReturn)))return null;
+12940 |     const cov=covarianceFromItems(items,corrMatrix);if(!cov)return null;
+12941 |     let w=minimumVariance(items,corrMatrix);if(!w)return null;
+12942 |     const objective=x=>{
+12943 |       const ret=x.reduce((s,v,i)=>s+v*items[i].expectedReturn,0);let vr=0;for(let i=0;i<x.length;i++)for(let j=0;j<x.length;j++)vr+=x[i]*x[j]*cov[i][j];
+12944 |       return vr>EPS?(ret-riskFreeRate)/Math.sqrt(vr):-Infinity;
+12945 |     };
+12946 |     let best=objective(w),step=.08;
+12947 |     for(let it=0;it<3000;it++){
+12948 |       let improved=false;
+12949 |       for(let i=0;i<w.length;i++)for(let j=0;j<w.length;j++)if(i!==j&&w[j]>0){
+12950 |         const d=Math.min(step,w[j]),x=w.slice();x[i]+=d;x[j]-=d;const q=objective(x);if(q>best+1e-12){w=x;best=q;improved=true;}
+12951 |       }
+```
+
 ## maximumSharpe — line 9142 — owner `PortfolioOptimizers`
 
 ```js
@@ -2218,6 +2341,47 @@ Generated mechanically from the production source to support the final modulariz
  9167 |   }
  9168 |   function riskParity(items,corr){
  9169 |     const n=items.length; if(n<2)return null;
+```
+
+## maximumSharpe — line 12938 — owner `exposures`
+
+```js
+12930 |     for(let it=0;it<2500;it++){
+12931 |       const grad=w.map((_,i)=>2*cov[i].reduce((acc,c,j)=>acc+c*w[j],0));
+12932 |       let next=w.map((x,i)=>Math.max(0,x-step*grad[i]));const z=next.reduce((a,b)=>a+b,0);
+12933 |       if(z<=EPS)return null;next=next.map(x=>x/z);
+12934 |       const diff=next.reduce((m,x,i)=>Math.max(m,Math.abs(x-w[i])),0);w=next;if(diff<1e-12)break;
+12935 |     }
+12936 |     return w;
+12937 |   }
+12938 |   function maximumSharpe(items,corrMatrix,riskFreeRate=0){
+12939 |     if(!Array.isArray(items)||items.length<2||!finite(riskFreeRate)||items.some(x=>!finite(x.expectedReturn)))return null;
+12940 |     const cov=covarianceFromItems(items,corrMatrix);if(!cov)return null;
+12941 |     let w=minimumVariance(items,corrMatrix);if(!w)return null;
+12942 |     const objective=x=>{
+12943 |       const ret=x.reduce((s,v,i)=>s+v*items[i].expectedReturn,0);let vr=0;for(let i=0;i<x.length;i++)for(let j=0;j<x.length;j++)vr+=x[i]*x[j]*cov[i][j];
+12944 |       return vr>EPS?(ret-riskFreeRate)/Math.sqrt(vr):-Infinity;
+12945 |     };
+12946 |     let best=objective(w),step=.08;
+12947 |     for(let it=0;it<3000;it++){
+12948 |       let improved=false;
+12949 |       for(let i=0;i<w.length;i++)for(let j=0;j<w.length;j++)if(i!==j&&w[j]>0){
+12950 |         const d=Math.min(step,w[j]),x=w.slice();x[i]+=d;x[j]-=d;const q=objective(x);if(q>best+1e-12){w=x;best=q;improved=true;}
+12951 |       }
+12952 |       if(!improved){step*=.5;if(step<1e-7)break;}
+12953 |     }
+12954 |     return w;
+12955 |   }
+12956 |   function riskParity(items,corrMatrix){
+12957 |     if(!Array.isArray(items)||items.length<2)return null;
+12958 |     const cov=covarianceFromItems(items,corrMatrix);if(!cov)return null;
+12959 |     let w=equalWeight(items);
+12960 |     for(let it=0;it<3000;it++){
+12961 |       const marginal=w.map((_,i)=>cov[i].reduce((s,c,j)=>s+c*w[j],0));
+12962 |       const contrib=w.map((x,i)=>x*marginal[i]);
+12963 |       const target=contrib.reduce((a,b)=>a+b,0)/w.length;
+12964 |       if(!finite(target)||target<=EPS){
+12965 |         if(items.every(x=>x.volatility<=EPS))return equalWeight(items);
 ```
 
 ## wsDividendAmounts — line 9607 — owner `FinancialValidators`
@@ -2732,7 +2896,7 @@ Generated mechanically from the production source to support the final modulariz
 10392 |   if(!bv.ok){ out.innerHTML=`<div class="banner bad"><b>BENCHMARK COMPARISON INVALID</b><div class="small">${bv.issues.map(i=>"• "+esc(i)).join("<br>")}</div></div>`; return; }
 10393 |   // align by date: use snapshots' dates to derive portfolio periodic returns; benchmark returns from its levels
 10394 |   // Build portfolio periodic returns from snapshot MV (TWR-style)
-10395 |   const portRets=[]; for(let i=1;i<snaps.length;i++){ const start=snaps[i-1].mv||0, end=snaps[i].mv||0, flow=snaps[i].cashFlow||0; if(start>0)portRets.push((end-flow)/start-1); }
+10395 |   const portRets=(typeof WorkstationCalculationCore!=="undefined"?WorkstationCalculationCore.periodReturnsFromSnapshots(snaps):null)||[];
 10396 |   // benchmark returns: use the benchmark levels nearest each snapshot date
 10397 |   const benchRets=[];
 10398 |   for(let i=1;i<snaps.length;i++){ const d=snaps[i].date; const prev=nearestBench(bench,snaps[i-1].date); const cur=nearestBench(bench,d); if(prev&&cur&&prev>0)benchRets.push(cur/prev-1); }
@@ -2791,7 +2955,7 @@ Generated mechanically from the production source to support the final modulariz
 11904 |   const periodRets=wsPeriodReturns(snaps);
 11905 |   const risk= wsPerfRisk(periodReturnsArray(snaps), wsAnnualizationFactor(snaps));
 11906 |   // build an array of period returns from snapshot MV for risk stats
-11907 |   function periodReturnsArray(snaps2){ const a=[]; for(let i=1;i<snaps2.length;i++){ const s=snaps2[i-1].mv||0; const e=snaps2[i].mv||0; const f=snaps2[i].cashFlow||0; if(s>0)a.push((e-f)/s-1); } return a; }
+11907 |   function periodReturnsArray(snaps2){ return (typeof WorkstationCalculationCore!=="undefined"?WorkstationCalculationCore.periodReturnsFromSnapshots(snaps2):null)||[]; }
 ```
 
 ## periodReturnsArray — line 11907 — owner `rets`
@@ -2805,7 +2969,7 @@ Generated mechanically from the production source to support the final modulariz
 11904 |   const periodRets=wsPeriodReturns(snaps);
 11905 |   const risk= wsPerfRisk(periodReturnsArray(snaps), wsAnnualizationFactor(snaps));
 11906 |   // build an array of period returns from snapshot MV for risk stats
-11907 |   function periodReturnsArray(snaps2){ const a=[]; for(let i=1;i<snaps2.length;i++){ const s=snaps2[i-1].mv||0; const e=snaps2[i].mv||0; const f=snaps2[i].cashFlow||0; if(s>0)a.push((e-f)/s-1); } return a; }
+11907 |   function periodReturnsArray(snaps2){ return (typeof WorkstationCalculationCore!=="undefined"?WorkstationCalculationCore.periodReturnsFromSnapshots(snaps2):null)||[]; }
 11908 |   let h=`<div class="card"><div class="card-title">Performance Center</div>
 11909 |   <p class="small dim"><b>Official performance</b> = TWR (time-weighted, removes cash-flow timing) and MWR/XIRR (money-weighted, actual dollar experience) computed from validated period-end snapshots with external cash flows. <b>Snapshot performance</b> (multi-period 1D/1W/1M/YTD/1Y/3Y/5Y and risk stats) is an approximation from the available snapshots and is labelled as such — never presented as authoritative if cash flows make it unreliable. Not live data.</p>
 11910 |   <div class="fields g3">

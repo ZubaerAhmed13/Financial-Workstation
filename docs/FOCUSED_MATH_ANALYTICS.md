@@ -758,7 +758,7 @@ Generated from index.html. Engineering evidence only; not a certification claim.
  9183 |   }
 ```
 
-## function factorExposure — 1 hit(s)
+## function factorExposure — 2 hit(s)
 
 ### line 6973
 
@@ -842,7 +842,89 @@ Generated from index.html. Engineering evidence only; not a certification claim.
  7037 |   <div class="small dim">Allocation and selection effects are simplified estimates. Attribution is only meaningful when actual asset returns and weights are accurate; do not fabricate attribution when data is insufficient.</div>
 ```
 
-## function performanceAttribution — 1 hit(s)
+### line 12852
+
+```js
+12840 |       if(p&&finite(p.growth))covered++;
+12841 |       if(p&&finite(p.margin))covered++;
+12842 |       if(p&&finite(p.roe))covered++;
+12843 |       if(p&&finite(p.multiple))covered++;
+12844 |     }
+12845 |     const coverage=covered/(5*peers.length);return {score:Math.round(coverage*100),coverage,n:peers.length};
+12846 |   }
+12847 |   function moatScore(values){
+12848 |     if(!Array.isArray(values)||!values.length||values.some(v=>!finite(v)||v<0||v>100))return null;
+12849 |     return Math.round(values.reduce((s,v)=>s+v,0)/values.length);
+12850 |   }
+12851 | 
+12852 |   function factorExposure(items){
+12853 |     const norm=normalizeItems(items);if(!norm)return null;
+12854 |     const exposures={Market:1,Size:0,Value:0,Growth:0,Momentum:0,Quality:0,LowVol:0};
+12855 |     for(const b of norm.items){
+12856 |       const w=b.normalizedWeight,t=String(b.type||b.assetClass||'').toLowerCase();
+12857 |       if(t.includes('stock')||t.includes('equity')){
+12858 |         const vol=finite(b.volatility)?b.volatility:.25;
+12859 |         const ret=finite(b.expectedReturn)?b.expectedReturn:.1;
+12860 |         const mos=finite(b.marginOfSafety)?b.marginOfSafety:0;
+12861 |         exposures.Size+=w*.5;
+12862 |         exposures.Value+=w*(mos>.1?1:mos>-.1?0:-1);
+12863 |         exposures.Growth+=w*(ret>.15?1:ret>.08?0:-1);
+12864 |         exposures.Momentum+=w*(ret>.12?1:-.3);
+12865 |         exposures.Quality+=w*(mos>-.05?.5:-.5);
+12866 |         exposures.LowVol+=w*(vol<.2?1:vol>.4?-1:0);
+12867 |       }
+12868 |     }
+12869 |     return Object.entries(exposures).map(([factor,exposure])=>({factor,exposure:Math.round(exposure*100)/100,risk:Math.abs(exposure)>.6?'High':Math.abs(exposure)>.3?'Medium':'Low'}));
+12870 |   }
+12871 |   function performanceAttribution(items,benchmarkRet){
+12872 |     const norm=normalizeItems(items);if(!norm||!finite(benchmarkRet))return null;
+12873 |     if(norm.items.some(x=>!finite(x.expectedReturn)))return null;
+12874 |     let totalPortRet=0,allocationProxy=0;const rows=[];
+12875 |     for(const b of norm.items){
+12876 |       const w=b.normalizedWeight,r=b.expectedReturn,active=r-benchmarkRet;
+12877 |       const contribution=w*r,alloc=w*active;
+12878 |       totalPortRet+=contribution;allocationProxy+=alloc;
+12879 |       rows.push({name:b.name,weight:w,return:r,contribution,allocation:alloc,selection:null});
+12880 |     }
+12881 |     return {rows,allocEffect:allocationProxy,selectionEffect:null,totalPortRet,benchmark:benchmarkRet,activeReturn:totalPortRet-benchmarkRet,methodology:'single-benchmark allocation proxy; selection unavailable without benchmark constituent weights/returns'};
+12882 |   }
+12883 | 
+12884 |   function validateCorrelationMatrix(corr,n){
+12885 |     if(!Array.isArray(corr)||corr.length!==n)return false;
+12886 |     for(let i=0;i<n;i++){
+12887 |       if(!Array.isArray(corr[i])||corr[i].length!==n)return false;
+12888 |       for(let j=0;j<n;j++)if(!finite(corr[i][j])||corr[i][j]<-1||corr[i][j]>1||Math.abs(corr[i][j]-corr[j]?.[i])>1e-8)return false;
+12889 |       if(Math.abs(corr[i][i]-1)>1e-8)return false;
+12890 |     }
+12891 |     return true;
+12892 |   }
+12893 |   function riskContribution(port,corrMatrix){
+12894 |     if(!port||!Array.isArray(port.items)||port.items.length<2)return null;
+12895 |     const norm=normalizeItems(port.items);if(!norm)return null;
+12896 |     const items=norm.items,n=items.length;
+12897 |     if(items.some(x=>!finite(x.volatility)||x.volatility<0))return null;
+12898 |     const corr=corrMatrix||Array.from({length:n},(_,i)=>Array.from({length:n},(_,j)=>i===j?1:.4));
+12899 |     if(!validateCorrelationMatrix(corr,n))return null;
+12900 |     const weights=items.map(x=>x.normalizedWeight),vols=items.map(x=>x.volatility);
+12901 |     let varP=0;for(let i=0;i<n;i++)for(let j=0;j<n;j++)varP+=weights[i]*weights[j]*vols[i]*vols[j]*corr[i][j];
+12902 |     if(varP<0&&varP>-EPS)varP=0;if(!finite(varP)||varP<0)return null;
+12903 |     const volP=Math.sqrt(varP);
+12904 |     const rows=items.map((b,i)=>{
+12905 |       let covarianceWithPortfolio=0;for(let j=0;j<n;j++)covarianceWithPortfolio+=weights[j]*vols[i]*vols[j]*corr[i][j];
+12906 |       const mcr=volP>EPS?covarianceWithPortfolio/volP:null;
+12907 |       const component=mcr==null?null:weights[i]*mcr;
+12908 |       const riskShare=varP>EPS?weights[i]*covarianceWithPortfolio/varP:null;
+12909 |       return {name:b.name,weight:weights[i],volatility:vols[i],mcr,component,riskShare};
+12910 |     });
+12911 |     return {rows,volP,varP};
+12912 |   }
+12913 | 
+12914 |   function covarianceFromItems(items,corrMatrix){
+12915 |     if(!Array.isArray(items)||!items.length||items.some(x=>!x||!finite(x.volatility)||x.volatility<0))return null;
+12916 |     const n=items.length;
+```
+
+## function performanceAttribution — 2 hit(s)
 
 ### line 7020
 
@@ -924,6 +1006,88 @@ Generated from index.html. Engineering evidence only; not a certification claim.
  7082 |   const orig=renderPortfolio;
  7083 |   renderPortfolio=function(port){
  7084 |     orig.call(this,port);
+```
+
+### line 12871
+
+```js
+12859 |         const ret=finite(b.expectedReturn)?b.expectedReturn:.1;
+12860 |         const mos=finite(b.marginOfSafety)?b.marginOfSafety:0;
+12861 |         exposures.Size+=w*.5;
+12862 |         exposures.Value+=w*(mos>.1?1:mos>-.1?0:-1);
+12863 |         exposures.Growth+=w*(ret>.15?1:ret>.08?0:-1);
+12864 |         exposures.Momentum+=w*(ret>.12?1:-.3);
+12865 |         exposures.Quality+=w*(mos>-.05?.5:-.5);
+12866 |         exposures.LowVol+=w*(vol<.2?1:vol>.4?-1:0);
+12867 |       }
+12868 |     }
+12869 |     return Object.entries(exposures).map(([factor,exposure])=>({factor,exposure:Math.round(exposure*100)/100,risk:Math.abs(exposure)>.6?'High':Math.abs(exposure)>.3?'Medium':'Low'}));
+12870 |   }
+12871 |   function performanceAttribution(items,benchmarkRet){
+12872 |     const norm=normalizeItems(items);if(!norm||!finite(benchmarkRet))return null;
+12873 |     if(norm.items.some(x=>!finite(x.expectedReturn)))return null;
+12874 |     let totalPortRet=0,allocationProxy=0;const rows=[];
+12875 |     for(const b of norm.items){
+12876 |       const w=b.normalizedWeight,r=b.expectedReturn,active=r-benchmarkRet;
+12877 |       const contribution=w*r,alloc=w*active;
+12878 |       totalPortRet+=contribution;allocationProxy+=alloc;
+12879 |       rows.push({name:b.name,weight:w,return:r,contribution,allocation:alloc,selection:null});
+12880 |     }
+12881 |     return {rows,allocEffect:allocationProxy,selectionEffect:null,totalPortRet,benchmark:benchmarkRet,activeReturn:totalPortRet-benchmarkRet,methodology:'single-benchmark allocation proxy; selection unavailable without benchmark constituent weights/returns'};
+12882 |   }
+12883 | 
+12884 |   function validateCorrelationMatrix(corr,n){
+12885 |     if(!Array.isArray(corr)||corr.length!==n)return false;
+12886 |     for(let i=0;i<n;i++){
+12887 |       if(!Array.isArray(corr[i])||corr[i].length!==n)return false;
+12888 |       for(let j=0;j<n;j++)if(!finite(corr[i][j])||corr[i][j]<-1||corr[i][j]>1||Math.abs(corr[i][j]-corr[j]?.[i])>1e-8)return false;
+12889 |       if(Math.abs(corr[i][i]-1)>1e-8)return false;
+12890 |     }
+12891 |     return true;
+12892 |   }
+12893 |   function riskContribution(port,corrMatrix){
+12894 |     if(!port||!Array.isArray(port.items)||port.items.length<2)return null;
+12895 |     const norm=normalizeItems(port.items);if(!norm)return null;
+12896 |     const items=norm.items,n=items.length;
+12897 |     if(items.some(x=>!finite(x.volatility)||x.volatility<0))return null;
+12898 |     const corr=corrMatrix||Array.from({length:n},(_,i)=>Array.from({length:n},(_,j)=>i===j?1:.4));
+12899 |     if(!validateCorrelationMatrix(corr,n))return null;
+12900 |     const weights=items.map(x=>x.normalizedWeight),vols=items.map(x=>x.volatility);
+12901 |     let varP=0;for(let i=0;i<n;i++)for(let j=0;j<n;j++)varP+=weights[i]*weights[j]*vols[i]*vols[j]*corr[i][j];
+12902 |     if(varP<0&&varP>-EPS)varP=0;if(!finite(varP)||varP<0)return null;
+12903 |     const volP=Math.sqrt(varP);
+12904 |     const rows=items.map((b,i)=>{
+12905 |       let covarianceWithPortfolio=0;for(let j=0;j<n;j++)covarianceWithPortfolio+=weights[j]*vols[i]*vols[j]*corr[i][j];
+12906 |       const mcr=volP>EPS?covarianceWithPortfolio/volP:null;
+12907 |       const component=mcr==null?null:weights[i]*mcr;
+12908 |       const riskShare=varP>EPS?weights[i]*covarianceWithPortfolio/varP:null;
+12909 |       return {name:b.name,weight:weights[i],volatility:vols[i],mcr,component,riskShare};
+12910 |     });
+12911 |     return {rows,volP,varP};
+12912 |   }
+12913 | 
+12914 |   function covarianceFromItems(items,corrMatrix){
+12915 |     if(!Array.isArray(items)||!items.length||items.some(x=>!x||!finite(x.volatility)||x.volatility<0))return null;
+12916 |     const n=items.length;
+12917 |     const corr=corrMatrix||Array.from({length:n},(_,i)=>Array.from({length:n},(_,j)=>i===j?1:.4));
+12918 |     if(!validateCorrelationMatrix(corr,n))return null;
+12919 |     return corr.map((row,i)=>row.map((rho,j)=>rho*items[i].volatility*items[j].volatility));
+12920 |   }
+12921 |   function equalWeight(items){
+12922 |     if(!Array.isArray(items)||!items.length)return null;return Array(items.length).fill(1/items.length);
+12923 |   }
+12924 |   function minimumVariance(items,corrMatrix){
+12925 |     if(!Array.isArray(items)||items.length<2)return null;
+12926 |     const cov=covarianceFromItems(items,corrMatrix);if(!cov)return null;
+12927 |     const invVol=items.map(x=>x.volatility>EPS?1/x.volatility:1/EPS);const s=invVol.reduce((a,b)=>a+b,0);
+12928 |     let w=invVol.map(v=>v/s);
+12929 |     const step=.08;
+12930 |     for(let it=0;it<2500;it++){
+12931 |       const grad=w.map((_,i)=>2*cov[i].reduce((acc,c,j)=>acc+c*w[j],0));
+12932 |       let next=w.map((x,i)=>Math.max(0,x-step*grad[i]));const z=next.reduce((a,b)=>a+b,0);
+12933 |       if(z<=EPS)return null;next=next.map(x=>x/z);
+12934 |       const diff=next.reduce((m,x,i)=>Math.max(m,Math.abs(x-w[i])),0);w=next;if(diff<1e-12)break;
+12935 |     }
 ```
 
 ## const RiskContribution — 1 hit(s)
