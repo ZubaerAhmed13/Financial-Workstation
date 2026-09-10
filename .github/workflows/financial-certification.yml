@@ -2,7 +2,7 @@ name: Financial Calculation Certification
 
 on:
   push:
-    branches: [main, financial-calculation-certification, full-monolith-hardening, legacy-calculation-hardening, risk-credit-certification]
+    branches: [main, financial-calculation-certification, full-monolith-hardening, legacy-calculation-hardening, risk-credit-certification, complete-calculation-modularization]
   pull_request:
     branches: [main]
 
@@ -37,6 +37,7 @@ jobs:
           node -c scripts/static-audit.js
           node -c scripts/contextual-audit.js
           node -c scripts/certified-core-audit.js
+          node -c scripts/legacy-calculation-inventory.js
           node -c tests/browser-smoke.js
           node -c tests/model-engine.test.js
           node -c tests/legacy-hardening.test.js
@@ -57,6 +58,9 @@ jobs:
 
       - name: Contextual disposition of all static-audit leads
         run: node scripts/contextual-audit.js dist/index.html --write=docs/STATIC_AUDIT_FINDINGS.md
+
+      - name: Generate legacy calculation inventory
+        run: node scripts/legacy-calculation-inventory.js index.html --write=docs/LEGACY_CALCULATION_INVENTORY.md
 
       - name: Production artifact verification
         run: node scripts/verify-build.js
@@ -79,14 +83,14 @@ jobs:
         run: node tests/browser-smoke.js dist/index.html --browser=chromium --viewport=mobile --write=docs/BROWSER_SMOKE_MOBILE.json
 
       - name: Generate deployable root on certification branch
-        if: github.event_name == 'push' && (github.ref_name == 'financial-calculation-certification' || github.ref_name == 'full-monolith-hardening' || github.ref_name == 'legacy-calculation-hardening' || github.ref_name == 'risk-credit-certification')
+        if: github.event_name == 'push' && (github.ref_name == 'financial-calculation-certification' || github.ref_name == 'full-monolith-hardening' || github.ref_name == 'legacy-calculation-hardening' || github.ref_name == 'risk-credit-certification' || github.ref_name == 'complete-calculation-modularization')
         run: npm run build:root
 
       - name: Commit generated certification evidence and single-file artifacts
-        if: github.event_name == 'push' && (github.ref_name == 'financial-calculation-certification' || github.ref_name == 'full-monolith-hardening' || github.ref_name == 'legacy-calculation-hardening' || github.ref_name == 'risk-credit-certification')
+        if: github.event_name == 'push' && (github.ref_name == 'financial-calculation-certification' || github.ref_name == 'full-monolith-hardening' || github.ref_name == 'legacy-calculation-hardening' || github.ref_name == 'risk-credit-certification' || github.ref_name == 'complete-calculation-modularization')
         shell: bash
         run: |
-          git add index.html dist/index.html docs/STATIC_AUDIT_FINDINGS.md docs/BROWSER_SMOKE_REPORT.json docs/BROWSER_SMOKE_FIREFOX.json docs/BROWSER_SMOKE_WEBKIT.json docs/BROWSER_SMOKE_MOBILE.json
+          git add index.html dist/index.html docs/STATIC_AUDIT_FINDINGS.md docs/LEGACY_CALCULATION_INVENTORY.md docs/BROWSER_SMOKE_REPORT.json docs/BROWSER_SMOKE_FIREFOX.json docs/BROWSER_SMOKE_WEBKIT.json docs/BROWSER_SMOKE_MOBILE.json
           if git diff --cached --quiet; then
             echo "Generated artifacts and evidence already current."
             exit 0
