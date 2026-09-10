@@ -2,11 +2,13 @@
   'use strict';
   const Core = typeof FinanceCore !== 'undefined' ? FinanceCore : null;
   const ModelCore = typeof FinancialModelCore !== 'undefined' ? FinancialModelCore : null;
+  const LegacyCore = typeof LegacyCalculationCore !== 'undefined' ? LegacyCalculationCore : null;
   if(!Core){ console.error('Financial certification runtime: FinanceCore missing'); return; }
 
-  const installReport={version:Core.VERSION,modelVersion:ModelCore?ModelCore.VERSION:null,installed:[],warnings:[]};
+  const installReport={version:Core.VERSION,modelVersion:ModelCore?ModelCore.VERSION:null,legacyVersion:LegacyCore?LegacyCore.VERSION:null,installed:[],warnings:[]};
   const mark=(name)=>installReport.installed.push(name);
   if(!ModelCore)installReport.warnings.push('FinancialModelCore missing; three-statement model is outside the expanded certification boundary.');
+  if(!LegacyCore)installReport.warnings.push('LegacyCalculationCore missing; stress, portfolio and multi-method valuation remain outside the expanded certification boundary.');
 
   if(typeof fmt!=='undefined' && fmt){
     fmt.big=(v)=>{
@@ -130,6 +132,37 @@
     mark('ECLV2');
   }
 
+  if(LegacyCore && typeof StressTestEngine!=='undefined' && StressTestEngine){
+    StressTestEngine.run=(sd,scenarios)=>{
+      const currentPD=(typeof App!=='undefined'&&App&&App.state&&App.state.results&&App.state.results.stock&&App.state.results.stock.defaultPD!=null)?App.state.results.stock.defaultPD:.05;
+      const useScenarios=scenarios==null?StressTestEngine.PREDEFINED:scenarios;
+      return LegacyCore.stressRun(sd,useScenarios,{defaultPD:currentPD});
+    };
+    mark('StressTestEngine.run');
+  }
+
+  if(LegacyCore && typeof PortfolioEngine!=='undefined' && PortfolioEngine){
+    PortfolioEngine.build=(items)=>{
+      const rf=(typeof App!=='undefined'&&App&&App.state&&App.state.stockData&&App.state.stockData.rf!=null)?App.state.stockData.rf:.03;
+      return LegacyCore.portfolioBuild(items,{riskFreeRate:rf,correlation:.4});
+    };
+    PortfolioEngine.stress=(port,scenario)=>LegacyCore.portfolioStress(port,scenario||{});
+    mark('PortfolioEngine.build/stress');
+  }
+
+  if(LegacyCore && typeof ValuationMatrixV2!=='undefined' && ValuationMatrixV2){
+    ValuationMatrixV2.build=(sd)=>{
+      const result=(typeof App!=='undefined'&&App&&App.state&&App.state.results&&App.state.results.stock)?App.state.results.stock:{};
+      return LegacyCore.valuationMatrix(sd,result);
+    };
+    ValuationMatrixV2.driversHTML=(_mx,sd)=>{
+      const rows=LegacyCore.valuationDrivers(sd);
+      if(!rows||!rows.length)return '';
+      return `<h4 class="mt">TOP VALUE DRIVERS</h4><div class="gridlist">${rows.map((r,i)=>`<div class="metricline"><span class="l">${i+1}. ${r.label}</span><span class="v">${fmt.pct(r.impact,1)} of base value</span></div>`).join('')}</div>`;
+    };
+    mark('ValuationMatrixV2.build/driversHTML');
+  }
+
   if(typeof FINANCE!=='undefined' && FINANCE){
     if(typeof FINANCE.median==='function')FINANCE.median=(a)=>Core.median(a);
     if(typeof FINANCE.calcRecoveryPeriod==='function')FINANCE.calcRecoveryPeriod=(a)=>{const d=Core.maximumDrawdown(a);return d.recoveryPeriod;};
@@ -142,6 +175,7 @@
   if(typeof App!=='undefined' && App && App.meta){
     App.meta.financialCertificationVersion=Core.VERSION;
     if(ModelCore)App.meta.financialModelEngineVersion=ModelCore.VERSION;
+    if(LegacyCore)App.meta.legacyCalculationCoreVersion=LegacyCore.VERSION;
     App.meta.bondEngineVersion='1.1.0';
     App.meta.dcfEngineVersion='1.1.0';
     App.meta.riskEngineVersion='1.1.0';
