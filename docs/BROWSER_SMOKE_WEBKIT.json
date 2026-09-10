@@ -1,6 +1,6 @@
 {
   "target": "index.html",
-  "browser": "chromium",
+  "browser": "webkit",
   "viewport": "desktop",
   "certificationVersion": "1.1.0",
   "financialModelVersion": "1.0.0",
