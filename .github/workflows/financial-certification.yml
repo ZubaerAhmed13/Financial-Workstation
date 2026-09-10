@@ -14,10 +14,10 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
-        uses: actions/checkout@v4
+        uses: actions/checkout@v5
 
       - name: Set up Node
-        uses: actions/setup-node@v4
+        uses: actions/setup-node@v5
         with:
           node-version: '20'
           cache: npm
@@ -31,22 +31,34 @@ jobs:
           node -c src/finance/model-engine.js
           node -c src/finance/legacy-hardening.js
           node -c src/finance/risk-credit-core.js
+          node -c src/finance/workstation-core.js
+          node -c src/finance/workstation-ledger-core.js
           node -c src/runtime/install.js
+          node -c src/runtime/install-workstation.js
           node -c scripts/build.js
           node -c scripts/verify-build.js
+          node -c scripts/verify-workstation-build.js
           node -c scripts/static-audit.js
           node -c scripts/contextual-audit.js
           node -c scripts/certified-core-audit.js
+          node -c scripts/workstation-core-audit.js
           node -c scripts/legacy-calculation-inventory.js
           node -c scripts/focused-math-inventory.js
           node -c tests/browser-smoke.js
+          node -c tests/workstation-browser-smoke.js
           node -c tests/model-engine.test.js
           node -c tests/legacy-hardening.test.js
           node -c tests/risk-credit-core.test.js
+          node -c tests/workstation-core.test.js
+          node -c tests/workstation-ledger-core.test.js
+          node -c tests/workstation-runtime.test.js
           node -c tests/runtime-integration.test.js
 
       - name: Certified calculation source gate
         run: node scripts/certified-core-audit.js
+
+      - name: Final workstation calculation source gate
+        run: node scripts/workstation-core-audit.js
 
       - name: Financial unit, regression, known-answer and integration tests
         run: npm test
@@ -69,6 +81,9 @@ jobs:
       - name: Production artifact verification
         run: node scripts/verify-build.js
 
+      - name: Final workstation production artifact verification
+        run: node scripts/verify-workstation-build.js
+
       - name: Install pinned cross-browser smoke-test runtime
         run: |
           npm install --no-save --package-lock=false --no-audit --no-fund playwright@1.55.0
@@ -86,6 +101,18 @@ jobs:
       - name: Chromium mobile responsive smoke pass
         run: node tests/browser-smoke.js dist/index.html --browser=chromium --viewport=mobile --write=docs/BROWSER_SMOKE_MOBILE.json
 
+      - name: Chromium desktop final calculation routes
+        run: node tests/workstation-browser-smoke.js dist/index.html --browser=chromium --viewport=desktop --write=docs/WORKSTATION_BROWSER_CHROMIUM.json
+
+      - name: Firefox desktop final calculation routes
+        run: node tests/workstation-browser-smoke.js dist/index.html --browser=firefox --viewport=desktop --write=docs/WORKSTATION_BROWSER_FIREFOX.json
+
+      - name: WebKit desktop final calculation routes
+        run: node tests/workstation-browser-smoke.js dist/index.html --browser=webkit --viewport=desktop --write=docs/WORKSTATION_BROWSER_WEBKIT.json
+
+      - name: Chromium mobile final calculation routes
+        run: node tests/workstation-browser-smoke.js dist/index.html --browser=chromium --viewport=mobile --write=docs/WORKSTATION_BROWSER_MOBILE.json
+
       - name: Generate deployable root on certification branch
         if: github.event_name == 'push' && (github.ref_name == 'financial-calculation-certification' || github.ref_name == 'full-monolith-hardening' || github.ref_name == 'legacy-calculation-hardening' || github.ref_name == 'risk-credit-certification' || github.ref_name == 'complete-calculation-modularization')
         run: npm run build:root
@@ -94,7 +121,7 @@ jobs:
         if: github.event_name == 'push' && (github.ref_name == 'financial-calculation-certification' || github.ref_name == 'full-monolith-hardening' || github.ref_name == 'legacy-calculation-hardening' || github.ref_name == 'risk-credit-certification' || github.ref_name == 'complete-calculation-modularization')
         shell: bash
         run: |
-          git add index.html dist/index.html docs/STATIC_AUDIT_FINDINGS.md docs/LEGACY_CALCULATION_INVENTORY.md docs/FOCUSED_MATH_ANALYTICS.md docs/FOCUSED_MATH_WORKSPACE.md docs/FOCUSED_MATH_PORTFOLIO.md docs/BROWSER_SMOKE_REPORT.json docs/BROWSER_SMOKE_FIREFOX.json docs/BROWSER_SMOKE_WEBKIT.json docs/BROWSER_SMOKE_MOBILE.json
+          git add index.html dist/index.html docs/STATIC_AUDIT_FINDINGS.md docs/LEGACY_CALCULATION_INVENTORY.md docs/FOCUSED_MATH_ANALYTICS.md docs/FOCUSED_MATH_WORKSPACE.md docs/FOCUSED_MATH_PORTFOLIO.md docs/BROWSER_SMOKE_REPORT.json docs/BROWSER_SMOKE_FIREFOX.json docs/BROWSER_SMOKE_WEBKIT.json docs/BROWSER_SMOKE_MOBILE.json docs/WORKSTATION_BROWSER_CHROMIUM.json docs/WORKSTATION_BROWSER_FIREFOX.json docs/WORKSTATION_BROWSER_WEBKIT.json docs/WORKSTATION_BROWSER_MOBILE.json
           if git diff --cached --quiet; then
             echo "Generated artifacts and evidence already current."
             exit 0
