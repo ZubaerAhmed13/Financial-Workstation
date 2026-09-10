@@ -6,21 +6,24 @@ Certification engines:
 - **FinancialModelCore v1.0.0**
 - **LegacyCalculationCore v1.0.0**
 - **RiskCreditCore v1.0.0**
+- **WorkstationCalculationCore v1.0.0**
+- **WorkstationLedgerCore v1.0.0**
+- **SimulationBacktestCore v1.0.0**
 
-Certification status: **PASS — EXPANDED CERTIFIED CALCULATION SCOPE**
+Certification status: **PASS — COMPLETE MODULAR CALCULATION CERTIFICATION SLICE**
 
-This document records formula conventions, validation, permanent regressions, production routing, build verification, browser evidence, and limitations. Source code alone is not considered certified: the claim requires deterministic tests, source gates, generated-artifact verification, and production-runtime evidence.
+This document records formula conventions, validation, permanent regressions, production routing, build verification, browser evidence, and limitations. Source code alone is not considered certified: the claim requires deterministic tests, source/ownership gates, generated-artifact verification, and production-runtime evidence.
 
 ## Core conventions
 
 - Internal rates are decimals (`5% = 0.05`).
 - Valid zeroes are data, not missing values.
-- Missing/invalid results return `null` or structured error output instead of fabricated zeroes.
+- Missing/invalid results return `null`, structured errors, or an explicit unavailable state rather than fabricated zeroes/defaults.
 - JavaScript numeric precision is retained internally; display rounding belongs to presentation.
 - Bond YTM is annual nominal yield and periodic yield is `YTM / frequency`.
 - XIRR uses a 365-day year basis.
 - Price-history recovery is expressed in observations unless timestamps are explicitly used.
-- Risk annualization requires a periods/year basis. The certified production path infers cadence from timestamps when possible and explicitly marks the 252 fallback when cadence cannot be inferred.
+- Risk/backtest annualization requires a periods/year basis. Certified routed paths infer cadence from timestamps where supported rather than silently assuming 252.
 - The three-statement model uses detailed COGS/SG&A/R&D assumptions as modeled cost drivers; its EBITDA-margin series is a target/diagnostic.
 - Certified hardening paths use finite/presence checks rather than truthiness for financial zeroes.
 
@@ -40,94 +43,113 @@ Certified behavior includes compounded revenue growth; zero growth/tax preservat
 
 `LegacyCalculationCore v1.0.0` promotes selected high-risk monolith calculations into independently testable pure functions.
 
-### Stress testing
-
-`StressTestEngine.run` is routed through `LegacyCalculationCore.stressRun`. The route accepts `revenue` when `revenue0` is absent, preserves valid zero assumptions and zero PD, rejects invalid zero share count, reproduces base DCF under a no-shock scenario, and avoids fabricated downside denominators.
-
-### Portfolio
-
-`PortfolioEngine.build` / `stress` require finite non-negative weights, returns, and volatility; reject zero total weight; preserve zero volatility; use normalized weights with the stated pairwise correlation; and do not inject hidden volatility into bond stress.
-
-### Multi-method valuation
-
-`ValuationMatrixV2` uses `current price / relative multiple` for comparable fair value, converts residual-income total equity value to per-share value, excludes non-finite method values, and uses explicit DCF base assumptions/denominators in value-driver sensitivity.
+`StressTestEngine.run` is routed through `LegacyCalculationCore.stressRun`; `PortfolioEngine.build` / `stress` use validated finite non-negative inputs and zero-safe volatility semantics; and `ValuationMatrixV2` uses corrected comparable fair-price conversion, residual-income per-share conversion, finite-value filtering, and explicit driver denominators.
 
 ## Certified RiskCreditCore
 
 `RiskCreditCore v1.0.0` is independently tested and mapped into production for high-risk market-risk and credit calculations.
 
-### VaR and Expected Shortfall
+Certified paths include interpolated historical VaR and fractional-tail Expected Shortfall; arbitrary valid-confidence parametric VaR; safe Monte-Carlo VaR/ES terminal-value conversion; timestamp-cadence inference and annualized risk statistics; Altman Z/Z-prime validation; rating-PD interpolation without out-of-range extrapolation; credit curves; bounded/convergence-checked Merton structural credit modeling with actual distance-to-default diagnostics; and zero/missing-safe ECL boundaries.
 
-- Historical VaR uses an interpolated empirical quantile.
-- Expected Shortfall averages the lower tail, including fractional tail mass where sample size does not make the tail count an integer.
-- Parametric VaR uses an inverse-normal approximation for any valid confidence in `(0,1)` rather than a 95/99-only branch.
-- Monte Carlo VaR/ES converts terminal values to returns only when current value is finite and positive.
-- Missing/invalid risk inputs return unavailable rather than a fabricated result.
+## Certified WorkstationCalculationCore
 
-### Frequency-aware risk statistics
+`WorkstationCalculationCore v1.0.0` promotes the final workstation calculation families that were previously embedded in the monolith/runtime surface. Explicitly routed and tested paths include:
 
-The production imported-history path calls `RiskCreditCore.inferPeriodsPerYear` using price timestamps. It distinguishes daily, weekly, monthly, quarterly, semiannual, and annual cadence from median timestamp spacing. The annualized risk summary consistently applies that frequency to return, volatility, Sharpe and Sortino. When timestamps do not support inference, the legacy 252 fallback is retained only as an explicitly tagged fallback.
+- similarity standardization, similarity score and normalized weights;
+- data-quality scoring, preference scoring and peer-data coverage;
+- factor exposure and performance attribution;
+- portfolio risk contribution;
+- equal-weight, minimum-variance, maximum-Sharpe and risk-parity optimizer calculations;
+- FX conversion used by the routed workstation boundary;
+- time-weighted and money-weighted return helpers, annualization, capture ratios, performance risk and period returns;
+- the explicitly promoted segment-forecast and SOTP calculation paths covered by the workstation regression/runtime/browser gates.
 
-### Altman models
+The certified behavior emphasizes denominator validation, finite-input validation, legitimate-zero preservation, deterministic ownership, and explicit treatment of unavailable calculations instead of hidden truthy defaults.
 
-Altman Z and Z-prime preserve legitimate zero numerators while requiring finite, non-zero denominators where division is required. Missing/invalid ratio inputs return unavailable rather than silently coercing data.
+## Certified WorkstationLedgerCore
 
-### Rating PD and credit curves
+`WorkstationLedgerCore v1.0.0` owns the explicitly routed workstation transaction/portfolio-ledger calculations. Certified routes cover dividend amount handling, ledger reconstruction, position base value, market-value summary, cash summary and position unrealized P&L. Zero amounts remain valid where financially meaningful; malformed/missing values are not silently converted into synthetic ledger values.
 
-The configured cumulative-PD table is treated as an illustrative model input. Exact configured horizons are returned directly; intermediate horizons are linearly interpolated using their true relative horizon position. No extrapolation is performed outside the configured range. Example: BBB 7-year cumulative PD is `0.064` between 5-year `0.04` and 10-year `0.10`.
+## Certified SimulationBacktestCore
 
-### Merton structural credit model
+`SimulationBacktestCore v1.0.0` owns the final Monte Carlo and backtest calculation routes.
 
-The certified Merton path validates positive finite equity, debt, volatility, and horizon inputs; solves asset value with bounded bisection; iterates asset volatility; checks both equity-value and volatility residuals; and reports PD only when convergence tolerances are met. Merton diagnostics propagate the actual solved distance-to-default rather than a hard-coded zero.
+### Monte Carlo
 
-### ECL boundary
+`MonteCarlo.run` is routed through `SimulationBacktestCore.monteCarloRun`. The certified path:
 
-Expected loss validates PD and recovery in `[0,1]` and non-negative EAD. Valid zero PD/EAD remains zero. Missing EAD remains missing; production no longer manufactures an EAD of 1,000,000.
+- preserves explicit zero expected return and zero volatility;
+- rejects non-positive/invalid initial capital rather than replacing it with a hidden default;
+- validates simulation and step counts plus deterministic seed inputs;
+- uses seeded geometric-Brownian-motion simulation for reproducible certification tests;
+- produces exact deterministic behavior for zero-volatility cases subject to the configured drift/target assumptions.
+
+### Backtesting
+
+`BacktestEngine.run` is routed through `SimulationBacktestCore.backtestRun`. The certified path:
+
+- rejects non-positive initial capital and invalid rebalance intervals;
+- prevents a signal based on the current close from earning the return that has already occurred on that same bar;
+- preserves signal/index alignment after date filtering;
+- applies turnover-based transaction cost/slippage deductions when turnover occurs;
+- charges two-sided turnover for direct position flips;
+- infers annualization cadence from timestamps rather than blindly assuming 252 observations/year;
+- compares benchmark and strategy annualized performance on the same inferred basis.
 
 ## Permanent regression controls
 
-All prior controls remain mandatory:
+All prior regression families remain mandatory, with the final completion slice adding workstation, ledger, simulation/backtest and production-route controls:
 
-- **8 `REG-*`** controls for bond duration, drawdown recovery, MACD, formatting, CSV index zero, median, RSI, and DCF terminal-growth validation;
-- **15 `FM-REG-*`** controls for the three-statement model;
-- **14 `LC-REG-*`** controls for stress, portfolio, comparable valuation, residual-income per-share conversion, and related zero/denominator semantics.
+- **8 `REG-*`** original calculation regressions;
+- **15 `FM-REG-*`** three-statement regressions;
+- **14 `LC-REG-*`** legacy stress/portfolio/valuation regressions;
+- **22 `RC-REG-*`** risk/credit regressions;
+- **32 `WC-REG-*`** workstation calculation regressions;
+- **12 `WL-REG-*`** workstation ledger regressions;
+- **12 `SB-REG-*`** simulation/backtest regressions;
+- **19 `WR-REG-*`** production-route/runtime regressions.
 
-This pass adds **22 `RC-REG-*`** controls for arbitrary-confidence VaR, historical VaR/ES, Monte Carlo denominator safety, cadence inference, annualized Sharpe, zero-volatility semantics, Altman validation, PD interpolation/no extrapolation, expected-loss zero/invalid handling, and Merton convergence/sensitivity/diagnostics.
+The integrated Node suite contains **277/277 passing tests**.
 
 ## Production build hardening
 
-The deterministic build embeds all four cores plus the runtime installer into the portable single-file workstation. It retains narrow compatibility repairs for bond frequency, recovery units, offline Cloudflare removal, SVG attributes, heatmap interpolation scope, model zero semantics, portfolio input validation, and the EBITDA-target label.
-
-This pass additionally refuses the build unless it can verify:
-
-- timestamp-aware risk annualization metadata is installed and the old hard-coded 252 block is absent;
-- zero/missing-safe ECL boundaries are installed and the synthetic 1,000,000 exposure fallback is absent;
-- the report propagates actual Merton distance-to-default and the old hard-coded zero path is absent.
+The deterministic build embeds the certified core family plus both runtime installers into the portable single-file workstation. Existing narrow compatibility repairs remain covered by artifact checks. The final workstation build verification additionally proves the promoted workstation/ledger/simulation cores and public production routes are embedded and that identified obsolete calculation ownership/fallback patterns are absent from the generated artifact where the gate requires absence.
 
 ## Verification stack
 
-Risk/credit expansion evidence for workflow **34472841478**:
+Full completion evidence for workflow **34497988919** (run #87):
 
-- generated evidence/deployable branch commit: `6d0a2199344d6cbdfb5e19657f78ece84c74833d`;
-- source gate: **84/84 PASS**;
-- Node unit/regression/known-answer/runtime tests: **202/202 PASS**;
-- artifact verification: **65/65 PASS**;
-- standalone HTML: **1,055,772 bytes**;
-- static/contextual audit: **435/435 leads classified, 0 unclassified**;
-- calculation-sensitive/algorithmic-review leads: **226**;
-- Chromium desktop: **42/42 views, 59 tabs, 0 page errors, 0 console errors, 0 external requests, 17/17 runtime checks**;
-- Firefox desktop: **42/42 views, 59 tabs, 0 page errors, 0 console errors, 0 external requests, 17/17 runtime checks**;
-- WebKit desktop: **42/42 views, 59 tabs, 0 page errors, 0 console errors, 0 external requests, 17/17 runtime checks**;
-- Chromium mobile 390×844: **42/42 views, 59 tabs, 0 page errors, 0 console errors, 0 external requests, 17/17 runtime checks**, with no document-level horizontal overflow and a functioning menu/sidebar.
+- tested source head: `895d8a1e886784d5d920a291d77eb3a223bc27a5`;
+- generated evidence/deployable branch commit: `cbdb4c9ab0f05f7e538e6465324630484114c949`;
+- existing certified source gate: **84/84 PASS**;
+- final workstation source/ownership gate: **62/62 PASS**;
+- Node unit/regression/known-answer/runtime tests: **277/277 PASS**;
+- existing artifact verification: **65/65 PASS**;
+- final workstation artifact verification: **38/38 PASS**;
+- standalone HTML: **1,108,820 bytes**;
+- static/contextual audit: **451/451 broad leads classified, 0 unclassified**;
+- calculation-sensitive/algorithmic-review leads: **231**;
+- legacy calculation inventory: **36 targets / 85 occurrences**;
+- Chromium desktop: **42/42 views, 59 tabs, 0 page errors, 0 console errors, 0 external requests, 17/17 primary runtime checks**;
+- Firefox desktop: **42/42 views, 59 tabs, 0 page errors, 0 console errors, 0 external requests, 17/17 primary runtime checks**;
+- WebKit desktop: **42/42 views, 59 tabs, 0 page errors, 0 console errors, 0 external requests, 17/17 primary runtime checks**;
+- Chromium mobile 390×844: **42/42 views, 59 tabs, 0 page errors, 0 console errors, 0 external requests, 17/17 primary runtime checks**, with no document-level horizontal overflow and a functioning menu/sidebar;
+- separate final workstation-route suite: **15/15 checks on Chromium, Firefox, WebKit and Chromium mobile**, with zero page errors, console errors, and external requests on each target.
 
-## Certification boundary
+## Source and artifact ownership gates
 
-`STATIC_AUDIT_FINDINGS.md` intentionally over-matches generic guards, numeric fallbacks, parser conversions, rounding, sentinels, and legacy implementations. The **226 calculation-sensitive/algorithmic-review entries are review leads, not 226 proven defects**.
+The two source gates are intentionally reported separately rather than combined into a misleading single score. The **84-check gate** protects the previously certified finance/model/legacy/risk-credit surface. The **62-check workstation gate** protects final workstation calculation ownership/routing and relevant banned-pattern controls.
 
-The certification claim is deliberately precise: **FinanceCore, FinancialModelCore, LegacyCalculationCore, RiskCreditCore, and the production paths explicitly routed/tested through them are certified, together with documented build-boundary corrections. Other legacy analytical helpers remain outside the formal boundary until separately tested and promoted.** Cross-browser smoke verifies broad execution compatibility, not every possible financial input combination.
+Likewise, the **65-check existing artifact gate** and **38-check workstation artifact gate** are independently required. Together they establish that the intended modular cores and routes survive the actual single-file production build rather than existing only in source modules.
+
+## Static audit and certification boundary
+
+`STATIC_AUDIT_FINDINGS.md` intentionally over-matches generic guards, numeric fallbacks, parser conversions, rounding, sentinels, and legacy implementations. The current artifact contains **451 broad review leads**, of which **231** are conservatively categorized as calculation-sensitive or algorithmic-review, with **0 unclassified**. These are an audit inventory, **not 231 proven defects**.
+
+The certification claim is deliberately precise: **FinanceCore, FinancialModelCore, LegacyCalculationCore, RiskCreditCore, WorkstationCalculationCore, WorkstationLedgerCore, SimulationBacktestCore, and only the production calculation paths explicitly routed/tested through those cores are certified, together with documented narrow build-boundary corrections. Legacy UI, rendering, orchestration, and composition wrappers are not automatically independently algorithm-certified merely because they delegate to a certified core. Other unrouted legacy analytical helpers remain outside the formal boundary until separately tested and promoted.** Cross-browser smoke proves broad execution compatibility and the named routed checks, not every possible financial input combination.
 
 ## Final status
 
-**PASS — EXPANDED CERTIFIED CALCULATION SCOPE.**
+**PASS — COMPLETE MODULAR CALCULATION CERTIFICATION SLICE.**
 
-Repository-level evidence is summarized in `FINANCIAL_TEST_REPORT.md`; model/product limitations are maintained in `KNOWN_LIMITATIONS.md`.
+Repository-level evidence is summarized in `FINANCIAL_TEST_REPORT.md`; model/product limitations are maintained in `KNOWN_LIMITATIONS.md`. Release completion additionally requires the stable exact-head branch run, PR-context run, merged `main` certification and GitHub Pages deployment to succeed on their corresponding SHAs.
