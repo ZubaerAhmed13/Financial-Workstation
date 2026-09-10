@@ -2,7 +2,7 @@ name: Financial Calculation Certification
 
 on:
   push:
-    branches: [main, financial-calculation-certification, full-monolith-hardening, legacy-calculation-hardening]
+    branches: [main, financial-calculation-certification, full-monolith-hardening, legacy-calculation-hardening, risk-credit-certification]
   pull_request:
     branches: [main]
 
@@ -30,6 +30,7 @@ jobs:
           node -c src/finance/engine.js
           node -c src/finance/model-engine.js
           node -c src/finance/legacy-hardening.js
+          node -c src/finance/risk-credit-core.js
           node -c src/runtime/install.js
           node -c scripts/build.js
           node -c scripts/verify-build.js
@@ -39,6 +40,7 @@ jobs:
           node -c tests/browser-smoke.js
           node -c tests/model-engine.test.js
           node -c tests/legacy-hardening.test.js
+          node -c tests/risk-credit-core.test.js
           node -c tests/runtime-integration.test.js
 
       - name: Certified calculation source gate
@@ -77,11 +79,11 @@ jobs:
         run: node tests/browser-smoke.js dist/index.html --browser=chromium --viewport=mobile --write=docs/BROWSER_SMOKE_MOBILE.json
 
       - name: Generate deployable root on certification branch
-        if: github.event_name == 'push' && (github.ref_name == 'financial-calculation-certification' || github.ref_name == 'full-monolith-hardening' || github.ref_name == 'legacy-calculation-hardening')
+        if: github.event_name == 'push' && (github.ref_name == 'financial-calculation-certification' || github.ref_name == 'full-monolith-hardening' || github.ref_name == 'legacy-calculation-hardening' || github.ref_name == 'risk-credit-certification')
         run: npm run build:root
 
       - name: Commit generated certification evidence and single-file artifacts
-        if: github.event_name == 'push' && (github.ref_name == 'financial-calculation-certification' || github.ref_name == 'full-monolith-hardening' || github.ref_name == 'legacy-calculation-hardening')
+        if: github.event_name == 'push' && (github.ref_name == 'financial-calculation-certification' || github.ref_name == 'full-monolith-hardening' || github.ref_name == 'legacy-calculation-hardening' || github.ref_name == 'risk-credit-certification')
         shell: bash
         run: |
           git add index.html dist/index.html docs/STATIC_AUDIT_FINDINGS.md docs/BROWSER_SMOKE_REPORT.json docs/BROWSER_SMOKE_FIREFOX.json docs/BROWSER_SMOKE_WEBKIT.json docs/BROWSER_SMOKE_MOBILE.json

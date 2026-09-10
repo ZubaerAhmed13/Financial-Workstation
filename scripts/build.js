@@ -8,12 +8,13 @@ const distPath=path.join(distDir,'index.html');
 const engine=fs.readFileSync(path.join(root,'src/finance/engine.js'),'utf8').trim();
 const modelEngine=fs.readFileSync(path.join(root,'src/finance/model-engine.js'),'utf8').trim();
 const legacyEngine=fs.readFileSync(path.join(root,'src/finance/legacy-hardening.js'),'utf8').trim();
+const riskCreditEngine=fs.readFileSync(path.join(root,'src/finance/risk-credit-core.js'),'utf8').trim();
 const installer=fs.readFileSync(path.join(root,'src/runtime/install.js'),'utf8').trim();
 let html=fs.readFileSync(indexPath,'utf8');
 
 const START='/* FINANCIAL_CERTIFICATION_RUNTIME_START */';
 const END='/* FINANCIAL_CERTIFICATION_RUNTIME_END */';
-const block=`${START}\n${engine}\n${modelEngine}\n${legacyEngine}\n${installer}\n${END}\n`;
+const block=`${START}\n${engine}\n${modelEngine}\n${legacyEngine}\n${riskCreditEngine}\n${installer}\n${END}\n`;
 const existing=new RegExp(escapeRegExp(START)+'[\\s\\S]*?'+escapeRegExp(END)+'\\n?','g');
 html=html.replace(existing,'');
 
@@ -74,6 +75,35 @@ let portfolioRenderPatches=0;
 if(html.includes(legacyPortfolioRender)){html=html.replace(legacyPortfolioRender,safePortfolioRender);portfolioRenderPatches=1;}else if(html.includes(safePortfolioRender)){portfolioRenderPatches=1;}
 if(!portfolioRenderPatches)throw new Error('Build refused: portfolio validation feedback was not installed.');
 
+// Imported price histories are not automatically daily. Infer cadence from timestamps,
+// annualize consistently, and disclose when the legacy 252 fallback is unavoidable.
+const legacyRiskBlock=/const vol=CalcEngine\.annualizeVol\(CalcEngine\.stdev\(rets\),252\); const mdd=CalcEngine\.maxDrawdown\(closes\);\s*res\.risk\.volatility=vol; res\.risk\.annualizedReturn=CalcEngine\.annualize\(CalcEngine\.mean\(rets\),252\); res\.risk\.maxDrawdown=mdd\.mdd; res\.risk\.periods=rets\.length;\s*res\.risk\.sharpe=CalcEngine\.sharpe\(rets,\(d\.rf\?\?\.03\)\/252\); res\.risk\.sortino=CalcEngine\.sortino\(rets,\(d\.rf\?\?\.03\)\/252\);\s*res\.risk\.volReturns=rets; res\.risk\.closes=closes;\s*if\(b\)\{ res\.risk\.beta=CalcEngine\.beta\(rets,b\); res\.risk\.alpha=CalcEngine\.alpha\(rets,b,\(d\.rf\?\?\.03\)\/252\); \}\s*res\.risk\.benchmarkReturns=b;/g;
+const safeRiskBlock='const periodicity=CalcEngine.inferPeriodsPerYear(App.state.history.prices); const ppy=periodicity.periodsPerYear||252; const riskSummary=CalcEngine.riskSummary(rets,ppy,d.rf??.03,b); const vol=riskSummary?riskSummary.annualizedVolatility:null; const mdd=CalcEngine.maxDrawdown(closes);\n    res.risk.volatility=vol; res.risk.annualizedReturn=riskSummary?riskSummary.annualizedReturn:null; res.risk.maxDrawdown=mdd.mdd; res.risk.periods=rets.length; res.risk.periodsPerYear=ppy; res.risk.periodLabel=periodicity.periodsPerYear?periodicity.label:"daily-fallback"; res.risk.frequencySource=periodicity.periodsPerYear?periodicity.source:"fallback-252";\n    res.risk.sharpe=riskSummary?riskSummary.sharpe:null; res.risk.sortino=riskSummary?riskSummary.sortino:null;\n    res.risk.volReturns=rets; res.risk.closes=closes;\n    if(b&&riskSummary){ res.risk.beta=riskSummary.beta; res.risk.alpha=riskSummary.alpha; }\n    res.risk.benchmarkReturns=b;';
+let riskFrequencyPatches=0;
+html=html.replace(legacyRiskBlock,()=>{riskFrequencyPatches++;return safeRiskBlock;});
+if(!riskFrequencyPatches && html.includes('frequencySource=periodicity.periodsPerYear?periodicity.source:"fallback-252"'))riskFrequencyPatches=1;
+if(!riskFrequencyPatches)throw new Error('Build refused: timestamp-aware risk annualization boundary was not installed.');
+
+// ECL boundaries must preserve a real zero PD/EAD and must not fabricate a €/$1m exposure.
+const legacyEclPd='(r.merton&&r.merton.pd? r.merton.pd: CreditModels.ratingPD(rating,1))';
+const safeEclPd='(r.merton&&r.merton.pd!=null? r.merton.pd: CreditModels.ratingPD(rating,1))';
+const legacyEclEad='const ead= App.state.stockData&&App.state.stockData.debt!=null? App.state.stockData.debt:1000000;';
+const safeEclEad='const ead= App.state.stockData&&App.state.stockData.debt!=null? App.state.stockData.debt:null;';
+const legacyEclPct='fmt.pct(ecl.el/ecl.ead,2)+" of EAD"';
+const safeEclPct='ecl.el!=null&&ecl.ead>0?fmt.pct(ecl.el/ecl.ead,2)+" of EAD":ecl.ead===0?"0 exposure":"—"';
+let eclBoundaryPatches=0;
+if(html.includes(legacyEclPd)){html=html.replaceAll(legacyEclPd,safeEclPd);eclBoundaryPatches++;}
+if(html.includes(legacyEclEad)){html=html.replaceAll(legacyEclEad,safeEclEad);eclBoundaryPatches++;}
+if(html.includes(legacyEclPct)){html=html.replaceAll(legacyEclPct,safeEclPct);eclBoundaryPatches++;}
+if(!html.includes(safeEclPd)||!html.includes(safeEclEad)||!html.includes(safeEclPct))throw new Error('Build refused: zero/missing-safe ECL UI boundary was not installed.');
+
+// A report-side credit waterfall used to overwrite the Merton distance-to-default with literal zero.
+const legacyMertonWaterfall='pr.mertonDiag?{distanceToDefault:pr.mertonDiag?0:0,pd:pr.pd}:null';
+const safeMertonWaterfall='pr.mertonDiag?{distanceToDefault:pr.mertonDiag.distanceToDefault,pd:pr.pd}:null';
+let mertonWaterfallPatches=0;
+if(html.includes(legacyMertonWaterfall)){html=html.replaceAll(legacyMertonWaterfall,safeMertonWaterfall);mertonWaterfallPatches=1;}else if(html.includes(safeMertonWaterfall)){mertonWaterfallPatches=1;}
+if(!mertonWaterfallPatches)throw new Error('Build refused: Merton distance-to-default report propagation was not installed.');
+
 const initNeedle='window.addEventListener("DOMContentLoaded",init);';
 if(!html.includes(initNeedle)) throw new Error('Build refused: DOMContentLoaded init anchor not found.');
 html=html.replace(initNeedle,block+initNeedle);
@@ -82,6 +112,6 @@ if(durationPatches<1 && !html.includes('BondEngine.modifiedDuration(mac,ytm,freq
 fs.mkdirSync(distDir,{recursive:true});
 fs.writeFileSync(distPath,html);
 if(process.argv.includes('--write-root')) fs.writeFileSync(indexPath,html);
-console.log(JSON.stringify({output:path.relative(root,distPath),bytes:Buffer.byteLength(html),durationPatches,svgFactoryPatches,mixColorPatches,debtRatePatches,covenantPatches,portfolioInputPatches,portfolioRenderPatches,rootUpdated:process.argv.includes('--write-root')},null,2));
+console.log(JSON.stringify({output:path.relative(root,distPath),bytes:Buffer.byteLength(html),durationPatches,svgFactoryPatches,mixColorPatches,debtRatePatches,covenantPatches,portfolioInputPatches,portfolioRenderPatches,riskFrequencyPatches,eclBoundaryPatches,mertonWaterfallPatches,rootUpdated:process.argv.includes('--write-root')},null,2));
 
 function escapeRegExp(s){return s.replace(/[.*+?^${}()|[\]\\]/g,'\\$&');}

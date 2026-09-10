@@ -3,12 +3,14 @@
   const Core = typeof FinanceCore !== 'undefined' ? FinanceCore : null;
   const ModelCore = typeof FinancialModelCore !== 'undefined' ? FinancialModelCore : null;
   const LegacyCore = typeof LegacyCalculationCore !== 'undefined' ? LegacyCalculationCore : null;
+  const RiskCore = typeof RiskCreditCore !== 'undefined' ? RiskCreditCore : null;
   if(!Core){ console.error('Financial certification runtime: FinanceCore missing'); return; }
 
-  const installReport={version:Core.VERSION,modelVersion:ModelCore?ModelCore.VERSION:null,legacyVersion:LegacyCore?LegacyCore.VERSION:null,installed:[],warnings:[]};
+  const installReport={version:Core.VERSION,modelVersion:ModelCore?ModelCore.VERSION:null,legacyVersion:LegacyCore?LegacyCore.VERSION:null,riskCreditVersion:RiskCore?RiskCore.VERSION:null,installed:[],warnings:[]};
   const mark=(name)=>installReport.installed.push(name);
   if(!ModelCore)installReport.warnings.push('FinancialModelCore missing; three-statement model is outside the expanded certification boundary.');
   if(!LegacyCore)installReport.warnings.push('LegacyCalculationCore missing; stress, portfolio and multi-method valuation remain outside the expanded certification boundary.');
+  if(!RiskCore)installReport.warnings.push('RiskCreditCore missing; VaR/ES, credit curves, Altman and Merton remain outside the expanded certification boundary.');
 
   if(typeof fmt!=='undefined' && fmt){
     fmt.big=(v)=>{
@@ -28,6 +30,10 @@
     };
     CalcEngine.sma=(arr,per)=>Core.sma(arr,per);
     CalcEngine.ema=(arr,per)=>Core.ema(arr,per);
+    if(RiskCore){
+      CalcEngine.inferPeriodsPerYear=(series)=>RiskCore.inferPeriodsPerYear(series);
+      CalcEngine.riskSummary=(returns,periodsPerYear,rfAnnual=0,benchmarkReturns=null)=>RiskCore.returnRiskSummary(returns,periodsPerYear,rfAnnual,benchmarkReturns);
+    }
     mark('CalcEngine');
   }
 
@@ -123,12 +129,61 @@
     mark('XIRR');
   }
 
+  if(RiskCore && typeof RiskMetricsV2!=='undefined' && RiskMetricsV2){
+    RiskMetricsV2.historicalVaR=(returns,conf)=>RiskCore.historicalVaR(returns,conf);
+    RiskMetricsV2.parametricVaR=(vol,mu,conf)=>RiskCore.parametricVaR(vol,mu,conf);
+    RiskMetricsV2.expectedShortfall=(returns,conf)=>RiskCore.expectedShortfall(returns,conf);
+    RiskMetricsV2.mcVaR=(finals,currentValue,conf)=>RiskCore.mcVaR(finals,currentValue,conf);
+    RiskMetricsV2.mcES=(finals,currentValue,conf)=>RiskCore.mcES(finals,currentValue,conf);
+    RiskMetricsV2.computeVaRES=(_sd)=>{
+      const r=(typeof App!=='undefined'&&App&&App.state&&App.state.results&&App.state.results.stock&&App.state.results.stock.risk)?App.state.results.stock.risk:null;
+      const out={};
+      if(r&&Array.isArray(r.volReturns)&&r.volReturns.length>0){
+        const rets=r.volReturns,vol=CalcEngine.stdev(rets),mu=CalcEngine.mean(rets);
+        out.histVaR95=RiskCore.historicalVaR(rets,.95);out.histVaR99=RiskCore.historicalVaR(rets,.99);
+        out.paramVaR95=RiskCore.parametricVaR(vol,mu,.95);out.paramVaR99=RiskCore.parametricVaR(vol,mu,.99);
+        out.es95=RiskCore.expectedShortfall(rets,.95);out.es99=RiskCore.expectedShortfall(rets,.99);
+        const inferred=RiskCore.inferPeriodsPerYear((App.state.history&&App.state.history.prices)||[]);
+        out.periodsPerYear=Number.isFinite(r.periodsPerYear)&&r.periodsPerYear>0?r.periodsPerYear:inferred.periodsPerYear;
+        out.period=r.periodLabel||inferred.label||'periodic';out.hasDaily=true;
+      }else out.hasDaily=false;
+      const mc=typeof App!=='undefined'&&App&&App.state&&App.state.results?App.state.results.mc:null;
+      if(mc&&Array.isArray(mc.subsample)&&mc.subsample.length&&Number.isFinite(mc.initial)&&mc.initial>0){
+        out.mcVaR95=RiskCore.mcVaR(mc.subsample,mc.initial,.95);out.mcVaR99=RiskCore.mcVaR(mc.subsample,mc.initial,.99);
+        out.mcES95=RiskCore.mcES(mc.subsample,mc.initial,.95);out.mcES99=RiskCore.mcES(mc.subsample,mc.initial,.99);out.hasMC=true;
+      }else out.hasMC=false;
+      if(typeof App!=='undefined'&&App&&App.state)App.state.var=out;
+      return out;
+    };
+    mark('RiskMetricsV2');
+  }
+
+  if(RiskCore && typeof CreditModels!=='undefined' && CreditModels){
+    CreditModels.altmanZ=(f)=>RiskCore.altmanZ(f||{});
+    CreditModels.altmanZPrime=(f)=>RiskCore.altmanZPrime(f||{});
+    CreditModels.merton=(E,sigmaE,D,r,T)=>RiskCore.merton(E,sigmaE,D,r,T);
+    CreditModels.ratingPD=(rating,horizon,table)=>RiskCore.ratingPD(rating,horizon,table||CreditModels.defaultPDTable||RiskCore.DEFAULT_PD_TABLE);
+    CreditModels.expectedLoss=(pd,recovery)=>RiskCore.expectedLossRate(pd,recovery);
+    mark('CreditModels');
+  }
+
+  if(RiskCore && typeof CreditCurveV2!=='undefined' && CreditCurveV2){
+    CreditCurveV2.curve=(rating)=>RiskCore.creditCurve(rating,[1,3,5,7,10],(typeof CreditModels!=='undefined'&&CreditModels.defaultPDTable)||RiskCore.DEFAULT_PD_TABLE);
+    mark('CreditCurveV2.curve');
+  }
+
+  if(RiskCore && typeof MertonDiag!=='undefined' && MertonDiag){
+    MertonDiag.trace=(E,sigmaE,D,r,T)=>RiskCore.mertonTrace(E,sigmaE,D,r,T);
+    mark('MertonDiag.trace');
+  }
+
   if(typeof ECLV2!=='undefined' && ECLV2){
     ECLV2.compute=(pd,recovery,ead)=>{
-      if(![pd,recovery,ead].every(Core.isFiniteNumber)||pd<0||pd>1||recovery<0||recovery>1||ead<0)return {pd,recovery,ead,lgd:null,el:null,error:'ECL requires finite PD/recovery in [0,1] and non-negative EAD.'};
-      const lgd=1-recovery;return {pd,recovery,ead,lgd,el:Math.round(pd*lgd*ead*100)/100};
+      const amount=RiskCore?RiskCore.expectedLossAmount(pd,recovery,ead):(Core.isFiniteNumber(pd)&&Core.isFiniteNumber(recovery)&&Core.isFiniteNumber(ead)&&pd>=0&&pd<=1&&recovery>=0&&recovery<=1&&ead>=0?pd*(1-recovery)*ead:null);
+      if(amount==null)return {pd,recovery,ead,lgd:null,el:null,error:'ECL requires finite PD/recovery in [0,1] and non-negative EAD.'};
+      const lgd=1-recovery;return {pd,recovery,ead,lgd,el:Math.round(amount*100)/100};
     };
-    ECLV2.eadDefault=(face,exposureType)=>exposureType==='bond'?(Core.isFiniteNumber(face)?face:null):(Core.isFiniteNumber(face)?face:1000000);
+    ECLV2.eadDefault=(face,_exposureType)=>Core.isFiniteNumber(face)&&face>=0?face:null;
     mark('ECLV2');
   }
 
@@ -176,9 +231,10 @@
     App.meta.financialCertificationVersion=Core.VERSION;
     if(ModelCore)App.meta.financialModelEngineVersion=ModelCore.VERSION;
     if(LegacyCore)App.meta.legacyCalculationCoreVersion=LegacyCore.VERSION;
+    if(RiskCore)App.meta.riskCreditCoreVersion=RiskCore.VERSION;
     App.meta.bondEngineVersion='1.1.0';
     App.meta.dcfEngineVersion='1.1.0';
-    App.meta.riskEngineVersion='1.1.0';
+    App.meta.riskEngineVersion=RiskCore?RiskCore.VERSION:'1.1.0';
   }
 
   globalThis.__FINANCIAL_CERTIFICATION__=Object.freeze(installReport);

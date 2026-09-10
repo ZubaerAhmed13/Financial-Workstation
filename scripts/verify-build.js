@@ -11,6 +11,14 @@ const safeCov='const n=(id,fb)=>{const el=$(id);const raw=el?el.value:null;if(ra
 const legacyCov='fm.covenants={debtEbitda:Number($("#cov_de").value)||4, ic:Number($("#cov_ic").value)||3, currentRatio:Number($("#cov_cr").value)||1, minCash:Number($("#cov_mc").value)||0};';
 const safePortfolioRead='expectedReturn:inv.metrics.expectedReturn!=null?inv.metrics.expectedReturn:null,volatility:inv.metrics.volatility!=null?inv.metrics.volatility:null';
 const legacyPortfolioRead='expectedReturn:inv.metrics.expectedReturn||0,volatility:inv.metrics.volatility||.2';
+const safeRiskFrequency='res.risk.periodsPerYear=ppy; res.risk.periodLabel=periodicity.periodsPerYear?periodicity.label:"daily-fallback"; res.risk.frequencySource=periodicity.periodsPerYear?periodicity.source:"fallback-252";';
+const legacyRiskFrequency='res.risk.volatility=vol; res.risk.annualizedReturn=CalcEngine.annualize(CalcEngine.mean(rets),252);';
+const safeEclPd='(r.merton&&r.merton.pd!=null? r.merton.pd: CreditModels.ratingPD(rating,1))';
+const legacyEclPd='(r.merton&&r.merton.pd? r.merton.pd: CreditModels.ratingPD(rating,1))';
+const safeEclEad='const ead= App.state.stockData&&App.state.stockData.debt!=null? App.state.stockData.debt:null;';
+const legacyEclEad='const ead= App.state.stockData&&App.state.stockData.debt!=null? App.state.stockData.debt:1000000;';
+const safeMertonWaterfall='pr.mertonDiag?{distanceToDefault:pr.mertonDiag.distanceToDefault,pd:pr.pd}:null';
+const legacyMertonWaterfall='pr.mertonDiag?{distanceToDefault:pr.mertonDiag?0:0,pd:pr.pd}:null';
 const checks=[
   ['generated HTML exists',fs.existsSync(file)],
   ['single-file artifact remains substantial',Buffer.byteLength(html)>900000],
@@ -19,6 +27,7 @@ const checks=[
   ['FinanceCore embedded',html.includes('root.FinanceCore = api')],
   ['FinancialModelCore embedded',html.includes('root.FinancialModelCore=api')],
   ['LegacyCalculationCore embedded',html.includes('root.LegacyCalculationCore = api')],
+  ['RiskCreditCore embedded',html.includes('root.RiskCreditCore=api')],
   ['runtime installer embedded',html.includes('__FINANCIAL_CERTIFICATION__')],
   ['model runtime route embedded',html.includes('const out=ModelCore.build(m,sd||{})')],
   ['XIRR runtime route embedded',html.includes('XIRR.xirr=(cashflows,dates,_guess=.1)=>Core.xirr(cashflows,dates)')],
@@ -28,6 +37,24 @@ const checks=[
   ['valuation matrix runtime route embedded',html.includes('return LegacyCore.valuationMatrix(sd,result)')],
   ['value-driver runtime route embedded',html.includes('const rows=LegacyCore.valuationDrivers(sd);')],
   ['legacy calculation certification version exposed',html.includes('App.meta.legacyCalculationCoreVersion=LegacyCore.VERSION')],
+  ['risk-credit certification version exposed',html.includes('App.meta.riskCreditCoreVersion=RiskCore.VERSION')&&html.includes('riskCreditVersion:RiskCore?RiskCore.VERSION:null')],
+  ['RiskMetrics runtime routes embedded',html.includes('RiskMetricsV2.historicalVaR=(returns,conf)=>RiskCore.historicalVaR(returns,conf)')&&html.includes('RiskMetricsV2.parametricVaR=(vol,mu,conf)=>RiskCore.parametricVaR(vol,mu,conf)')&&html.includes('RiskMetricsV2.expectedShortfall=(returns,conf)=>RiskCore.expectedShortfall(returns,conf)')],
+  ['credit-model runtime routes embedded',html.includes('CreditModels.altmanZ=(f)=>RiskCore.altmanZ(f||{})')&&html.includes('CreditModels.merton=(E,sigmaE,D,r,T)=>RiskCore.merton(E,sigmaE,D,r,T)')],
+  ['credit-curve runtime route embedded',html.includes('CreditCurveV2.curve=(rating)=>RiskCore.creditCurve')],
+  ['Merton diagnostic route embedded',html.includes('MertonDiag.trace=(E,sigmaE,D,r,T)=>RiskCore.mertonTrace(E,sigmaE,D,r,T)')],
+  ['arbitrary-confidence normal quantile embedded',html.includes('function normalInvCDF(p)')&&html.includes('const z=normalInvCDF(1-confidence);')],
+  ['Monte Carlo denominator guard embedded',html.includes('!finite(currentValue)||currentValue<=0')],
+  ['correct credit interpolation embedded',html.includes('const w=(horizon-h0)/(h1-h0);return p0+w*(p1-p0);')],
+  ['Merton residual convergence contract embedded',html.includes("Merton solver did not converge to the requested tolerance.")&&html.includes('Math.abs(residualEquity)<1e-7&&Math.abs(residualVol)<1e-7')],
+  ['timestamp-aware risk frequency metadata embedded',html.includes(safeRiskFrequency)],
+  ['legacy hard-coded 252 annualization block absent',!html.includes(legacyRiskFrequency)],
+  ['ECL preserves zero Merton PD at UI boundary',html.includes(safeEclPd)],
+  ['ECL truthy PD fallback absent',!html.includes(legacyEclPd)],
+  ['ECL missing exposure remains missing at UI boundary',html.includes(safeEclEad)],
+  ['ECL synthetic one-million UI exposure absent',!html.includes(legacyEclEad)],
+  ['runtime EAD default no longer manufactures one million',html.includes("ECLV2.eadDefault=(face,_exposureType)=>Core.isFiniteNumber(face)&&face>=0?face:null")],
+  ['Merton report propagates actual distance-to-default',html.includes(safeMertonWaterfall)],
+  ['Merton report hard-coded distance-to-default zero absent',!html.includes(legacyMertonWaterfall)],
   ['comparable valuation uses relative multiple to fair price',html.includes('const value=finite(implied)&&implied>EPS?price/implied:null;')],
   ['residual income is converted to per-share value',html.includes('const value=ri.value/shares;')],
   ['portfolio UI preserves missing and zero metrics',html.includes(safePortfolioRead)],
@@ -54,6 +81,7 @@ const checks=[
   ['bond module preserved',html.includes('BondEngine')],
   ['CSV import preserved',html.includes('CsvParser')],
   ['three-statement model presentation preserved',html.includes('FinancialModelEngine.incomeTableHTML')&&html.includes('FinancialModelEngine.balanceTableHTML')&&html.includes('FinancialModelEngine.cashTableHTML')],
+  ['risk presentation preserved',html.includes('RiskMetricsV2.varHTML')&&html.includes('CreditCurveV2.curveHTML')&&html.includes('MertonDiag.diagHTML')],
   ['XIRR view preserved',html.includes('loanXirrRender')],
   ['ECL view wiring preserved',html.includes('Expected Credit Loss (PD × LGD × EAD)')]
 ];
