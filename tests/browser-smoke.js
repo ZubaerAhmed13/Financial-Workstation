@@ -3,17 +3,27 @@
 const path=require('node:path');
 const fs=require('node:fs');
 const {pathToFileURL}=require('node:url');
-const {chromium}=require('playwright');
+const {chromium,firefox,webkit}=require('playwright');
 
 (async()=>{
   const positional=process.argv.slice(2).filter(a=>!a.startsWith('--'));
   const target=path.resolve(positional[0]||'dist/index.html');
   const outArg=process.argv.find(a=>a.startsWith('--write='));
   const outPath=outArg?path.resolve(outArg.slice('--write='.length)):null;
+  const browserArg=(process.argv.find(a=>a.startsWith('--browser='))||'--browser=chromium').slice('--browser='.length);
+  const viewportArg=(process.argv.find(a=>a.startsWith('--viewport='))||'--viewport=desktop').slice('--viewport='.length);
+  const launchers={chromium,firefox,webkit};
+  if(!launchers[browserArg])throw new Error(`Unsupported browser: ${browserArg}`);
+  if(!['desktop','mobile'].includes(viewportArg))throw new Error(`Unsupported viewport: ${viewportArg}`);
   if(!fs.existsSync(target)) throw new Error(`Missing browser-smoke target: ${target}`);
 
-  const browser=await chromium.launch({headless:true});
-  const page=await browser.newPage({viewport:{width:1440,height:1000}});
+  const browser=await launchers[browserArg].launch({headless:true});
+  const mobile=viewportArg==='mobile';
+  const page=await browser.newPage({
+    viewport:mobile?{width:390,height:844}:{width:1440,height:1000},
+    isMobile:mobile,
+    hasTouch:mobile
+  });
   const pageErrors=[];
   const consoleErrors=[];
   const networkRequests=[];
@@ -27,19 +37,18 @@ const {chromium}=require('playwright');
 
   await page.goto(pathToFileURL(target).href,{waitUntil:'load'});
   try{
-    // App is declared with top-level `const` in the legacy classic script. It is a
-    // global lexical binding, not a `window`/`globalThis` property, so test it by name.
     await page.waitForFunction(()=>typeof App!=='undefined' && !!globalThis.__FINANCIAL_CERTIFICATION__,null,{timeout:15000});
   }catch(err){
     const readiness=await page.evaluate(()=>({
       appLexical:typeof App!=='undefined',
       appWindow:Object.prototype.hasOwnProperty.call(globalThis,'App'),
       financeCore:typeof FinanceCore!=='undefined',
+      financialModelCore:typeof FinancialModelCore!=='undefined',
       certification:!!globalThis.__FINANCIAL_CERTIFICATION__,
       readyState:document.readyState,
       bodyChildren:document.body?document.body.children.length:null
     })).catch(e=>({evaluationError:String(e&&e.stack||e)}));
-    const failure={status:'FAIL',phase:'readiness',error:String(err&&err.stack||err),readiness,pageErrors,consoleErrors,externalNetworkRequests:[...new Set(networkRequests)]};
+    const failure={status:'FAIL',phase:'readiness',browser:browserArg,viewport:viewportArg,error:String(err&&err.stack||err),readiness,pageErrors,consoleErrors,externalNetworkRequests:[...new Set(networkRequests)]};
     const json=JSON.stringify(failure,null,2)+'\n';
     console.error(json);
     if(outPath){fs.mkdirSync(path.dirname(outPath),{recursive:true});fs.writeFileSync(outPath,json);}
@@ -102,6 +111,10 @@ const {chromium}=require('playwright');
     csv:typeof CsvParser==='object',
     ratios:typeof FinancialRatios==='object',
     financeCore:typeof FinanceCore==='object',
+    financialModelCore:typeof FinancialModelCore==='object',
+    financialModelEngine:typeof FinancialModelEngine==='object',
+    xirr:typeof XIRR==='object',
+    ecl:typeof ECLV2==='object',
     cert:!!globalThis.__FINANCIAL_CERTIFICATION__
   }));
   for(const [k,v] of Object.entries(criticalGlobals)) if(!v) failures.push(`critical global missing: ${k}`);
@@ -116,15 +129,39 @@ const {chromium}=require('playwright');
     try{ const m=CalcEngine.macd(Array.from({length:80},(_,i)=>100+i),12,26,9); out.macd=Array.isArray(m.hist)&&m.hist.some(Number.isFinite); }catch(e){out.macd=false;}
     try{ const r=CalcEngine.rsi(Array.from({length:30},(_,i)=>i+1),14); out.rsi=r[r.length-1]===100; }catch(e){out.rsi=false;}
     try{ const d=ValuationEngine.dcf({revenue0:100,growth:.05,ebitdaMargin:.2,tax:.2,capexPct:.04,wcPct:.01,dandaPct:.03,wacc:.08,terminalGrowth:.08,netDebt:0,shares:1,horizon:5}); out.dcf=!!d.error; }catch(e){out.dcf=false;}
+    try{
+      const m=FinancialModelEngine.defaults();m.years=2;m.startYear=2027;m.bs0={revenue:100,cash:10,equity:10};m.growth=[.1,.1];m.tax=[0,0];m.capexPct=[0,0];m.daPct=[0,0];m.dso=[0,0];m.dio=[0,0];m.dpo=[0,0];m.ocaPct=[0,0];m.oclPct=[0,0];m.cogsPct=[.65,.65];m.sgaPct=[.12,.12];m.rndPct=[.03,.03];
+      const r=FinancialModelEngine.build(m,{});out.financialModel=Math.abs(r.income[0].revenue-110)<1e-9&&Math.abs(r.income[1].revenue-121)<1e-9&&r.check.ok===true;
+    }catch(e){out.financialModel=false;}
+    try{ const d0=Date.UTC(2024,0,1),d1=Date.UTC(2024,11,31);const r=XIRR.xirr([-1000,1100],[d0,d1]);out.xirr=r!=null&&Math.abs(r-.1)<1e-8; }catch(e){out.xirr=false;}
+    try{ const e=ECLV2.compute(.08,.35,1000);const z=ECLV2.compute(null,.35,1000);out.ecl=e.el===52&&z.el===null&&ECLV2.eadDefault(0,'loan')===0; }catch(e){out.ecl=false;}
     return out;
   });
   for(const [k,v] of Object.entries(runtimeChecks)) if(!v) failures.push(`runtime regression failed: ${k}`);
+
+  const layoutChecks=await page.evaluate((mobile)=>{
+    const root=document.documentElement;
+    const menu=document.getElementById('menuBtn');
+    const sidebar=document.getElementById('sidebar');
+    const result={horizontalOverflow:root.scrollWidth>root.clientWidth+2,menuVisible:null,menuOpens:null};
+    if(mobile&&menu&&sidebar){
+      result.menuVisible=getComputedStyle(menu).display!=='none';
+      menu.click();result.menuOpens=sidebar.classList.contains('open');menu.click();
+    }
+    return result;
+  },mobile);
+  if(mobile&&layoutChecks.horizontalOverflow)failures.push('mobile body has unexpected horizontal overflow');
+  if(mobile&&layoutChecks.menuVisible!==true)failures.push('mobile menu button is not visible');
+  if(mobile&&layoutChecks.menuOpens!==true)failures.push('mobile menu does not open sidebar');
 
   await browser.close();
 
   const report={
     target:path.basename(target),
+    browser:browserArg,
+    viewport:viewportArg,
     certificationVersion:cert.version,
+    financialModelVersion:cert.modelVersion||null,
     totalViews:viewIds.length,
     viewsVisited,
     tabsActivated,
@@ -132,6 +169,7 @@ const {chromium}=require('playwright');
     consoleErrors,
     externalNetworkRequests:[...new Set(networkRequests)],
     runtimeChecks,
+    layoutChecks,
     failures,
     status:(!pageErrors.length&&!consoleErrors.length&&!networkRequests.length&&!failures.length&&viewsVisited===viewIds.length)?'PASS':'FAIL'
   };

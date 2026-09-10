@@ -1,17 +1,18 @@
 (function(){
   'use strict';
   const Core = typeof FinanceCore !== 'undefined' ? FinanceCore : null;
+  const ModelCore = typeof FinancialModelCore !== 'undefined' ? FinancialModelCore : null;
   if(!Core){ console.error('Financial certification runtime: FinanceCore missing'); return; }
 
-  const installReport={version:Core.VERSION,installed:[],warnings:[]};
+  const installReport={version:Core.VERSION,modelVersion:ModelCore?ModelCore.VERSION:null,installed:[],warnings:[]};
   const mark=(name)=>installReport.installed.push(name);
+  if(!ModelCore)installReport.warnings.push('FinancialModelCore missing; three-statement model is outside the expanded certification boundary.');
 
   if(typeof fmt!=='undefined' && fmt){
     fmt.big=(v)=>{
       const a=Core.abbreviate(v); if(!a) return '—';
       if(!a.suffix) return fmt.money(a.scaled,2);
-      const dp=a.suffix==='K'?2:2;
-      return fmt.money(a.scaled,dp)+a.suffix;
+      return fmt.money(a.scaled,2)+a.suffix;
     };
     mark('formatter.big');
   }
@@ -51,9 +52,6 @@
   }
 
   if(typeof LoanEngine!=='undefined' && LoanEngine){
-    // Preserve the legacy call signatures while routing the production methods to
-    // the independently tested core. The optional legacy IRR guess is accepted
-    // for compatibility but intentionally ignored by the deterministic bracketed solver.
     LoanEngine.npv=(flows,rate)=>Core.npv(flows,rate);
     LoanEngine.irr=(flows,_guess=.1)=>Core.irr(flows);
     mark('LoanEngine.npv/irr');
@@ -98,6 +96,40 @@
     mark('FinancialRatios');
   }
 
+  if(ModelCore && typeof FinancialModelEngine!=='undefined' && FinancialModelEngine){
+    FinancialModelEngine.defaults=()=>{
+      const currency=(typeof App!=='undefined'&&App&&App.state&&App.state.settings&&App.state.settings.currency)||'EUR';
+      return ModelCore.defaults(currency);
+    };
+    FinancialModelEngine.fillDefaults=(m,sd)=>ModelCore.fillDefaults(m,sd||{});
+    FinancialModelEngine.build=(m,sd)=>{
+      const out=ModelCore.build(m,sd||{});
+      if(Array.isArray(out.covenants) && typeof fmt!=='undefined')out.covenants=out.covenants.map(c=>({...c,fmt:c.format==='ratio'?fmt.x:fmt.money}));
+      return out;
+    };
+    mark('FinancialModelEngine.build/fillDefaults/defaults');
+  }
+
+  if(typeof XIRR!=='undefined' && XIRR){
+    XIRR.xnpv=(rate,cashflows,dates)=>Core.xnpv(rate,cashflows,dates);
+    XIRR.xirr=(cashflows,dates,_guess=.1)=>Core.xirr(cashflows,dates);
+    XIRR.xirrHTML=(cashflows,dates)=>{
+      const r=Core.xirr(cashflows,dates);
+      if(r==null)return '<div class="banner warn">XIRR could not be determined — the irregular cash-flow pattern may have no unique root.</div>';
+      return `<div class="card"><div class="card-title">XIRR (irregular-period IRR)</div><div class="grid g2">${kpi('XIRR',fmt.pct(r,2),'annualized, irregular dates')}</div><div class="formula">Solve Σ CF_i/(1+XIRR)^((date_i−date_0)/365) = 0</div><div class="banner info">XIRR handles cash flows that arrive at irregular dates by discounting each to its actual year-fraction. It annualizes the return correctly for non-annual periods.</div></div>`;
+    };
+    mark('XIRR');
+  }
+
+  if(typeof ECLV2!=='undefined' && ECLV2){
+    ECLV2.compute=(pd,recovery,ead)=>{
+      if(![pd,recovery,ead].every(Core.isFiniteNumber)||pd<0||pd>1||recovery<0||recovery>1||ead<0)return {pd,recovery,ead,lgd:null,el:null,error:'ECL requires finite PD/recovery in [0,1] and non-negative EAD.'};
+      const lgd=1-recovery;return {pd,recovery,ead,lgd,el:Math.round(pd*lgd*ead*100)/100};
+    };
+    ECLV2.eadDefault=(face,exposureType)=>exposureType==='bond'?(Core.isFiniteNumber(face)?face:null):(Core.isFiniteNumber(face)?face:1000000);
+    mark('ECLV2');
+  }
+
   if(typeof FINANCE!=='undefined' && FINANCE){
     if(typeof FINANCE.median==='function')FINANCE.median=(a)=>Core.median(a);
     if(typeof FINANCE.calcRecoveryPeriod==='function')FINANCE.calcRecoveryPeriod=(a)=>{const d=Core.maximumDrawdown(a);return d.recoveryPeriod;};
@@ -109,6 +141,7 @@
 
   if(typeof App!=='undefined' && App && App.meta){
     App.meta.financialCertificationVersion=Core.VERSION;
+    if(ModelCore)App.meta.financialModelEngineVersion=ModelCore.VERSION;
     App.meta.bondEngineVersion='1.1.0';
     App.meta.dcfEngineVersion='1.1.0';
     App.meta.riskEngineVersion='1.1.0';

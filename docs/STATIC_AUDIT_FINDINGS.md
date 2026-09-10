@@ -3,19 +3,19 @@
 This file is generated from the deployable `dist/index.html`. Every regex lead from `scripts/static-audit.js` is enumerated with a source line, owner hint, stable fingerprint and contextual disposition. These are review leads, not automatic defects.
 
 - Target: `index.html`
-- Total pattern hits: **422**
-- Calculation-sensitive / algorithmic-review hits: **218**
+- Total pattern hits: **425**
+- Calculation-sensitive / algorithmic-review hits: **220**
 - Unclassified hits: **0**
 
 ## Counts by pattern
 
 | Pattern | Count |
 |---|---:|
-| truthy-value checks | 134 |
-| Math.round usage | 52 |
+| truthy-value checks | 135 |
+| Math.round usage | 53 |
 | Infinity literals | 13 |
-| generic OR zero | 174 |
-| toFixed usage | 20 |
+| generic OR zero | 173 |
+| toFixed usage | 22 |
 | parseInt usage | 3 |
 | fallback-to-zero coercions | 25 |
 | NaN literals | 1 |
@@ -25,13 +25,14 @@ This file is generated from the deployable `dist/index.html`. Every regex lead f
 | Disposition | Count |
 |---|---:|
 | algorithm/parser sentinel | 14 |
-| calculation-sensitive numeric fallback | 178 |
-| calculation-sensitive presence guard | 40 |
+| algorithmic rounding | 2 |
+| calculation-sensitive numeric fallback | 177 |
+| calculation-sensitive presence guard | 41 |
 | DOM/object presence guard | 94 |
 | general numeric/default fallback | 4 |
 | input/parser boundary | 3 |
 | parser/default fallback | 3 |
-| presentation/UI rounding | 72 |
+| presentation/UI rounding | 73 |
 | UI/default-state fallback | 14 |
 
 ## Calculation-sensitive / algorithmic-review leads
@@ -456,40 +457,33 @@ This file is generated from the deployable `dist/index.html`. Every regex lead f
 - Match: `||0`
 - Source: `${AppUI.frow("Minimum cash",App.state.settings.currency,"cov_mc",fm.covenants.minCash||0)}`
 
-### 319b94c9c5f92da4 — fallback-to-zero coercions — line 4727
+### 4f4c5f10089b6a04 — fallback-to-zero coercions — line 4727
 
 - Owner hint: `readDebt`
 - Disposition: **calculation-sensitive numeric fallback**
-- Match: `Number($("#d_"+i+"_o").value)||0, rate:(Number($("#d_"+i+"_r").value)||5)/100, repayment:Number($("#d_"+i+"_p").value)||0`
-- Source: `function readDebt(){ const fm=App.state.fm; if(!fm.debt.rows)return; const rows=[]; $$("#debtRows tr[data-i]").forEach(tr=>{ const i=Number(tr.dataset.i); rows.push({name:$("#d_"+i+"_n").value, opening:Number($("#d_"+i+"_o").value)||0, rate:(Number($("#d_"+i+"_r").value)||5)/100, repayment:Number($("#d_"+i+"_p").value)||0}); }); fm.debt.rows=rows; }`
+- Match: `Number($("#d_"+i+"_o").value)||0`
+- Source: `function readDebt(){ const fm=App.state.fm; if(!fm.debt.rows)return; const rows=[]; $$("#debtRows tr[data-i]").forEach(tr=>{ const i=Number(tr.dataset.i); rows.push({name:$("#d_"+i+"_n").value, opening:Number($("#d_"+i+"_o").value)||0, rate:(()=>{const v=Number($("#d_"+i+"_r").value);return Number.isFinite(v)?v/100:.05;})(), repayment:Number($("#d_"+i+"_p").value)||0}); }); fm.debt.rows=rows; }`
 
-### ee9cfc81001164bd — generic OR zero — line 4727
+### 4f4c5f10089b6a04 — fallback-to-zero coercions — line 4727
+
+- Owner hint: `readDebt`
+- Disposition: **calculation-sensitive numeric fallback**
+- Match: `Number($("#d_"+i+"_p").value)||0`
+- Source: `function readDebt(){ const fm=App.state.fm; if(!fm.debt.rows)return; const rows=[]; $$("#debtRows tr[data-i]").forEach(tr=>{ const i=Number(tr.dataset.i); rows.push({name:$("#d_"+i+"_n").value, opening:Number($("#d_"+i+"_o").value)||0, rate:(()=>{const v=Number($("#d_"+i+"_r").value);return Number.isFinite(v)?v/100:.05;})(), repayment:Number($("#d_"+i+"_p").value)||0}); }); fm.debt.rows=rows; }`
+
+### 3fdea3997be29629 — generic OR zero — line 4727
 
 - Owner hint: `readDebt`
 - Disposition: **calculation-sensitive numeric fallback**
 - Match: `||0`
-- Source: `function readDebt(){ const fm=App.state.fm; if(!fm.debt.rows)return; const rows=[]; $$("#debtRows tr[data-i]").forEach(tr=>{ const i=Number(tr.dataset.i); rows.push({name:$("#d_"+i+"_n").value, opening:Number($("#d_"+i+"_o").value)||0, rate:(Number($("#d_"+i+"_r").value)||5)/100, repayment:Number($("#d_"+i+"_p").value)||0}); }); fm.debt.rows=rows; }`
+- Source: `function readDebt(){ const fm=App.state.fm; if(!fm.debt.rows)return; const rows=[]; $$("#debtRows tr[data-i]").forEach(tr=>{ const i=Number(tr.dataset.i); rows.push({name:$("#d_"+i+"_n").value, opening:Number($("#d_"+i+"_o").value)||0, rate:(()=>{const v=Number($("#d_"+i+"_r").value);return Number.isFinite(v)?v/100:.05;})(), repayment:Number($("#d_"+i+"_p").value)||0}); }); fm.debt.rows=rows; }`
 
-### ee9cfc81001164bd — generic OR zero — line 4727
+### 3fdea3997be29629 — generic OR zero — line 4727
 
 - Owner hint: `readDebt`
 - Disposition: **calculation-sensitive numeric fallback**
 - Match: `||0`
-- Source: `function readDebt(){ const fm=App.state.fm; if(!fm.debt.rows)return; const rows=[]; $$("#debtRows tr[data-i]").forEach(tr=>{ const i=Number(tr.dataset.i); rows.push({name:$("#d_"+i+"_n").value, opening:Number($("#d_"+i+"_o").value)||0, rate:(Number($("#d_"+i+"_r").value)||5)/100, repayment:Number($("#d_"+i+"_p").value)||0}); }); fm.debt.rows=rows; }`
-
-### 4236d76995c08605 — fallback-to-zero coercions — line 4728
-
-- Owner hint: `readCov`
-- Disposition: **calculation-sensitive numeric fallback**
-- Match: `Number($("#cov_de").value)||4, ic:Number($("#cov_ic").value)||3, currentRatio:Number($("#cov_cr").value)||1, minCash:Number($("#cov_mc").value)||0`
-- Source: `function readCov(){ const fm=App.state.fm; fm.covenants={debtEbitda:Number($("#cov_de").value)||4, ic:Number($("#cov_ic").value)||3, currentRatio:Number($("#cov_cr").value)||1, minCash:Number($("#cov_mc").value)||0}; }`
-
-### e62d24ce2153e421 — generic OR zero — line 4728
-
-- Owner hint: `readCov`
-- Disposition: **calculation-sensitive numeric fallback**
-- Match: `||0`
-- Source: `function readCov(){ const fm=App.state.fm; fm.covenants={debtEbitda:Number($("#cov_de").value)||4, ic:Number($("#cov_ic").value)||3, currentRatio:Number($("#cov_cr").value)||1, minCash:Number($("#cov_mc").value)||0}; }`
+- Source: `function readDebt(){ const fm=App.state.fm; if(!fm.debt.rows)return; const rows=[]; $$("#debtRows tr[data-i]").forEach(tr=>{ const i=Number(tr.dataset.i); rows.push({name:$("#d_"+i+"_n").value, opening:Number($("#d_"+i+"_o").value)||0, rate:(()=>{const v=Number($("#d_"+i+"_r").value);return Number.isFinite(v)?v/100:.05;})(), repayment:Number($("#d_"+i+"_p").value)||0}); }); fm.debt.rows=rows; }`
 
 ### e4c383bd2f56679a — fallback-to-zero coercions — line 4730
 
@@ -1548,16 +1542,37 @@ This file is generated from the deployable `dist/index.html`. Every regex lead f
 - Match: `if(!bracket)`
 - Source: `function irr(flows){ assertFiniteArray(flows,'flows'); if(flows.length<2||!flows.some(x=>x<0)||!flows.some(x=>x>0))return null; const f=r=>npv(flows,r); const points=[]; for(let i=0;i<=800;i++){ const x=-0.9999+i*(10.9999/800); const y=f(x); if(y!=null&&Number.isFinite(y))points.push([x,y]); } let bracket=null; for(let i=1;i<points.length;i++){ if(points[i-1][1]===0)return points[i-1][0]; if(points[i-1][1]*points[i][1]<0){ bracket=[points[i-1][0],points[i][0]]; break; } } if(!bracket)return null; let [lo,hi]=bracket,flo=f(lo); for(let i=0;i<300;i++){const mid=(lo+hi)/2,fm=f(mid);if(Math.abs(fm)<1e-11)return mid;if(flo*fm<=0)hi=mid;else{lo=mid;flo=fm;}}return (lo+hi)/2; }`
 
-### 660668cece369c8f — truthy-value checks — line 12193
+### 281850d60ebd0b14 — toFixed usage — line 12282
 
-- Owner hint: `abbreviate`
+- Owner hint: `build`
+- Disposition: **algorithmic rounding**
+- Match: `.toFixed(`
+- Source: `if(marginVariance!=null&&Math.abs(marginVariance)>.005)warnings.push({severity:'CAUTION',code:'FM-MARGIN-001',year:y,message:\`Detailed cost assumptions imply EBITDA margin ${(mar*100).toFixed(2)}%, versus target ${(marginTarget*100).toFixed(2)}%.\`});`
+
+### 281850d60ebd0b14 — toFixed usage — line 12282
+
+- Owner hint: `build`
+- Disposition: **algorithmic rounding**
+- Match: `.toFixed(`
+- Source: `if(marginVariance!=null&&Math.abs(marginVariance)>.005)warnings.push({severity:'CAUTION',code:'FM-MARGIN-001',year:y,message:\`Detailed cost assumptions imply EBITDA margin ${(mar*100).toFixed(2)}%, versus target ${(marginTarget*100).toFixed(2)}%.\`});`
+
+### d860d0ca31f4070c — truthy-value checks — line 12321
+
+- Owner hint: `computeCovenants`
 - Disposition: **calculation-sensitive presence guard**
 - Match: `if(!Core)`
 - Source: `if(!Core){ console.error('Financial certification runtime: FinanceCore missing'); return; }`
 
-### 465032b3d1292dc1 — truthy-value checks — line 12200
+### 523a7d212da8943d — truthy-value checks — line 12325
 
-- Owner hint: `abbreviate`
+- Owner hint: `computeCovenants`
+- Disposition: **calculation-sensitive presence guard**
+- Match: `if(!ModelCore)`
+- Source: `if(!ModelCore)installReport.warnings.push('FinancialModelCore missing; three-statement model is outside the expanded certification boundary.');`
+
+### af4a9a6842780775 — truthy-value checks — line 12329
+
+- Owner hint: `computeCovenants`
 - Disposition: **calculation-sensitive presence guard**
 - Match: `if(!a)`
 - Source: `const a=Core.abbreviate(v); if(!a) return '—';`
@@ -1685,7 +1700,7 @@ This file is generated from the deployable `dist/index.html`. Every regex lead f
 | `4585fccb6f23c0e2` | generic OR zero | 4633 | `stress` | calculation-sensitive numeric fallback | `else { shock+=(scenario.eq\|\|0)*0.5; }` |
 | `303beb5c847d1596` | truthy-value checks | 4664 | `checkHTML` | DOM/object presence guard | `if(!res)return "";` |
 | `c0414328d27364e9` | toFixed usage | 4685 | `fmRender` | presentation/UI rounding | `<tr><td>Revenue growth %</td>${fm.growth.map((v,i)=>\`<td><input type="text" value="${(v*100).toFixed(1)}" id="fm_g_${i}" style="width:64px"></td>\`).join("")}</tr>` |
-| `b88a3fc396924ed6` | toFixed usage | 4686 | `fmRender` | presentation/UI rounding | `<tr><td>EBITDA margin %</td>${fm.margin.map((v,i)=>\`<td><input type="text" value="${(v*100).toFixed(1)}" id="fm_m_${i}" style="width:64px"></td>\`).join("")}</tr>` |
+| `a39e3c0e6e3f479c` | toFixed usage | 4686 | `fmRender` | presentation/UI rounding | `<tr><td>EBITDA margin target %</td>${fm.margin.map((v,i)=>\`<td><input type="text" value="${(v*100).toFixed(1)}" id="fm_m_${i}" style="width:64px"></td>\`).join("")}</tr>` |
 | `0874e1a9828e1c56` | toFixed usage | 4687 | `fmRender` | presentation/UI rounding | `<tr><td>Tax rate %</td>${fm.tax.map((v,i)=>\`<td><input type="text" value="${(v*100).toFixed(1)}" id="fm_t_${i}" style="width:64px"></td>\`).join("")}</tr>` |
 | `ab3291303407b7f0` | toFixed usage | 4688 | `fmRender` | presentation/UI rounding | `<tr><td>CapEx % revenue</td>${fm.capexPct.map((v,i)=>\`<td><input type="text" value="${(v*100).toFixed(1)}" id="fm_c_${i}" style="width:64px"></td>\`).join("")}</tr>` |
 | `15cdca8947b1b983` | toFixed usage | 4689 | `fmRender` | presentation/UI rounding | `<tr><td>D&A % revenue</td>${fm.daPct.map((v,i)=>\`<td><input type="text" value="${(v*100).toFixed(1)}" id="fm_d_${i}" style="width:64px"></td>\`).join("")}</tr>` |
@@ -1698,11 +1713,10 @@ This file is generated from the deployable `dist/index.html`. Every regex lead f
 | `9505be0d3a7a4566` | generic OR zero | 4705 | `fmRender` | calculation-sensitive numeric fallback | `${(fm.debt.rows\|\|[{name:"Senior Debt",opening:sd.debt\|\|0,rate:.05,repayment:0}]).map((r,i)=>\`<tr data-i="${i}"><td><input type="text" value="${esc(r.name)}" id="d_${i}_n" style="width:120px"></td><td><input type="text" value="${r.opening}" id="d_${i}_o" style="width:90px"></td><td><input type="text" value="${(r.rate*100).toFixed(2)}" id="d_${i}_r" style="width:70px"></td><td><input type="text" value="${r.repayment}" id="d_${i}_p" style="width:90px"></td><td><button class="btn btn-sm btn-danger" data-del="${i}">×</button></td></tr>\`).join("")}` |
 | `0f67a583af241df6` | toFixed usage | 4705 | `fmRender` | presentation/UI rounding | `${(fm.debt.rows\|\|[{name:"Senior Debt",opening:sd.debt\|\|0,rate:.05,repayment:0}]).map((r,i)=>\`<tr data-i="${i}"><td><input type="text" value="${esc(r.name)}" id="d_${i}_n" style="width:120px"></td><td><input type="text" value="${r.opening}" id="d_${i}_o" style="width:90px"></td><td><input type="text" value="${(r.rate*100).toFixed(2)}" id="d_${i}_r" style="width:70px"></td><td><input type="text" value="${r.repayment}" id="d_${i}_p" style="width:90px"></td><td><button class="btn btn-sm btn-danger" data-del="${i}">×</button></td></tr>\`).join("")}` |
 | `33568d38970b9660` | generic OR zero | 4713 | `fmRender` | calculation-sensitive numeric fallback | `${AppUI.frow("Minimum cash",App.state.settings.currency,"cov_mc",fm.covenants.minCash\|\|0)}` |
-| `319b94c9c5f92da4` | fallback-to-zero coercions | 4727 | `readDebt` | calculation-sensitive numeric fallback | `function readDebt(){ const fm=App.state.fm; if(!fm.debt.rows)return; const rows=[]; $$("#debtRows tr[data-i]").forEach(tr=>{ const i=Number(tr.dataset.i); rows.push({name:$("#d_"+i+"_n").value, opening:Number($("#d_"+i+"_o").value)\|\|0, rate:(Number($("#d_"+i+"_r").value)\|\|5)/100, repayment:Number($("#d_"+i+"_p").value)\|\|0}); }); fm.debt.rows=rows; }` |
-| `ee9cfc81001164bd` | generic OR zero | 4727 | `readDebt` | calculation-sensitive numeric fallback | `function readDebt(){ const fm=App.state.fm; if(!fm.debt.rows)return; const rows=[]; $$("#debtRows tr[data-i]").forEach(tr=>{ const i=Number(tr.dataset.i); rows.push({name:$("#d_"+i+"_n").value, opening:Number($("#d_"+i+"_o").value)\|\|0, rate:(Number($("#d_"+i+"_r").value)\|\|5)/100, repayment:Number($("#d_"+i+"_p").value)\|\|0}); }); fm.debt.rows=rows; }` |
-| `ee9cfc81001164bd` | generic OR zero | 4727 | `readDebt` | calculation-sensitive numeric fallback | `function readDebt(){ const fm=App.state.fm; if(!fm.debt.rows)return; const rows=[]; $$("#debtRows tr[data-i]").forEach(tr=>{ const i=Number(tr.dataset.i); rows.push({name:$("#d_"+i+"_n").value, opening:Number($("#d_"+i+"_o").value)\|\|0, rate:(Number($("#d_"+i+"_r").value)\|\|5)/100, repayment:Number($("#d_"+i+"_p").value)\|\|0}); }); fm.debt.rows=rows; }` |
-| `4236d76995c08605` | fallback-to-zero coercions | 4728 | `readCov` | calculation-sensitive numeric fallback | `function readCov(){ const fm=App.state.fm; fm.covenants={debtEbitda:Number($("#cov_de").value)\|\|4, ic:Number($("#cov_ic").value)\|\|3, currentRatio:Number($("#cov_cr").value)\|\|1, minCash:Number($("#cov_mc").value)\|\|0}; }` |
-| `e62d24ce2153e421` | generic OR zero | 4728 | `readCov` | calculation-sensitive numeric fallback | `function readCov(){ const fm=App.state.fm; fm.covenants={debtEbitda:Number($("#cov_de").value)\|\|4, ic:Number($("#cov_ic").value)\|\|3, currentRatio:Number($("#cov_cr").value)\|\|1, minCash:Number($("#cov_mc").value)\|\|0}; }` |
+| `4f4c5f10089b6a04` | fallback-to-zero coercions | 4727 | `readDebt` | calculation-sensitive numeric fallback | `function readDebt(){ const fm=App.state.fm; if(!fm.debt.rows)return; const rows=[]; $$("#debtRows tr[data-i]").forEach(tr=>{ const i=Number(tr.dataset.i); rows.push({name:$("#d_"+i+"_n").value, opening:Number($("#d_"+i+"_o").value)\|\|0, rate:(()=>{const v=Number($("#d_"+i+"_r").value);return Number.isFinite(v)?v/100:.05;})(), repayment:Number($("#d_"+i+"_p").value)\|\|0}); }); fm.debt.rows=rows; }` |
+| `4f4c5f10089b6a04` | fallback-to-zero coercions | 4727 | `readDebt` | calculation-sensitive numeric fallback | `function readDebt(){ const fm=App.state.fm; if(!fm.debt.rows)return; const rows=[]; $$("#debtRows tr[data-i]").forEach(tr=>{ const i=Number(tr.dataset.i); rows.push({name:$("#d_"+i+"_n").value, opening:Number($("#d_"+i+"_o").value)\|\|0, rate:(()=>{const v=Number($("#d_"+i+"_r").value);return Number.isFinite(v)?v/100:.05;})(), repayment:Number($("#d_"+i+"_p").value)\|\|0}); }); fm.debt.rows=rows; }` |
+| `3fdea3997be29629` | generic OR zero | 4727 | `readDebt` | calculation-sensitive numeric fallback | `function readDebt(){ const fm=App.state.fm; if(!fm.debt.rows)return; const rows=[]; $$("#debtRows tr[data-i]").forEach(tr=>{ const i=Number(tr.dataset.i); rows.push({name:$("#d_"+i+"_n").value, opening:Number($("#d_"+i+"_o").value)\|\|0, rate:(()=>{const v=Number($("#d_"+i+"_r").value);return Number.isFinite(v)?v/100:.05;})(), repayment:Number($("#d_"+i+"_p").value)\|\|0}); }); fm.debt.rows=rows; }` |
+| `3fdea3997be29629` | generic OR zero | 4727 | `readDebt` | calculation-sensitive numeric fallback | `function readDebt(){ const fm=App.state.fm; if(!fm.debt.rows)return; const rows=[]; $$("#debtRows tr[data-i]").forEach(tr=>{ const i=Number(tr.dataset.i); rows.push({name:$("#d_"+i+"_n").value, opening:Number($("#d_"+i+"_o").value)\|\|0, rate:(()=>{const v=Number($("#d_"+i+"_r").value);return Number.isFinite(v)?v/100:.05;})(), repayment:Number($("#d_"+i+"_p").value)\|\|0}); }); fm.debt.rows=rows; }` |
 | `e4c383bd2f56679a` | fallback-to-zero coercions | 4730 | `readFMAndRun` | calculation-sensitive numeric fallback | `const readArr=(arr,prefix,factor)=>{ const out=[]; for(let i=0;i<n;i++){ const e=$("#"+prefix+"_"+i); out.push(e? (Number(e.value)\|\|0)/factor:0); } return out; };` |
 | `a319ee3d6f4572e3` | generic OR zero | 4730 | `readFMAndRun` | calculation-sensitive numeric fallback | `const readArr=(arr,prefix,factor)=>{ const out=[]; for(let i=0;i<n;i++){ const e=$("#"+prefix+"_"+i); out.push(e? (Number(e.value)\|\|0)/factor:0); } return out; };` |
 | `8584695c35aee01c` | fallback-to-zero coercions | 4732 | `readFMAndRun` | calculation-sensitive numeric fallback | `const readNum=(prefix,factor)=>{ const out=[]; for(let i=0;i<n;i++){ const e=$("#"+prefix+"_"+i); out.push(e? Number(e.value)\|\|0:0); } return out; };` |
@@ -1986,5 +2000,9 @@ This file is generated from the deployable `dist/index.html`. Every regex lead f
 | `0f16b9639f7e281d` | truthy-value checks | 12060 | `irr` | calculation-sensitive presence guard | `function irr(flows){ assertFiniteArray(flows,'flows'); if(flows.length<2\|\|!flows.some(x=>x<0)\|\|!flows.some(x=>x>0))return null; const f=r=>npv(flows,r); const points=[]; for(let i=0;i<=800;i++){ const x=-0.9999+i*(10.9999/800); const y=f(x); if(y!=null&&Number.isFinite(y))points.push([x,y]); } let bracket=null; for(let i=1;i<points.length;i++){ if(points[i-1][1]===0)return points[i-1][0]; if(points[i-1][1]*points[i][1]<0){ bracket=[points[i-1][0],points[i][0]]; break; } } if(!bracket)return null; let [lo,hi]=bracket,flo=f(lo); for(let i=0;i<300;i++){const mid=(lo+hi)/2,fm=f(mid);if(Math.abs(fm)<1e-11)return mid;if(flo*fm<=0)hi=mid;else{lo=mid;flo=fm;}}return (lo+hi)/2; }` |
 | `fb8496ab76cfe239` | Math.round usage | 12126 | `bondPeriods` | presentation/UI rounding | `function bondPeriods(years,frequency){ asFinite(years,'years'); if(!validPeriod(frequency)\|\|years<=0)throw new RangeError('positive years and integer frequency required'); const n=years*frequency; if(Math.abs(n-Math.round(n))>1e-9)throw new RangeError('years × frequency must be an integer number of periods'); return Math.round(n); }` |
 | `fb8496ab76cfe239` | Math.round usage | 12126 | `bondPeriods` | presentation/UI rounding | `function bondPeriods(years,frequency){ asFinite(years,'years'); if(!validPeriod(frequency)\|\|years<=0)throw new RangeError('positive years and integer frequency required'); const n=years*frequency; if(Math.abs(n-Math.round(n))>1e-9)throw new RangeError('years × frequency must be an integer number of periods'); return Math.round(n); }` |
-| `660668cece369c8f` | truthy-value checks | 12193 | `abbreviate` | calculation-sensitive presence guard | `if(!Core){ console.error('Financial certification runtime: FinanceCore missing'); return; }` |
-| `465032b3d1292dc1` | truthy-value checks | 12200 | `abbreviate` | calculation-sensitive presence guard | `const a=Core.abbreviate(v); if(!a) return '—';` |
+| `281850d60ebd0b14` | toFixed usage | 12282 | `build` | algorithmic rounding | `if(marginVariance!=null&&Math.abs(marginVariance)>.005)warnings.push({severity:'CAUTION',code:'FM-MARGIN-001',year:y,message:\`Detailed cost assumptions imply EBITDA margin ${(mar*100).toFixed(2)}%, versus target ${(marginTarget*100).toFixed(2)}%.\`});` |
+| `281850d60ebd0b14` | toFixed usage | 12282 | `build` | algorithmic rounding | `if(marginVariance!=null&&Math.abs(marginVariance)>.005)warnings.push({severity:'CAUTION',code:'FM-MARGIN-001',year:y,message:\`Detailed cost assumptions imply EBITDA margin ${(mar*100).toFixed(2)}%, versus target ${(marginTarget*100).toFixed(2)}%.\`});` |
+| `d860d0ca31f4070c` | truthy-value checks | 12321 | `computeCovenants` | calculation-sensitive presence guard | `if(!Core){ console.error('Financial certification runtime: FinanceCore missing'); return; }` |
+| `523a7d212da8943d` | truthy-value checks | 12325 | `computeCovenants` | calculation-sensitive presence guard | `if(!ModelCore)installReport.warnings.push('FinancialModelCore missing; three-statement model is outside the expanded certification boundary.');` |
+| `af4a9a6842780775` | truthy-value checks | 12329 | `computeCovenants` | calculation-sensitive presence guard | `const a=Core.abbreviate(v); if(!a) return '—';` |
+| `653edf9ba4ee51b8` | Math.round usage | 12443 | `top-level/unknown` | presentation/UI rounding | `const lgd=1-recovery;return {pd,recovery,ead,lgd,el:Math.round(pd*lgd*ead*100)/100};` |

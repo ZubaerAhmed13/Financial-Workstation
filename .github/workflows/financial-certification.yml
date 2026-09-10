@@ -2,7 +2,7 @@ name: Financial Calculation Certification
 
 on:
   push:
-    branches: [main, financial-calculation-certification]
+    branches: [main, financial-calculation-certification, full-monolith-hardening]
   pull_request:
     branches: [main]
 
@@ -28,6 +28,7 @@ jobs:
       - name: Syntax validation
         run: |
           node -c src/finance/engine.js
+          node -c src/finance/model-engine.js
           node -c src/runtime/install.js
           node -c scripts/build.js
           node -c scripts/verify-build.js
@@ -35,6 +36,8 @@ jobs:
           node -c scripts/contextual-audit.js
           node -c scripts/certified-core-audit.js
           node -c tests/browser-smoke.js
+          node -c tests/model-engine.test.js
+          node -c tests/runtime-integration.test.js
 
       - name: Certified calculation source gate
         run: node scripts/certified-core-audit.js
@@ -54,28 +57,37 @@ jobs:
       - name: Production artifact verification
         run: node scripts/verify-build.js
 
-      - name: Install pinned Chromium smoke-test runtime
+      - name: Install pinned cross-browser smoke-test runtime
         run: |
           npm install --no-save --package-lock=false --no-audit --no-fund playwright@1.55.0
-          npx playwright install --with-deps chromium
+          npx playwright install --with-deps chromium firefox webkit
 
-      - name: Interactive Chromium workstation smoke pass
-        run: node tests/browser-smoke.js dist/index.html --write=docs/BROWSER_SMOKE_REPORT.json
+      - name: Chromium desktop workstation smoke pass
+        run: node tests/browser-smoke.js dist/index.html --browser=chromium --viewport=desktop --write=docs/BROWSER_SMOKE_REPORT.json
+
+      - name: Firefox desktop workstation smoke pass
+        run: node tests/browser-smoke.js dist/index.html --browser=firefox --viewport=desktop --write=docs/BROWSER_SMOKE_FIREFOX.json
+
+      - name: WebKit desktop workstation smoke pass
+        run: node tests/browser-smoke.js dist/index.html --browser=webkit --viewport=desktop --write=docs/BROWSER_SMOKE_WEBKIT.json
+
+      - name: Chromium mobile responsive smoke pass
+        run: node tests/browser-smoke.js dist/index.html --browser=chromium --viewport=mobile --write=docs/BROWSER_SMOKE_MOBILE.json
 
       - name: Generate deployable root on certification branch
-        if: github.event_name == 'push' && github.ref_name == 'financial-calculation-certification'
+        if: github.event_name == 'push' && (github.ref_name == 'financial-calculation-certification' || github.ref_name == 'full-monolith-hardening')
         run: npm run build:root
 
       - name: Commit generated certification evidence and single-file artifacts
-        if: github.event_name == 'push' && github.ref_name == 'financial-calculation-certification'
+        if: github.event_name == 'push' && (github.ref_name == 'financial-calculation-certification' || github.ref_name == 'full-monolith-hardening')
         shell: bash
         run: |
-          git add index.html dist/index.html docs/STATIC_AUDIT_FINDINGS.md docs/BROWSER_SMOKE_REPORT.json
+          git add index.html dist/index.html docs/STATIC_AUDIT_FINDINGS.md docs/BROWSER_SMOKE_REPORT.json docs/BROWSER_SMOKE_FIREFOX.json docs/BROWSER_SMOKE_WEBKIT.json docs/BROWSER_SMOKE_MOBILE.json
           if git diff --cached --quiet; then
             echo "Generated artifacts and evidence already current."
             exit 0
           fi
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git commit -m "build: refresh certification evidence [cert-build]"
+          git commit -m "build: refresh expanded certification evidence [cert-build]"
           git push origin HEAD:${GITHUB_REF_NAME}

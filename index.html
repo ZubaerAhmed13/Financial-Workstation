@@ -4683,7 +4683,7 @@ function fmRender(){ const tab=$("#view-financialmodel .tab.active")?.dataset.ta
     <button class="btn btn-primary" id="fm_applyY">Apply</button></div>
     <div class="tablewrap"><table class="data"><thead><tr><th>Metric</th>${Array.from({length:n},(_,i)=>`<th class="num">Y${i+1}</th>`).join("")}</tr></thead><tbody>
       <tr><td>Revenue growth %</td>${fm.growth.map((v,i)=>`<td><input type="text" value="${(v*100).toFixed(1)}" id="fm_g_${i}" style="width:64px"></td>`).join("")}</tr>
-      <tr><td>EBITDA margin %</td>${fm.margin.map((v,i)=>`<td><input type="text" value="${(v*100).toFixed(1)}" id="fm_m_${i}" style="width:64px"></td>`).join("")}</tr>
+      <tr><td>EBITDA margin target %</td>${fm.margin.map((v,i)=>`<td><input type="text" value="${(v*100).toFixed(1)}" id="fm_m_${i}" style="width:64px"></td>`).join("")}</tr>
       <tr><td>Tax rate %</td>${fm.tax.map((v,i)=>`<td><input type="text" value="${(v*100).toFixed(1)}" id="fm_t_${i}" style="width:64px"></td>`).join("")}</tr>
       <tr><td>CapEx % revenue</td>${fm.capexPct.map((v,i)=>`<td><input type="text" value="${(v*100).toFixed(1)}" id="fm_c_${i}" style="width:64px"></td>`).join("")}</tr>
       <tr><td>D&A % revenue</td>${fm.daPct.map((v,i)=>`<td><input type="text" value="${(v*100).toFixed(1)}" id="fm_d_${i}" style="width:64px"></td>`).join("")}</tr>
@@ -4724,8 +4724,8 @@ function fmRender(){ const tab=$("#view-financialmodel .tab.active")?.dataset.ta
     wire("fm_run_rec","click",()=>readFMAndRun());
   }
 }
-function readDebt(){ const fm=App.state.fm; if(!fm.debt.rows)return; const rows=[]; $$("#debtRows tr[data-i]").forEach(tr=>{ const i=Number(tr.dataset.i); rows.push({name:$("#d_"+i+"_n").value, opening:Number($("#d_"+i+"_o").value)||0, rate:(Number($("#d_"+i+"_r").value)||5)/100, repayment:Number($("#d_"+i+"_p").value)||0}); }); fm.debt.rows=rows; }
-function readCov(){ const fm=App.state.fm; fm.covenants={debtEbitda:Number($("#cov_de").value)||4, ic:Number($("#cov_ic").value)||3, currentRatio:Number($("#cov_cr").value)||1, minCash:Number($("#cov_mc").value)||0}; }
+function readDebt(){ const fm=App.state.fm; if(!fm.debt.rows)return; const rows=[]; $$("#debtRows tr[data-i]").forEach(tr=>{ const i=Number(tr.dataset.i); rows.push({name:$("#d_"+i+"_n").value, opening:Number($("#d_"+i+"_o").value)||0, rate:(()=>{const v=Number($("#d_"+i+"_r").value);return Number.isFinite(v)?v/100:.05;})(), repayment:Number($("#d_"+i+"_p").value)||0}); }); fm.debt.rows=rows; }
+function readCov(){ const fm=App.state.fm; const n=(id,fb)=>{const el=$(id);const raw=el?el.value:null;if(raw==null||String(raw).trim()==="")return fb;const v=Number(raw);return Number.isFinite(v)?v:fb;}; fm.covenants={debtEbitda:n("#cov_de",4), ic:n("#cov_ic",3), currentRatio:n("#cov_cr",1), minCash:n("#cov_mc",0)}; }
 function readFMAndRun(){ const fm=App.state.fm; const sd=App.state.stockData; const n=fm.years;
   const readArr=(arr,prefix,factor)=>{ const out=[]; for(let i=0;i<n;i++){ const e=$("#"+prefix+"_"+i); out.push(e? (Number(e.value)||0)/factor:0); } return out; };
   fm.growth=readArr(fm.growth,"fm_g",100); fm.margin=readArr(fm.margin,"fm_m",100); fm.tax=readArr(fm.tax,"fm_t",100); fm.capexPct=readArr(fm.capexPct,"fm_c",100); fm.daPct=readArr(fm.daPct,"fm_d",100); fm.cogsPct=readArr(fm.cogsPct,"fm_cogs",100); fm.sgaPct=readArr(fm.sgaPct,"fm_sga",100); fm.rndPct=readArr(fm.rndPct,"fm_rnd",100);
@@ -12187,20 +12187,148 @@ function decisionReadiness(){
     portfolioReturn,portfolioVariance,financialRatios,guessHeader,abbreviate
   };
 });
+(function(root,factory){
+  const api=factory();
+  if(typeof module==='object'&&module.exports)module.exports=api;
+  root.FinancialModelCore=api;
+})(typeof globalThis!=='undefined'?globalThis:this,function(){
+  'use strict';
+  const VERSION='1.0.0';
+  const EPS=1e-12;
+  const finite=v=>typeof v==='number'&&Number.isFinite(v);
+  const pick=(v,fallback)=>finite(v)?v:fallback;
+  const ratio=(a,b)=>finite(a)&&finite(b)&&Math.abs(b)>EPS?a/b:null;
+  const clone=v=>JSON.parse(JSON.stringify(v==null?{}:v));
+
+  function defaults(currency='EUR'){
+    return {
+      name:'',currency,years:5,startYear:new Date().getFullYear()+1,
+      growth:[],margin:[],tax:[],capexPct:[],daPct:[],dso:[],dio:[],dpo:[],ocaPct:[],oclPct:[],sgaPct:[],rndPct:[],cogsPct:[],
+      bs0:{cash:0,ar:0,inventory:0,oca:0,ppne:0,otherAssets:0,ap:0,debt:0,ocl:0,otherLiab:0,equity:0,revenue:0,cogs:0,ebitda:0,da:0,ebit:0,ni:0,interestExp:0},
+      debt:{rows:[]},covenants:{}
+    };
+  }
+  function fillSeries(target,key,n,fallback){
+    const a=Array.isArray(target[key])?target[key]:[];
+    for(let i=0;i<n;i++)if(!finite(a[i]))a[i]=fallback;
+    target[key]=a.slice(0,n);
+  }
+  function fillDefaults(model,stockData={}){
+    const m=model&&typeof model==='object'?model:{};const sd=stockData||{};
+    if(!Number.isInteger(m.years)||m.years<=0||m.years>100)m.years=5;
+    if(!Number.isInteger(m.startYear))m.startYear=new Date().getFullYear()+1;
+    fillSeries(m,'growth',m.years,pick(sd.growth,.10));
+    fillSeries(m,'margin',m.years,pick(sd.ebitdaMargin,.20));
+    fillSeries(m,'tax',m.years,pick(sd.tax,.21));
+    fillSeries(m,'capexPct',m.years,pick(sd.capexPct,.06));
+    fillSeries(m,'daPct',m.years,pick(sd.dandaPct,.05));
+    fillSeries(m,'dso',m.years,45);fillSeries(m,'dio',m.years,45);fillSeries(m,'dpo',m.years,40);
+    fillSeries(m,'ocaPct',m.years,.05);fillSeries(m,'oclPct',m.years,.06);
+    // 65% COGS + 12% SG&A + 3% R&D = 20% EBITDA margin, matching the default margin target.
+    fillSeries(m,'cogsPct',m.years,.65);fillSeries(m,'sgaPct',m.years,.12);fillSeries(m,'rndPct',m.years,.03);
+    m.bs0=m.bs0&&typeof m.bs0==='object'?m.bs0:{};
+    m.debt=m.debt&&typeof m.debt==='object'?m.debt:{rows:[]};
+    m.debt.rows=Array.isArray(m.debt.rows)?m.debt.rows:[];
+    m.covenants=m.covenants&&typeof m.covenants==='object'?m.covenants:{};
+    return m;
+  }
+  function normalize(model,stockData={}){return fillDefaults(clone(model),stockData);}
+
+  function debtSchedule(model,fallbackOpeningDebt=0){
+    const rows=model&&model.debt&&Array.isArray(model.debt.rows)?model.debt.rows:[];
+    if(!rows.length)return null;
+    const instruments=rows.map((r,i)=>({
+      name:r&&r.name!=null?String(r.name):`Debt ${i+1}`,
+      opening:Math.max(0,pick(r&&r.opening,0)),
+      rate:pick(r&&r.rate,.05),
+      annualRepayment:Math.max(0,pick(r&&r.repayment,0)),
+      annualAmort:Math.max(0,pick(r&&r.amort,0))
+    }));
+    if(instruments.length===1&&instruments[0].opening===0&&finite(fallbackOpeningDebt)&&fallbackOpeningDebt>0)instruments[0].opening=fallbackOpeningDebt;
+    const balances=instruments.map(x=>x.opening);const out=[];
+    for(let i=0;i<model.years;i++){
+      let opening=0,interest=0,repayment=0,ending=0;const detail=[];
+      for(let j=0;j<instruments.length;j++){
+        const inst=instruments[j];const op=balances[j];const int=op*inst.rate;const requested=inst.annualRepayment+inst.annualAmort;const paid=Math.min(op,requested);const end=Math.max(0,op-paid);
+        opening+=op;interest+=int;repayment+=paid;ending+=end;balances[j]=end;
+        detail.push({name:inst.name,opening:op,rate:inst.rate,interest:int,repayment:paid,ending:end});
+      }
+      out.push({y:model.startYear+i,opening,rate:ratio(interest,opening),interest,repayment,ending,instruments:detail});
+    }
+    return out;
+  }
+
+  function build(model,stockData={}){
+    const sd=stockData||{};const m=normalize(model,sd);const n=m.years;const b0=m.bs0;
+    const revenue0=finite(b0.revenue)?b0.revenue:(finite(sd.revenue)?sd.revenue:100);
+    const warnings=[];
+    const opening={
+      cash:pick(b0.cash,0),ar:pick(b0.ar,0),inventory:pick(b0.inventory,0),oca:pick(b0.oca,0),ppne:pick(b0.ppne,0),otherAssets:pick(b0.otherAssets,0),
+      ap:pick(b0.ap,0),debt:pick(b0.debt,0),ocl:pick(b0.ocl,0),otherLiab:pick(b0.otherLiab,0),equity:pick(b0.equity,0)
+    };
+    const schedule=debtSchedule(m,opening.debt);if(schedule)opening.debt=schedule[0].opening;
+    const openingAssets=opening.cash+opening.ar+opening.inventory+opening.oca+opening.ppne+opening.otherAssets;
+    const openingLiabEq=opening.ap+opening.debt+opening.ocl+opening.otherLiab+opening.equity;
+    const openingDiff=openingAssets-openingLiabEq;
+    const out={status:'valid',warnings,years:[],income:[],balance:[],cash:[],wc:[],revs:[],check:null,meta:m,debtSchedule:schedule,opening:{...opening,assets:openingAssets,liabEquity:openingLiabEq,diff:openingDiff}};
+    let prevRevenue=revenue0,prevCash=opening.cash,prevPPNE=opening.ppne,prevEquity=opening.equity,prevDebt=opening.debt;
+    let prevNWC=opening.ar+opening.inventory+opening.oca-opening.ap-opening.ocl;
+    for(let i=0;i<n;i++){
+      const y=m.startYear+i;const g=m.growth[i];
+      if(g<=-1)warnings.push({severity:'ERROR',code:'FM-GROWTH-001',year:y,message:'Growth at or below -100% is not economically valid; revenue is floored at zero.'});
+      const revenue=Math.max(0,prevRevenue*(1+g));
+      const cogs=revenue*m.cogsPct[i];const gross=revenue-cogs;const sga=revenue*m.sgaPct[i];const rnd=revenue*m.rndPct[i];const opex=sga+rnd;
+      const ebitda=gross-opex;const mar=ratio(ebitda,revenue);const marginTarget=m.margin[i];const marginVariance=mar==null?null:mar-marginTarget;
+      if(marginVariance!=null&&Math.abs(marginVariance)>.005)warnings.push({severity:'CAUTION',code:'FM-MARGIN-001',year:y,message:`Detailed cost assumptions imply EBITDA margin ${(mar*100).toFixed(2)}%, versus target ${(marginTarget*100).toFixed(2)}%.`});
+      const danda=revenue*m.daPct[i];const ebit=ebitda-danda;
+      const debtRow=schedule?schedule[i]:null;const openingDebt=debtRow?debtRow.opening:prevDebt;const interest=debtRow?debtRow.interest:openingDebt*.05;
+      const ebt=ebit-interest;const taxes=ebt*m.tax[i];const ni=ebt-taxes;
+      const arEnd=revenue/365*m.dso[i];const invEnd=cogs/365*m.dio[i];const apEnd=cogs/365*m.dpo[i];
+      const ocaEnd=revenue*m.ocaPct[i];const oclEnd=revenue*m.oclPct[i];const nwc=arEnd+invEnd+ocaEnd-apEnd-oclEnd;const deltaNWC=nwc-prevNWC;
+      const capex=revenue*m.capexPct[i];const ppneEnd=prevPPNE+capex-danda;
+      const endingDebt=debtRow?debtRow.ending:openingDebt;const debtDelta=endingDebt-openingDebt;
+      const freeCashFlow=ni+danda-capex-deltaNWC;const netChange=freeCashFlow+debtDelta;const cash=prevCash+netChange;const equity=prevEquity+ni;
+      const nonCashAssets=arEnd+invEnd+ocaEnd+ppneEnd+opening.otherAssets;const assets=nonCashAssets+cash;const liabEquity=apEnd+endingDebt+oclEnd+opening.otherLiab+equity;
+      out.years.push(y);out.revs.push(revenue);
+      out.income.push({y,revenue,cogs,gross,sga,rnd,opex,ebitda,danda,ebit,interest,ebt,taxes,ni,g,mar,marginTarget,marginVariance,cogsPct:m.cogsPct[i],sgaPct:m.sgaPct[i],rndPct:m.rndPct[i]});
+      out.wc.push({y,ar:arEnd,inv:invEnd,oca:ocaEnd,ap:apEnd,ocl:oclEnd,nwc,deltaNWC});
+      out.balance.push({y,cash,ar:arEnd,inv:invEnd,oca:ocaEnd,ppne:ppneEnd,otherAssets:opening.otherAssets,ap:apEnd,debt:endingDebt,ocl:oclEnd,otherLiab:opening.otherLiab,equity,assets,liabEquity});
+      out.cash.push({y,ni,danda,capex,deltaNWC,debtDelta,freeCashFlow,netChange,cash,ties:Math.abs((assets-liabEquity)-openingDiff)<0.01});
+      prevRevenue=revenue;prevCash=cash;prevPPNE=ppneEnd;prevEquity=equity;prevDebt=endingDebt;prevNWC=nwc;
+    }
+    const last=out.balance[out.balance.length-1];const diff=last.assets-last.liabEquity;
+    out.check={diff,openingDiff,ok:Math.abs(diff)<0.01,carriesOpeningDifference:Math.abs(diff-openingDiff)<0.01,assets:last.assets,liabEquity:last.liabEquity,cashFlowTies:out.cash.every(c=>c.ties===true)};
+    out.covenants=computeCovenants(out,m);
+    return out;
+  }
+
+  function computeCovenants(out,m){
+    const c=m&&m.covenants?m.covenants:{};const cov=[];const income=out.income.at(-1);const balance=out.balance.at(-1);if(!income||!balance)return cov;
+    const currentLiabilities=balance.ap+balance.ocl;const currentAssets=balance.cash+balance.ar+balance.inv;const currentRatio=ratio(currentAssets,currentLiabilities);
+    if(finite(c.debtEbitda)&&finite(balance.debt)&&finite(income.ebitda)&&Math.abs(income.ebitda)>EPS){const v=balance.debt/income.ebitda;const head=c.debtEbitda-v;cov.push({name:'Debt/EBITDA',value:v,limit:c.debtEbitda,headroom:head,status:v<=c.debtEbitda?(head<0.5?'warn':'ok'):'breach',format:'ratio'});}
+    if(finite(c.ic)&&finite(income.interest)&&income.interest>EPS){const v=income.ebit/income.interest;const head=v-c.ic;cov.push({name:'Interest coverage',value:v,limit:c.ic,headroom:head,status:v>=c.ic?(head<0.5?'warn':'ok'):'breach',format:'ratio'});}
+    if(finite(c.currentRatio)&&currentRatio!=null){const head=currentRatio-c.currentRatio;cov.push({name:'Current ratio',value:currentRatio,limit:c.currentRatio,headroom:head,status:currentRatio>=c.currentRatio?(head<0.2?'warn':'ok'):'breach',format:'ratio'});}
+    if(finite(c.minCash)){const v=out.cash.at(-1).cash;const head=v-c.minCash;cov.push({name:'Minimum cash',value:v,limit:c.minCash,headroom:head,status:v>=c.minCash?(head<Math.abs(c.minCash)*.2?'warn':'ok'):'breach',format:'money'});}
+    return cov;
+  }
+
+  return {VERSION,defaults,fillDefaults,normalize,debtSchedule,build,computeCovenants};
+});
 (function(){
   'use strict';
   const Core = typeof FinanceCore !== 'undefined' ? FinanceCore : null;
+  const ModelCore = typeof FinancialModelCore !== 'undefined' ? FinancialModelCore : null;
   if(!Core){ console.error('Financial certification runtime: FinanceCore missing'); return; }
 
-  const installReport={version:Core.VERSION,installed:[],warnings:[]};
+  const installReport={version:Core.VERSION,modelVersion:ModelCore?ModelCore.VERSION:null,installed:[],warnings:[]};
   const mark=(name)=>installReport.installed.push(name);
+  if(!ModelCore)installReport.warnings.push('FinancialModelCore missing; three-statement model is outside the expanded certification boundary.');
 
   if(typeof fmt!=='undefined' && fmt){
     fmt.big=(v)=>{
       const a=Core.abbreviate(v); if(!a) return '—';
       if(!a.suffix) return fmt.money(a.scaled,2);
-      const dp=a.suffix==='K'?2:2;
-      return fmt.money(a.scaled,dp)+a.suffix;
+      return fmt.money(a.scaled,2)+a.suffix;
     };
     mark('formatter.big');
   }
@@ -12240,9 +12368,6 @@ function decisionReadiness(){
   }
 
   if(typeof LoanEngine!=='undefined' && LoanEngine){
-    // Preserve the legacy call signatures while routing the production methods to
-    // the independently tested core. The optional legacy IRR guess is accepted
-    // for compatibility but intentionally ignored by the deterministic bracketed solver.
     LoanEngine.npv=(flows,rate)=>Core.npv(flows,rate);
     LoanEngine.irr=(flows,_guess=.1)=>Core.irr(flows);
     mark('LoanEngine.npv/irr');
@@ -12287,6 +12412,40 @@ function decisionReadiness(){
     mark('FinancialRatios');
   }
 
+  if(ModelCore && typeof FinancialModelEngine!=='undefined' && FinancialModelEngine){
+    FinancialModelEngine.defaults=()=>{
+      const currency=(typeof App!=='undefined'&&App&&App.state&&App.state.settings&&App.state.settings.currency)||'EUR';
+      return ModelCore.defaults(currency);
+    };
+    FinancialModelEngine.fillDefaults=(m,sd)=>ModelCore.fillDefaults(m,sd||{});
+    FinancialModelEngine.build=(m,sd)=>{
+      const out=ModelCore.build(m,sd||{});
+      if(Array.isArray(out.covenants) && typeof fmt!=='undefined')out.covenants=out.covenants.map(c=>({...c,fmt:c.format==='ratio'?fmt.x:fmt.money}));
+      return out;
+    };
+    mark('FinancialModelEngine.build/fillDefaults/defaults');
+  }
+
+  if(typeof XIRR!=='undefined' && XIRR){
+    XIRR.xnpv=(rate,cashflows,dates)=>Core.xnpv(rate,cashflows,dates);
+    XIRR.xirr=(cashflows,dates,_guess=.1)=>Core.xirr(cashflows,dates);
+    XIRR.xirrHTML=(cashflows,dates)=>{
+      const r=Core.xirr(cashflows,dates);
+      if(r==null)return '<div class="banner warn">XIRR could not be determined — the irregular cash-flow pattern may have no unique root.</div>';
+      return `<div class="card"><div class="card-title">XIRR (irregular-period IRR)</div><div class="grid g2">${kpi('XIRR',fmt.pct(r,2),'annualized, irregular dates')}</div><div class="formula">Solve Σ CF_i/(1+XIRR)^((date_i−date_0)/365) = 0</div><div class="banner info">XIRR handles cash flows that arrive at irregular dates by discounting each to its actual year-fraction. It annualizes the return correctly for non-annual periods.</div></div>`;
+    };
+    mark('XIRR');
+  }
+
+  if(typeof ECLV2!=='undefined' && ECLV2){
+    ECLV2.compute=(pd,recovery,ead)=>{
+      if(![pd,recovery,ead].every(Core.isFiniteNumber)||pd<0||pd>1||recovery<0||recovery>1||ead<0)return {pd,recovery,ead,lgd:null,el:null,error:'ECL requires finite PD/recovery in [0,1] and non-negative EAD.'};
+      const lgd=1-recovery;return {pd,recovery,ead,lgd,el:Math.round(pd*lgd*ead*100)/100};
+    };
+    ECLV2.eadDefault=(face,exposureType)=>exposureType==='bond'?(Core.isFiniteNumber(face)?face:null):(Core.isFiniteNumber(face)?face:1000000);
+    mark('ECLV2');
+  }
+
   if(typeof FINANCE!=='undefined' && FINANCE){
     if(typeof FINANCE.median==='function')FINANCE.median=(a)=>Core.median(a);
     if(typeof FINANCE.calcRecoveryPeriod==='function')FINANCE.calcRecoveryPeriod=(a)=>{const d=Core.maximumDrawdown(a);return d.recoveryPeriod;};
@@ -12298,6 +12457,7 @@ function decisionReadiness(){
 
   if(typeof App!=='undefined' && App && App.meta){
     App.meta.financialCertificationVersion=Core.VERSION;
+    if(ModelCore)App.meta.financialModelEngineVersion=ModelCore.VERSION;
     App.meta.bondEngineVersion='1.1.0';
     App.meta.dcfEngineVersion='1.1.0';
     App.meta.riskEngineVersion='1.1.0';

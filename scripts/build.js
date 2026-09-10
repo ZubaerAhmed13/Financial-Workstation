@@ -6,12 +6,13 @@ const indexPath=path.join(root,'index.html');
 const distDir=path.join(root,'dist');
 const distPath=path.join(distDir,'index.html');
 const engine=fs.readFileSync(path.join(root,'src/finance/engine.js'),'utf8').trim();
+const modelEngine=fs.readFileSync(path.join(root,'src/finance/model-engine.js'),'utf8').trim();
 const installer=fs.readFileSync(path.join(root,'src/runtime/install.js'),'utf8').trim();
 let html=fs.readFileSync(indexPath,'utf8');
 
 const START='/* FINANCIAL_CERTIFICATION_RUNTIME_START */';
 const END='/* FINANCIAL_CERTIFICATION_RUNTIME_END */';
-const block=`${START}\n${engine}\n${installer}\n${END}\n`;
+const block=`${START}\n${engine}\n${modelEngine}\n${installer}\n${END}\n`;
 const existing=new RegExp(escapeRegExp(START)+'[\\s\\S]*?'+escapeRegExp(END)+'\\n?','g');
 html=html.replace(existing,'');
 
@@ -41,6 +42,23 @@ html=html.replace(/BondEngine\.modifiedDuration\(mac,ytm\)/g,()=>{durationPatche
 // Recovery is counted in observations in the current imported-price workflow, not calendar days.
 html=html.replace(/rec\+"d"/g,'rec+" obs"');
 
+// Three-statement model UI boundary hardening. The model now treats EBITDA margin
+// as a target/diagnostic while the detailed COGS/SG&A/R&D assumptions drive EBITDA.
+html=html.replace(/<tr><td>EBITDA margin %<\/td>/g,'<tr><td>EBITDA margin target %</td>');
+// Preserve an explicitly entered 0% debt rate instead of coercing it to the 5% fallback.
+const legacyDebtRead='rate:(Number($("#d_"+i+"_r").value)||5)/100';
+const safeDebtRead='rate:(()=>{const v=Number($("#d_"+i+"_r").value);return Number.isFinite(v)?v/100:.05;})()';
+let debtRatePatches=0;
+html=html.replaceAll(legacyDebtRead,safeDebtRead);debtRatePatches=(html.includes(safeDebtRead)?1:0);
+if(!debtRatePatches)throw new Error('Build refused: zero-preserving debt-rate reader was not installed.');
+
+// Preserve zero covenant limits where they are meaningful; blank/invalid values alone receive defaults.
+const legacyCov='function readCov(){ const fm=App.state.fm; fm.covenants={debtEbitda:Number($("#cov_de").value)||4, ic:Number($("#cov_ic").value)||3, currentRatio:Number($("#cov_cr").value)||1, minCash:Number($("#cov_mc").value)||0}; }';
+const safeCov='function readCov(){ const fm=App.state.fm; const n=(id,fb)=>{const el=$(id);const raw=el?el.value:null;if(raw==null||String(raw).trim()==="")return fb;const v=Number(raw);return Number.isFinite(v)?v:fb;}; fm.covenants={debtEbitda:n("#cov_de",4), ic:n("#cov_ic",3), currentRatio:n("#cov_cr",1), minCash:n("#cov_mc",0)}; }';
+let covenantPatches=0;
+if(html.includes(legacyCov)){html=html.replace(legacyCov,safeCov);covenantPatches=1;}else if(html.includes(safeCov)){covenantPatches=1;}
+if(!covenantPatches)throw new Error('Build refused: zero-preserving covenant reader was not installed.');
+
 const initNeedle='window.addEventListener("DOMContentLoaded",init);';
 if(!html.includes(initNeedle)) throw new Error('Build refused: DOMContentLoaded init anchor not found.');
 html=html.replace(initNeedle,block+initNeedle);
@@ -49,6 +67,6 @@ if(durationPatches<1 && !html.includes('BondEngine.modifiedDuration(mac,ytm,freq
 fs.mkdirSync(distDir,{recursive:true});
 fs.writeFileSync(distPath,html);
 if(process.argv.includes('--write-root')) fs.writeFileSync(indexPath,html);
-console.log(JSON.stringify({output:path.relative(root,distPath),bytes:Buffer.byteLength(html),durationPatches,svgFactoryPatches,mixColorPatches,rootUpdated:process.argv.includes('--write-root')},null,2));
+console.log(JSON.stringify({output:path.relative(root,distPath),bytes:Buffer.byteLength(html),durationPatches,svgFactoryPatches,mixColorPatches,debtRatePatches,covenantPatches,rootUpdated:process.argv.includes('--write-root')},null,2));
 
 function escapeRegExp(s){return s.replace(/[.*+?^${}()|[\]\\]/g,'\\$&');}
