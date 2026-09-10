@@ -17,7 +17,7 @@ for(let i=0;i<lines.length;i++){
   const s=lines[i];const start=s.match(/\bconst\s+([A-Za-z_$][\w$]*)\s*=\s*\(\s*\(\s*\)\s*=>\s*\{/);if(start)ownerStack.push(start[1]);
   const owner=ownerStack.length?ownerStack[ownerStack.length-1]:null;let m;
   const f=/\bfunction\s+([A-Za-z_$][\w$]*)\s*\(/g;while((m=f.exec(s)))add(m[1],i+1,owner,'function');
-  const af=/\b(?:const|let|var)\s+([A-Za-z_$][\w$]*)\s*=\s*(?:async\s*)?(?:\([^)]*\)|[A-Za-z_$][\w$]*)\s*=>/g;while((m=af.exec(s)))add(m[1],i+1,owner,'arrow');
+  const af=/\b(?:const|let|var)\s+([A-Za-z_$][\w$]*)\s*=\s*(?:async\s*)?(?:\([^)]*\)|[A-Za-z_$][\w$]*)\s*=>/g;while((m=af.exec(s))){if(start&&m[1]===start[1])continue;add(m[1],i+1,owner,'arrow');}
   const of=/\b([A-Za-z_$][\w$]*)\s*:\s*function\s*\(/g;while((m=of.exec(s)))add(m[1],i+1,owner,'object-method');
   if(/^\s*\}\)\(\);?\s*$/.test(s)&&ownerStack.length)ownerStack.pop();
 }
