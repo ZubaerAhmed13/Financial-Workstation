@@ -5,8 +5,10 @@ const vm=require('node:vm');
 const fs=require('node:fs');
 const W=require('../src/finance/workstation-core.js');
 const L=require('../src/finance/workstation-ledger-core.js');
+const S=require('../src/finance/simulation-backtest-core.js');
 const addon=fs.readFileSync(require.resolve('../src/runtime/install-workstation.js'),'utf8');
 const near=(a,b,t=1e-9)=>assert.ok(a!=null&&Math.abs(a-b)<=t,`${a} not within ${t} of ${b}`);
+const priceSeries=(n,step=86400000,fn=i=>100)=>Array.from({length:n},(_,i)=>({date:Date.UTC(2026,0,1)+i*step,close:fn(i)}));
 
 function context(){
   const ws={
@@ -15,11 +17,11 @@ function context(){
     prices:{ABC:50},fxRates:{USD:{rate:1.2}},cashAccounts:{EUR:{balance:0},USD:{balance:100}}
   };
   const c={
-    console,WorkstationCalculationCore:W,WorkstationLedgerCore:L,
+    console,WorkstationCalculationCore:W,WorkstationLedgerCore:L,SimulationBacktestCore:S,
     SimilarityEngine:{FEATURES:['x'],defaultWeights:{x:1}},
     DataQualityEngine:{},ScoringEngine:{DEFAULT_W:W.DEFAULT_PREFERENCE_WEIGHTS},PeerSimilarity:{},
     factorExposure:()=>null,performanceAttribution:()=>null,RiskContribution:{html:true},
-    PortfolioOptimizers:{htmlOptimizer:true},
+    PortfolioOptimizers:{htmlOptimizer:true},MonteCarlo:{run:()=>({legacy:true})},BacktestEngine:{run:()=>({legacy:true}),html:true},
     wsDividendAmounts:()=>null,wsCalculateFromLedger:()=>null,wsFxConvert:()=>null,wsPositionBaseValue:()=>null,wsMarketValue:()=>null,wsCashSummary:()=>null,wsUnrealized:()=>null,
     wsTWR:()=>null,wsMWR:()=>null,wsAnnualized:()=>null,wsCaptureRatios:()=>null,wsPerfRisk:()=>null,wsPeriodReturns:()=>null,
     wsPortfolio:()=>ws,wsBaseCurrency:()=> 'EUR',
@@ -31,7 +33,7 @@ function context(){
   vm.createContext(c);vm.runInContext(addon,c);return c;
 }
 
-test('WR-REG-001 runtime exposes workstation calculation and ledger versions',()=>{const c=context();assert.equal(c.__FINANCIAL_CERTIFICATION__.workstationVersion,W.VERSION);assert.equal(c.__FINANCIAL_CERTIFICATION__.workstationLedgerVersion,L.VERSION);assert.equal(c.App.meta.workstationCalculationCoreVersion,W.VERSION);assert.equal(c.App.meta.workstationLedgerCoreVersion,L.VERSION);});
+test('WR-REG-001 runtime exposes workstation calculation, ledger and simulation versions',()=>{const c=context();assert.equal(c.__FINANCIAL_CERTIFICATION__.workstationVersion,W.VERSION);assert.equal(c.__FINANCIAL_CERTIFICATION__.workstationLedgerVersion,L.VERSION);assert.equal(c.__FINANCIAL_CERTIFICATION__.simulationBacktestVersion,S.VERSION);assert.equal(c.App.meta.workstationCalculationCoreVersion,W.VERSION);assert.equal(c.App.meta.workstationLedgerCoreVersion,L.VERSION);assert.equal(c.App.meta.simulationBacktestCoreVersion,S.VERSION);});
 test('WR-REG-002 similarity public route uses hardened standardized distance',()=>{const c=context(),stats=c.SimilarityEngine.standardize([{features:{x:1}},{features:{x:3}}]);near(c.SimilarityEngine.simScore({features:{x:2}},{features:{x:1}},stats,{x:1}),Math.exp(-1));});
 test('WR-REG-003 data quality public route awards proportional case coverage',()=>{const c=context(),base={history:{prices:Array(120).fill(1)},financials:{assets:1,netIncome:1},dcf:{wacc:.1,perShare:1},peers:[{},{},{}],dataOk:true};assert.equal(c.DataQualityEngine.score({...base,caseMatches:[{}]}).score,91);});
 test('WR-REG-004 scoring public route preserves legitimate zero metrics',()=>{const c=context(),r=c.ScoringEngine.score({expectedReturn:0},{return:100,safety:0,valuation:0,liquidity:0,historical:0});assert.equal(r.detail.length,1);});
@@ -46,4 +48,7 @@ test('WR-REG-012 market-value route applies current FX and cost-basis FX indepen
 test('WR-REG-013 cash summary preserves zero base cash',()=>{const c=context(),r=c.wsCashSummary();assert.equal(r.localCash.EUR,0);assert.equal(r.cash,120);assert.equal(r.total,240);});
 test('WR-REG-014 TWR/MWR routes use certified snapshot functions',()=>{const c=context(),s=[{date:'2024-01-01',mv:100},{date:'2024-12-31',mv:110,cashFlow:0}];near(c.wsTWR(s),.1);near(c.wsMWR(s),.1,1e-8);});
 test('WR-REG-015 performance-risk route requires explicit positive annualization',()=>{const c=context();assert.equal(c.wsPerfRisk([.01,.02],0),null);});
-test('WR-REG-016 certification report records final installed route set',()=>{const c=context();assert.ok(c.__FINANCIAL_CERTIFICATION__.workstationInstalled.includes('wsCalculateFromLedger'));assert.ok(c.__FINANCIAL_CERTIFICATION__.workstationInstalled.includes('PortfolioOptimizers'));});
+test('WR-REG-016 certification report records final installed route set',()=>{const c=context();assert.ok(c.__FINANCIAL_CERTIFICATION__.workstationInstalled.includes('wsCalculateFromLedger'));assert.ok(c.__FINANCIAL_CERTIFICATION__.workstationInstalled.includes('PortfolioOptimizers'));assert.ok(c.__FINANCIAL_CERTIFICATION__.workstationInstalled.includes('MonteCarlo.run'));assert.ok(c.__FINANCIAL_CERTIFICATION__.workstationInstalled.includes('BacktestEngine.run'));});
+test('WR-REG-017 MonteCarlo production route preserves explicit zero return and volatility',()=>{const c=context(),r=c.MonteCarlo.run({initial:100,expectedReturn:0,volatility:0,horizonYears:1,simulations:20,seed:7,target:100,stepsPerYear:12});assert.equal(r.median,100);assert.equal(r.pTarget,1);});
+test('WR-REG-018 Backtest production route rejects zero initial capital',()=>{const c=context(),r=c.BacktestEngine.run({prices:priceSeries(30),signal:Array(30).fill(0),initialCapital:0});assert.equal(r.available,false);assert.match(r.reason,/initial capital/i);});
+test('WR-REG-019 Backtest production route prevents current-bar signal lookahead',()=>{const c=context(),p=priceSeries(30,86400000,i=>i===0?100:110),sig=Array(30).fill(1);sig[0]=0;const r=c.BacktestEngine.run({prices:p,signal:sig,initialCapital:100000,transactionCost:0,slippage:0});assert.equal(r.available,true);assert.equal(r.equityCurve[1],100000);assert.equal(c.BacktestEngine.html,true);});
