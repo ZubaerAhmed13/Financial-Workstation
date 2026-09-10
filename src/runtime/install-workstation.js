@@ -2,6 +2,7 @@
   'use strict';
   const W=typeof WorkstationCalculationCore!=='undefined'?WorkstationCalculationCore:null;
   const L=typeof WorkstationLedgerCore!=='undefined'?WorkstationLedgerCore:null;
+  const S=typeof SimulationBacktestCore!=='undefined'?SimulationBacktestCore:null;
   if(!W){console.error('Financial certification runtime: WorkstationCalculationCore missing');return;}
   const installed=[];
   const mark=name=>installed.push(name);
@@ -39,6 +40,9 @@
     PortfolioOptimizers.riskParity=(items,corr)=>W.riskParity(items,corr);
     mark('PortfolioOptimizers');
   }
+
+  if(S&&typeof MonteCarlo!=='undefined'&&MonteCarlo){MonteCarlo.run=cfg=>S.monteCarloRun(cfg);mark('MonteCarlo.run');}
+  if(S&&typeof BacktestEngine!=='undefined'&&BacktestEngine){BacktestEngine.run=cfg=>S.backtestRun(cfg);mark('BacktestEngine.run');}
 
   if(L){
     if(typeof wsDividendAmounts==='function'){wsDividendAmounts=tx=>L.dividendAmounts(tx);mark('wsDividendAmounts');}
@@ -78,12 +82,14 @@
   if(typeof App!=='undefined'&&App&&App.meta){
     App.meta.workstationCalculationCoreVersion=W.VERSION;
     if(L)App.meta.workstationLedgerCoreVersion=L.VERSION;
+    if(S)App.meta.simulationBacktestCoreVersion=S.VERSION;
   }
   const prior=globalThis.__FINANCIAL_CERTIFICATION__||{};
   const priorInstalled=Array.isArray(prior.installed)?prior.installed:[];
   globalThis.__FINANCIAL_CERTIFICATION__=Object.freeze(Object.assign({},prior,{
     workstationVersion:W.VERSION,
     workstationLedgerVersion:L?L.VERSION:null,
+    simulationBacktestVersion:S?S.VERSION:null,
     installed:priorInstalled.concat(installed),
     workstationInstalled:Object.freeze(installed.slice())
   }));
