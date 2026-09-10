@@ -38,6 +38,7 @@ jobs:
           node -c scripts/contextual-audit.js
           node -c scripts/certified-core-audit.js
           node -c scripts/legacy-calculation-inventory.js
+          node -c scripts/focused-math-inventory.js
           node -c tests/browser-smoke.js
           node -c tests/model-engine.test.js
           node -c tests/legacy-hardening.test.js
@@ -61,6 +62,9 @@ jobs:
 
       - name: Generate legacy calculation inventory
         run: node scripts/legacy-calculation-inventory.js index.html --write=docs/LEGACY_CALCULATION_INVENTORY.md
+
+      - name: Generate focused math inventories
+        run: node scripts/focused-math-inventory.js index.html
 
       - name: Production artifact verification
         run: node scripts/verify-build.js
@@ -90,7 +94,7 @@ jobs:
         if: github.event_name == 'push' && (github.ref_name == 'financial-calculation-certification' || github.ref_name == 'full-monolith-hardening' || github.ref_name == 'legacy-calculation-hardening' || github.ref_name == 'risk-credit-certification' || github.ref_name == 'complete-calculation-modularization')
         shell: bash
         run: |
-          git add index.html dist/index.html docs/STATIC_AUDIT_FINDINGS.md docs/LEGACY_CALCULATION_INVENTORY.md docs/BROWSER_SMOKE_REPORT.json docs/BROWSER_SMOKE_FIREFOX.json docs/BROWSER_SMOKE_WEBKIT.json docs/BROWSER_SMOKE_MOBILE.json
+          git add index.html dist/index.html docs/STATIC_AUDIT_FINDINGS.md docs/LEGACY_CALCULATION_INVENTORY.md docs/FOCUSED_MATH_ANALYTICS.md docs/FOCUSED_MATH_WORKSPACE.md docs/FOCUSED_MATH_PORTFOLIO.md docs/BROWSER_SMOKE_REPORT.json docs/BROWSER_SMOKE_FIREFOX.json docs/BROWSER_SMOKE_WEBKIT.json docs/BROWSER_SMOKE_MOBILE.json
           if git diff --cached --quiet; then
             echo "Generated artifacts and evidence already current."
             exit 0
