@@ -9,12 +9,13 @@ const engine=fs.readFileSync(path.join(root,'src/finance/engine.js'),'utf8').tri
 const modelEngine=fs.readFileSync(path.join(root,'src/finance/model-engine.js'),'utf8').trim();
 const legacyEngine=fs.readFileSync(path.join(root,'src/finance/legacy-hardening.js'),'utf8').trim();
 const riskCreditEngine=fs.readFileSync(path.join(root,'src/finance/risk-credit-core.js'),'utf8').trim();
+const workstationEngine=fs.readFileSync(path.join(root,'src/finance/workstation-core.js'),'utf8').trim();
 const installer=fs.readFileSync(path.join(root,'src/runtime/install.js'),'utf8').trim();
 let html=fs.readFileSync(indexPath,'utf8');
 
 const START='/* FINANCIAL_CERTIFICATION_RUNTIME_START */';
 const END='/* FINANCIAL_CERTIFICATION_RUNTIME_END */';
-const block=`${START}\n${engine}\n${modelEngine}\n${legacyEngine}\n${riskCreditEngine}\n${installer}\n${END}\n`;
+const block=`${START}\n${engine}\n${modelEngine}\n${legacyEngine}\n${riskCreditEngine}\n${workstationEngine}\n${installer}\n${END}\n`;
 const existing=new RegExp(escapeRegExp(START)+'[\\s\\S]*?'+escapeRegExp(END)+'\\n?','g');
 html=html.replace(existing,'');
 
@@ -104,6 +105,17 @@ let mertonWaterfallPatches=0;
 if(html.includes(legacyMertonWaterfall)){html=html.replaceAll(legacyMertonWaterfall,safeMertonWaterfall);mertonWaterfallPatches=1;}else if(html.includes(safeMertonWaterfall)){mertonWaterfallPatches=1;}
 if(!mertonWaterfallPatches)throw new Error('Build refused: Merton distance-to-default report propagation was not installed.');
 
+// Final calculation-layer boundary: nested performance arithmetic that cannot be
+// replaced through object-method routing is delegated to WorkstationCalculationCore.
+const legacyPeriodReturns='function periodReturnsArray(snaps2){ const a=[]; for(let i=1;i<snaps2.length;i++){ const s=snaps2[i-1].mv||0; const e=snaps2[i].mv||0; const f=snaps2[i].cashFlow||0; if(s>0)a.push((e-f)/s-1); } return a; }';
+const safePeriodReturns='function periodReturnsArray(snaps2){ return (typeof WorkstationCalculationCore!=="undefined"?WorkstationCalculationCore.periodReturnsFromSnapshots(snaps2):null)||[]; }';
+let periodReturnPatches=0;if(html.includes(legacyPeriodReturns)){html=html.replaceAll(legacyPeriodReturns,safePeriodReturns);periodReturnPatches=1;}else if(html.includes(safePeriodReturns)){periodReturnPatches=1;}
+if(!periodReturnPatches)throw new Error('Build refused: nested portfolio period-return route was not installed.');
+const legacyBenchmarkReturns='const portRets=[]; for(let i=1;i<snaps.length;i++){ const start=snaps[i-1].mv||0, end=snaps[i].mv||0, flow=snaps[i].cashFlow||0; if(start>0)portRets.push((end-flow)/start-1); }';
+const safeBenchmarkReturns='const portRets=(typeof WorkstationCalculationCore!=="undefined"?WorkstationCalculationCore.periodReturnsFromSnapshots(snaps):null)||[];';
+let benchmarkReturnPatches=0;if(html.includes(legacyBenchmarkReturns)){html=html.replaceAll(legacyBenchmarkReturns,safeBenchmarkReturns);benchmarkReturnPatches=1;}else if(html.includes(safeBenchmarkReturns)){benchmarkReturnPatches=1;}
+if(!benchmarkReturnPatches)throw new Error('Build refused: benchmark portfolio-return route was not installed.');
+
 const initNeedle='window.addEventListener("DOMContentLoaded",init);';
 if(!html.includes(initNeedle)) throw new Error('Build refused: DOMContentLoaded init anchor not found.');
 html=html.replace(initNeedle,block+initNeedle);
@@ -112,6 +124,6 @@ if(durationPatches<1 && !html.includes('BondEngine.modifiedDuration(mac,ytm,freq
 fs.mkdirSync(distDir,{recursive:true});
 fs.writeFileSync(distPath,html);
 if(process.argv.includes('--write-root')) fs.writeFileSync(indexPath,html);
-console.log(JSON.stringify({output:path.relative(root,distPath),bytes:Buffer.byteLength(html),durationPatches,svgFactoryPatches,mixColorPatches,debtRatePatches,covenantPatches,portfolioInputPatches,portfolioRenderPatches,riskFrequencyPatches,eclBoundaryPatches,mertonWaterfallPatches,rootUpdated:process.argv.includes('--write-root')},null,2));
+console.log(JSON.stringify({output:path.relative(root,distPath),bytes:Buffer.byteLength(html),durationPatches,svgFactoryPatches,mixColorPatches,debtRatePatches,covenantPatches,portfolioInputPatches,portfolioRenderPatches,riskFrequencyPatches,eclBoundaryPatches,mertonWaterfallPatches,periodReturnPatches,benchmarkReturnPatches,rootUpdated:process.argv.includes('--write-root')},null,2));
 
 function escapeRegExp(s){return s.replace(/[.*+?^${}()|[\]\\]/g,'\\$&');}
