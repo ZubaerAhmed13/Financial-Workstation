@@ -44,6 +44,7 @@ const {chromium,firefox,webkit}=require('playwright');
       appWindow:Object.prototype.hasOwnProperty.call(globalThis,'App'),
       financeCore:typeof FinanceCore!=='undefined',
       financialModelCore:typeof FinancialModelCore!=='undefined',
+      legacyCalculationCore:typeof LegacyCalculationCore!=='undefined',
       certification:!!globalThis.__FINANCIAL_CERTIFICATION__,
       readyState:document.readyState,
       bodyChildren:document.body?document.body.children.length:null
@@ -112,7 +113,11 @@ const {chromium,firefox,webkit}=require('playwright');
     ratios:typeof FinancialRatios==='object',
     financeCore:typeof FinanceCore==='object',
     financialModelCore:typeof FinancialModelCore==='object',
+    legacyCalculationCore:typeof LegacyCalculationCore==='object',
     financialModelEngine:typeof FinancialModelEngine==='object',
+    stressEngine:typeof StressTestEngine==='object',
+    portfolioEngine:typeof PortfolioEngine==='object',
+    valuationMatrix:typeof ValuationMatrixV2==='object',
     xirr:typeof XIRR==='object',
     ecl:typeof ECLV2==='object',
     cert:!!globalThis.__FINANCIAL_CERTIFICATION__
@@ -135,6 +140,29 @@ const {chromium,firefox,webkit}=require('playwright');
     }catch(e){out.financialModel=false;}
     try{ const d0=Date.UTC(2024,0,1),d1=Date.UTC(2024,11,31);const r=XIRR.xirr([-1000,1100],[d0,d1]);out.xirr=r!=null&&Math.abs(r-.1)<1e-8; }catch(e){out.xirr=false;}
     try{ const e=ECLV2.compute(.08,.35,1000);const z=ECLV2.compute(null,.35,1000);out.ecl=e.el===52&&z.el===null&&ECLV2.eadDefault(0,'loan')===0; }catch(e){out.ecl=false;}
+    try{
+      const old=App.state.results.stock;App.state.results.stock={defaultPD:0};
+      const r=StressTestEngine.run({revenue:100,growth:0,ebitdaMargin:.2,tax:0,capexPct:.05,wcPct:.02,dandaPct:.04,wacc:.1,terminalGrowth:.02,netDebt:0,shares:10,horizon:5},[{name:'Control',rev:0,margin:0,wacc:0,pdMult:3,desc:'control'}]);
+      out.stress=!!r&&r.base.revenue0===100&&r.base.growth===0&&r.base.tax===0&&r.out[0].pd===0;
+      App.state.results.stock=old;
+    }catch(e){out.stress=false;}
+    try{
+      const bad=PortfolioEngine.build([{name:'A',weight:0,expectedReturn:.1,volatility:.2}]);
+      const p=PortfolioEngine.build([{name:'Bond',assetClass:'bond',weight:1,expectedReturn:.03,volatility:0}]);
+      const s=PortfolioEngine.stress(p,{rate:.02,bondSpread:.03,eq:0,earnings:0});
+      out.portfolio=bad===null&&p&&p.vol===0&&p.sharpe===null&&s&&s.totalImpact===0;
+    }catch(e){out.portfolio=false;}
+    try{
+      const old=App.state.results.stock;
+      App.state.results.stock={comps:{impliedMean:2,peers:[10,11,12,13]},costEquity:.12};
+      const sd={price:100,equity:1000,netIncome:120,shares:100};
+      const mx=ValuationMatrixV2.build(sd);
+      const comp=mx.methods.find(m=>m.method==='Comparable');
+      const ri=mx.methods.find(m=>m.method==='Residual Income');
+      const rawRI=FinanceCore.residualIncome({bookValue0:1000,roe:.12,costEquity:.12,horizon:5,terminalRoe:.10,payoutRatio:0,terminalGrowth:0});
+      out.valuationMatrix=comp&&comp.value===50&&comp.upside===-.5&&ri&&Math.abs(ri.value-rawRI.value/100)<1e-10;
+      App.state.results.stock=old;
+    }catch(e){out.valuationMatrix=false;}
     return out;
   });
   for(const [k,v] of Object.entries(runtimeChecks)) if(!v) failures.push(`runtime regression failed: ${k}`);
@@ -162,6 +190,7 @@ const {chromium,firefox,webkit}=require('playwright');
     viewport:viewportArg,
     certificationVersion:cert.version,
     financialModelVersion:cert.modelVersion||null,
+    legacyCalculationVersion:cert.legacyVersion||null,
     totalViews:viewIds.length,
     viewsVisited,
     tabsActivated,

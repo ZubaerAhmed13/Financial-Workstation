@@ -5,12 +5,14 @@ const vm=require('node:vm');
 const fs=require('node:fs');
 const Core=require('../src/finance/engine.js');
 const ModelCore=require('../src/finance/model-engine.js');
+const LegacyCore=require('../src/finance/legacy-hardening.js');
 const installer=fs.readFileSync(require.resolve('../src/runtime/install.js'),'utf8');
 
 function context(){
   const c={
     FinanceCore:Core,
     FinancialModelCore:ModelCore,
+    LegacyCalculationCore:LegacyCore,
     console,
     fmt:{money:(v)=>'$'+String(v),num:String,pct:String,x:String},
     kpi:(a,b,c)=>`${a}:${b}:${c||''}`,
@@ -24,7 +26,10 @@ function context(){
     FinancialModelEngine:{legacyTableHelper:true},
     XIRR:{},
     ECLV2:{},
-    App:{meta:{},state:{settings:{currency:'EUR'}}},
+    StressTestEngine:{PREDEFINED:[{name:'Control',rev:0,margin:0,wacc:0,pdMult:1,desc:'control'}],stressHTML:true},
+    PortfolioEngine:{legacyPresentation:true},
+    ValuationMatrixV2:{matrixHTML:true,driversHTML:true},
+    App:{meta:{},state:{settings:{currency:'EUR'},stockData:{rf:.03},results:{stock:{}}}},
   };
   vm.createContext(c);vm.runInContext(installer,c);return c;
 }
@@ -49,3 +54,12 @@ test('runtime XIRR routes irregular dates through certified solver',()=>{const c
 test('runtime XIRR rejects cash flows without a sign change',()=>{const c=context();assert.equal(c.XIRR.xirr([100,200],[Date.UTC(2024,0,1),Date.UTC(2025,0,1)]),null);});
 test('runtime ECL preserves a valid zero exposure rather than defaulting to one million',()=>{const c=context();assert.equal(c.ECLV2.eadDefault(0,'loan'),0);assert.equal(c.ECLV2.compute(.08,.35,0).el,0);});
 test('runtime ECL does not convert missing PD into zero expected loss',()=>{const c=context();const r=c.ECLV2.compute(null,.35,1000);assert.equal(r.el,null);assert.ok(r.error);});
+
+test('runtime exposes legacy calculation hardening version',()=>{const c=context();assert.equal(c.__FINANCIAL_CERTIFICATION__.legacyVersion,LegacyCore.VERSION);assert.equal(c.App.meta.legacyCalculationCoreVersion,LegacyCore.VERSION);});
+test('runtime stress route accepts revenue without revenue0',()=>{const c=context();const r=c.StressTestEngine.run({revenue:100,growth:.1,ebitdaMargin:.2,tax:.2,capexPct:.05,wcPct:.02,dandaPct:.04,wacc:.1,terminalGrowth:.02,netDebt:0,shares:10,horizon:5});assert.ok(r);assert.equal(r.base.revenue0,100);});
+test('runtime stress route preserves zero PD from current analysis',()=>{const c=context();c.App.state.results.stock.defaultPD=0;const r=c.StressTestEngine.run({revenue:100,growth:.1,ebitdaMargin:.2,tax:.2,capexPct:.05,wcPct:.02,dandaPct:.04,wacc:.1,terminalGrowth:.02,netDebt:0,shares:10,horizon:5});assert.equal(r.out[0].pd,0);});
+test('runtime portfolio route rejects zero total weight',()=>{const c=context();assert.equal(c.PortfolioEngine.build([{name:'A',weight:0,expectedReturn:.1,volatility:.2}]),null);});
+test('runtime portfolio stress preserves zero bond volatility',()=>{const c=context();const p=c.PortfolioEngine.build([{name:'Bond',assetClass:'bond',weight:1,expectedReturn:.03,volatility:0}]);const s=c.PortfolioEngine.stress(p,{rate:.02,bondSpread:.03,eq:0,earnings:0});assert.equal(s.totalImpact,0);});
+test('runtime comparable valuation no longer collapses to current price',()=>{const c=context();c.App.state.results.stock={comps:{impliedMean:2,peers:[10,11,12,13]}};const mx=c.ValuationMatrixV2.build({price:100});const comp=mx.methods.find(m=>m.method==='Comparable');assert.equal(comp.value,50);assert.equal(comp.upside,-.5);});
+test('runtime valuation matrix preserves legacy presentation helper',()=>{const c=context();assert.equal(c.ValuationMatrixV2.matrixHTML,true);assert.equal(typeof c.ValuationMatrixV2.driversHTML,'function');});
+test('runtime portfolio engine preserves non-calculation presentation fields',()=>{const c=context();assert.equal(c.PortfolioEngine.legacyPresentation,true);assert.equal(typeof c.PortfolioEngine.build,'function');assert.equal(typeof c.PortfolioEngine.stress,'function');});

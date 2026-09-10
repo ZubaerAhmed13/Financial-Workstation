@@ -7,12 +7,13 @@ const distDir=path.join(root,'dist');
 const distPath=path.join(distDir,'index.html');
 const engine=fs.readFileSync(path.join(root,'src/finance/engine.js'),'utf8').trim();
 const modelEngine=fs.readFileSync(path.join(root,'src/finance/model-engine.js'),'utf8').trim();
+const legacyEngine=fs.readFileSync(path.join(root,'src/finance/legacy-hardening.js'),'utf8').trim();
 const installer=fs.readFileSync(path.join(root,'src/runtime/install.js'),'utf8').trim();
 let html=fs.readFileSync(indexPath,'utf8');
 
 const START='/* FINANCIAL_CERTIFICATION_RUNTIME_START */';
 const END='/* FINANCIAL_CERTIFICATION_RUNTIME_END */';
-const block=`${START}\n${engine}\n${modelEngine}\n${installer}\n${END}\n`;
+const block=`${START}\n${engine}\n${modelEngine}\n${legacyEngine}\n${installer}\n${END}\n`;
 const existing=new RegExp(escapeRegExp(START)+'[\\s\\S]*?'+escapeRegExp(END)+'\\n?','g');
 html=html.replace(existing,'');
 
@@ -59,6 +60,20 @@ let covenantPatches=0;
 if(html.includes(legacyCov)){html=html.replace(legacyCov,safeCov);covenantPatches=1;}else if(html.includes(safeCov)){covenantPatches=1;}
 if(!covenantPatches)throw new Error('Build refused: zero-preserving covenant reader was not installed.');
 
+// Portfolio input boundary: do not silently manufacture expected return or volatility,
+// and do not convert malformed weights into valid zero-weight observations.
+const legacyPortfolioRead='const w=(Number($("#pw_"+i).value)||0)/100; return {name:inv.name,type:inv.type,assetClass:inv.type,weight:w,expectedReturn:inv.metrics.expectedReturn||0,volatility:inv.metrics.volatility||.2,sector:inv.type,country:"—",currency:App.state.settings.currency};';
+const safePortfolioRead='const rawW=Number($("#pw_"+i).value); const w=Number.isFinite(rawW)?rawW/100:NaN; return {name:inv.name,type:inv.type,assetClass:inv.type,weight:w,expectedReturn:inv.metrics.expectedReturn!=null?inv.metrics.expectedReturn:null,volatility:inv.metrics.volatility!=null?inv.metrics.volatility:null,sector:inv.type,country:"—",currency:App.state.settings.currency};';
+let portfolioInputPatches=0;
+if(html.includes(legacyPortfolioRead)){html=html.replace(legacyPortfolioRead,safePortfolioRead);portfolioInputPatches=1;}else if(html.includes(safePortfolioRead)){portfolioInputPatches=1;}
+if(!portfolioInputPatches)throw new Error('Build refused: portfolio numeric input boundary was not hardened.');
+
+const legacyPortfolioRender='function renderPortfolio(port){ if(!port)return; ';
+const safePortfolioRender='function renderPortfolio(port){ if(!port){ const o=$("#pfOut"); if(o)o.innerHTML=`<div class="banner warn">Portfolio calculation requires positive total weight and finite expected-return/volatility inputs for every included asset.</div>`; return; } ';
+let portfolioRenderPatches=0;
+if(html.includes(legacyPortfolioRender)){html=html.replace(legacyPortfolioRender,safePortfolioRender);portfolioRenderPatches=1;}else if(html.includes(safePortfolioRender)){portfolioRenderPatches=1;}
+if(!portfolioRenderPatches)throw new Error('Build refused: portfolio validation feedback was not installed.');
+
 const initNeedle='window.addEventListener("DOMContentLoaded",init);';
 if(!html.includes(initNeedle)) throw new Error('Build refused: DOMContentLoaded init anchor not found.');
 html=html.replace(initNeedle,block+initNeedle);
@@ -67,6 +82,6 @@ if(durationPatches<1 && !html.includes('BondEngine.modifiedDuration(mac,ytm,freq
 fs.mkdirSync(distDir,{recursive:true});
 fs.writeFileSync(distPath,html);
 if(process.argv.includes('--write-root')) fs.writeFileSync(indexPath,html);
-console.log(JSON.stringify({output:path.relative(root,distPath),bytes:Buffer.byteLength(html),durationPatches,svgFactoryPatches,mixColorPatches,debtRatePatches,covenantPatches,rootUpdated:process.argv.includes('--write-root')},null,2));
+console.log(JSON.stringify({output:path.relative(root,distPath),bytes:Buffer.byteLength(html),durationPatches,svgFactoryPatches,mixColorPatches,debtRatePatches,covenantPatches,portfolioInputPatches,portfolioRenderPatches,rootUpdated:process.argv.includes('--write-root')},null,2));
 
 function escapeRegExp(s){return s.replace(/[.*+?^${}()|[\]\\]/g,'\\$&');}
