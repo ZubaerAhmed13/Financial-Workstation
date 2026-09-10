@@ -45,6 +45,7 @@ const {chromium,firefox,webkit}=require('playwright');
       financeCore:typeof FinanceCore!=='undefined',
       financialModelCore:typeof FinancialModelCore!=='undefined',
       legacyCalculationCore:typeof LegacyCalculationCore!=='undefined',
+      riskCreditCore:typeof RiskCreditCore!=='undefined',
       certification:!!globalThis.__FINANCIAL_CERTIFICATION__,
       readyState:document.readyState,
       bodyChildren:document.body?document.body.children.length:null
@@ -114,10 +115,15 @@ const {chromium,firefox,webkit}=require('playwright');
     financeCore:typeof FinanceCore==='object',
     financialModelCore:typeof FinancialModelCore==='object',
     legacyCalculationCore:typeof LegacyCalculationCore==='object',
+    riskCreditCore:typeof RiskCreditCore==='object',
     financialModelEngine:typeof FinancialModelEngine==='object',
     stressEngine:typeof StressTestEngine==='object',
     portfolioEngine:typeof PortfolioEngine==='object',
     valuationMatrix:typeof ValuationMatrixV2==='object',
+    riskMetrics:typeof RiskMetricsV2==='object',
+    creditModels:typeof CreditModels==='object',
+    creditCurve:typeof CreditCurveV2==='object',
+    mertonDiag:typeof MertonDiag==='object',
     xirr:typeof XIRR==='object',
     ecl:typeof ECLV2==='object',
     cert:!!globalThis.__FINANCIAL_CERTIFICATION__
@@ -139,7 +145,7 @@ const {chromium,firefox,webkit}=require('playwright');
       const r=FinancialModelEngine.build(m,{});out.financialModel=Math.abs(r.income[0].revenue-110)<1e-9&&Math.abs(r.income[1].revenue-121)<1e-9&&r.check.ok===true;
     }catch(e){out.financialModel=false;}
     try{ const d0=Date.UTC(2024,0,1),d1=Date.UTC(2024,11,31);const r=XIRR.xirr([-1000,1100],[d0,d1]);out.xirr=r!=null&&Math.abs(r-.1)<1e-8; }catch(e){out.xirr=false;}
-    try{ const e=ECLV2.compute(.08,.35,1000);const z=ECLV2.compute(null,.35,1000);out.ecl=e.el===52&&z.el===null&&ECLV2.eadDefault(0,'loan')===0; }catch(e){out.ecl=false;}
+    try{ const e=ECLV2.compute(.08,.35,1000),z=ECLV2.compute(null,.35,1000);out.ecl=e.el===52&&z.el===null&&ECLV2.eadDefault(0,'loan')===0&&ECLV2.eadDefault(null,'loan')===null; }catch(e){out.ecl=false;}
     try{
       const old=App.state.results.stock;App.state.results.stock={defaultPD:0};
       const r=StressTestEngine.run({revenue:100,growth:0,ebitdaMargin:.2,tax:0,capexPct:.05,wcPct:.02,dandaPct:.04,wacc:.1,terminalGrowth:.02,netDebt:0,shares:10,horizon:5},[{name:'Control',rev:0,margin:0,wacc:0,pdMult:3,desc:'control'}]);
@@ -163,6 +169,14 @@ const {chromium,firefox,webkit}=require('playwright');
       out.valuationMatrix=comp&&comp.value===50&&comp.upside===-.5&&ri&&Math.abs(ri.value-rawRI.value/100)<1e-10;
       App.state.results.stock=old;
     }catch(e){out.valuationMatrix=false;}
+    try{
+      const p=RiskMetricsV2.parametricVaR(.02,0,.975),p95=RiskMetricsV2.parametricVaR(.02,0,.95);
+      const weekly=CalcEngine.inferPeriodsPerYear([Date.UTC(2026,0,5),Date.UTC(2026,0,12),Date.UTC(2026,0,19)]);
+      const summary=CalcEngine.riskSummary([.01,-.005,.015,0,.007,-.003],12,0);
+      out.riskMetrics=p!==p95&&Math.abs(p+0.03919927969080108)<3e-7&&RiskMetricsV2.mcVaR([90,100,110],0,.95)===null&&weekly.periodsPerYear===52&&summary&&Number.isFinite(summary.sharpe);
+    }catch(e){out.riskMetrics=false;}
+    try{ const c=CreditCurveV2.curve('BBB');const z=CreditModels.altmanZ({workingCapital:0,retained:0,ebit:0,mve:0,revenue:0,assets:100,liabilities:50});out.creditCurve=!!c&&Math.abs(c.pd[3]-.064)<1e-12&&z.z===0; }catch(e){out.creditCurve=false;}
+    try{ const m=CreditModels.merton(100,.30,80,.03,1),d=MertonDiag.trace(100,.30,80,.03,1);out.merton=!!m&&m.converged===true&&m.pd>=0&&m.pd<=1&&d.converged===true&&Math.abs(d.distanceToDefault-m.distanceToDefault)<1e-12&&d.distanceToDefault!==0; }catch(e){out.merton=false;}
     return out;
   });
   for(const [k,v] of Object.entries(runtimeChecks)) if(!v) failures.push(`runtime regression failed: ${k}`);
@@ -191,6 +205,7 @@ const {chromium,firefox,webkit}=require('playwright');
     certificationVersion:cert.version,
     financialModelVersion:cert.modelVersion||null,
     legacyCalculationVersion:cert.legacyVersion||null,
+    riskCreditVersion:cert.riskCreditVersion||null,
     totalViews:viewIds.length,
     viewsVisited,
     tabsActivated,
